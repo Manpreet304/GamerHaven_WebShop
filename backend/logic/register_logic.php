@@ -44,16 +44,17 @@ class RegisterLogic {
 
     public function save(User $user, $conn): bool {
         $conn->begin_transaction();
-
+    
         try {
+            // 1. User speichern
             $sqlUser = "INSERT INTO users 
                 (salutation, firstname, lastname, address, zip_code, city, email, username, password, country, created_at, role)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'user')";
-
+    
             $stmtUser = mysqli_prepare($conn, $sqlUser);
             $createdAt = date("Y-m-d H:i:s");
             $hashedPassword = password_hash($user->password, PASSWORD_DEFAULT);
-
+    
             mysqli_stmt_bind_param($stmtUser, "sssssssssss",
                 $user->salutation,
                 $user->first_name,
@@ -67,41 +68,52 @@ class RegisterLogic {
                 $user->country,
                 $createdAt
             );
-
+    
             if (!mysqli_stmt_execute($stmtUser)) {
                 throw new Exception("Failed to save user");
             }
-
+    
             $userId = $conn->insert_id;
-
-            // Payment speichern
+    
+            // 2. Payment speichern
+            // Die Zahlungsfelder werden je nach payment_method einzeln aus $user gelesen.
+            $card_number    = ($user->payment_method === "Credit Card")   ? $user->card_number    : NULL;
+            $csv            = ($user->payment_method === "Credit Card")   ? $user->csv            : NULL;
+            $paypal_email   = ($user->payment_method === "PayPal")        ? $user->paypal_email   : NULL;
+            $paypal_username= ($user->payment_method === "PayPal")        ? $user->paypal_username: NULL;
+            $iban           = ($user->payment_method === "Bank Transfer") ? $user->iban           : NULL;
+            $bic            = ($user->payment_method === "Bank Transfer") ? $user->bic            : NULL;
+    
+            // Zahlungsdaten in der Tabelle payments speichern
             $sqlPayment = "INSERT INTO payments 
                 (user_id, method, card_number, csv, paypal_email, paypal_username, iban, bic, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
+    
             $stmtPayment = mysqli_prepare($conn, $sqlPayment);
+    
             mysqli_stmt_bind_param($stmtPayment, "issssssss",
                 $userId,
                 $user->payment_method,
-                $user->card_number,
-                $user->csv,
-                $user->paypal_email,
-                $user->paypal_username,
-                $user->iban,
-                $user->bic,
+                $card_number,
+                $csv,
+                $paypal_email,
+                $paypal_username,
+                $iban,
+                $bic,
                 $createdAt
             );
-
+    
             if (!mysqli_stmt_execute($stmtPayment)) {
                 throw new Exception("Failed to save payment");
             }
-
+    
             $conn->commit();
             return true;
-
+    
         } catch (Exception $e) {
             $conn->rollback();
             return false;
         }
     }
-}
+    
+}    

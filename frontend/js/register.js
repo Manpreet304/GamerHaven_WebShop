@@ -47,35 +47,6 @@ $(document).ready(function () {
         }
 
         const method = $("#payment_method").val();
-        let payment_info = "";
-
-        // Daten für die gewählte Zahlungsmethode sammeln
-        if (method === "Credit Card") {
-            const card = $("#card_number").val().trim();
-            const csv = $("#csv").val().trim();
-            if (!card || !csv) {
-                showMessage("error", "Please fill in card number and CSV.");
-                return;
-            }
-            payment_info = `${card}|${csv}`;
-        } else if (method === "PayPal") {
-            const email = $("#paypal_email").val().trim();
-            const user = $("#paypal_username").val().trim();
-            if (!email || !user) {
-                showMessage("error", "Please fill in PayPal email and username.");
-                return;
-            }
-            payment_info = `${email}|${user}`;
-        } else if (method === "Bank Transfer") {
-            const iban = $("#iban").val().trim();
-            const bic = $("#bic").val().trim();
-            if (!iban || !bic) {
-                showMessage("error", "Please fill in IBAN and BIC.");
-                return;
-            }
-            payment_info = `${iban}|${bic}`;
-        }
-
         const data = {
             salutation: $("#salutation").val(),
             first_name: $("#first_name").val(),
@@ -88,9 +59,38 @@ $(document).ready(function () {
             username: $("#username").val(),
             password: $("#password").val(),
             password2: $("#password2").val(),
-            payment_method: method,
-            payment_info: payment_info
+            payment_method: method
         };
+
+        // Zahlungsfelder einzeln hinzufügen und validieren
+        if (method === "Credit Card") {
+            const card = $("#card_number").val().trim();
+            const csv = $("#csv").val().trim();
+            if (!card || !csv) {
+                showMessage("error", "Please fill in card number and CSV.");
+                return;
+            }
+            data.card_number = card;
+            data.csv = csv;
+        } else if (method === "PayPal") {
+            const paypalEmail = $("#paypal_email").val().trim();
+            const paypalUser = $("#paypal_username").val().trim();
+            if (!paypalEmail || !paypalUser) {
+                showMessage("error", "Please fill in PayPal email and username.");
+                return;
+            }
+            data.paypal_email = paypalEmail;
+            data.paypal_username = paypalUser;
+        } else if (method === "Bank Transfer") {
+            const iban = $("#iban").val().trim();
+            const bic = $("#bic").val().trim();
+            if (!iban || !bic) {
+                showMessage("error", "Please fill in IBAN and BIC.");
+                return;
+            }
+            data.iban = iban;
+            data.bic = bic;
+        }
 
         $.ajax({
             url: "/Webproject_GamerHaven/backend/api/api_guest.php?register",
