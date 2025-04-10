@@ -19,56 +19,62 @@ $(document).ready(function () {
         $countrySelect.append(new Option(country, country));
     });
 
+    // Dynamisch Felder anzeigen je nach ausgewählter Zahlungsmethode
     $("#payment_method").on("change", function () {
         const selected = $(this).val();
-        const $wrapper = $("#paymentDetailsWrapper");
-        const $label = $("#paymentDetailsLabel");
-        const $input = $("#payment_info");
+        $("#paymentDetailsWrapper").show();
+        $("#creditFields, #paypalFields, #bankFields").hide();
 
-        if (!selected) {
-            $wrapper.hide();
-            $input.val("");
-            return;
-        }
-
-        $wrapper.show();
-
-        switch (selected) {
-            case "Credit Card":
-                $label.text("Card Number:");
-                $input.attr("placeholder", "e.g., 4111 1111 1111 1111");
-                break;
-            case "PayPal":
-                $label.text("PayPal Email:");
-                $input.attr("placeholder", "e.g., yourmail@paypal.com");
-                break;
-            case "Bank Transfer":
-                $label.text("IBAN + BIC:");
-                $input.attr("placeholder", "e.g., AT61 1904 3002 3457 3201");
-                break;
-            default:
-                $label.text("Details:");
-                $input.attr("placeholder", "");
+        if (selected === "Credit Card") {
+            $("#creditFields").show();
+        } else if (selected === "PayPal") {
+            $("#paypalFields").show();
+        } else if (selected === "Bank Transfer") {
+            $("#bankFields").show();
+        } else {
+            $("#paymentDetailsWrapper").hide();
         }
     });
 
-    function showMessage(type, text) {
-        const alertClass = type === "success" ? "alert-success" : "alert-danger";
-        const message = `
-            <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
-                ${text}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>`;
-    
-        $("#messageBox").html(message);
-    
-        setTimeout(() => {
-            $(".alert").alert("close");
-        }, 5000);
-    }
-
+    // Formular absenden
     $("#registerForm").on("submit", function (e) {
         e.preventDefault();
+
+        // Passwortabgleich
+        if ($("#password").val() !== $("#password2").val()) {
+            showMessage("error", "Passwords do not match!");
+            return;
+        }
+
+        const method = $("#payment_method").val();
+        let payment_info = "";
+
+        // Daten für die gewählte Zahlungsmethode sammeln
+        if (method === "Credit Card") {
+            const card = $("#card_number").val().trim();
+            const csv = $("#csv").val().trim();
+            if (!card || !csv) {
+                showMessage("error", "Please fill in card number and CSV.");
+                return;
+            }
+            payment_info = `${card}|${csv}`;
+        } else if (method === "PayPal") {
+            const email = $("#paypal_email").val().trim();
+            const user = $("#paypal_username").val().trim();
+            if (!email || !user) {
+                showMessage("error", "Please fill in PayPal email and username.");
+                return;
+            }
+            payment_info = `${email}|${user}`;
+        } else if (method === "Bank Transfer") {
+            const iban = $("#iban").val().trim();
+            const bic = $("#bic").val().trim();
+            if (!iban || !bic) {
+                showMessage("error", "Please fill in IBAN and BIC.");
+                return;
+            }
+            payment_info = `${iban}|${bic}`;
+        }
 
         const data = {
             salutation: $("#salutation").val(),
@@ -82,21 +88,16 @@ $(document).ready(function () {
             username: $("#username").val(),
             password: $("#password").val(),
             password2: $("#password2").val(),
-            payment_method: $("#payment_method").val(),
-            payment_info: $("#payment_info").val()
+            payment_method: method,
+            payment_info: payment_info
         };
-
-        if (data.password !== data.password2) {
-            showMessage("error", "Passwords do not match!");
-            return;
-        }
 
         $.ajax({
             url: "/Webproject_GamerHaven/backend/api/api_guest.php?register",
             method: "POST",
             contentType: "application/json",
             data: JSON.stringify(data),
-            success: function (response) {
+            success: function () {
                 showMessage("success", "Registration successful! You will be redirected to login...");
                 setTimeout(() => {
                     window.location.href = "../website/login.html";
@@ -109,4 +110,9 @@ $(document).ready(function () {
         });
     });
 
+    // Tooltip-Initialisierung
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+        new bootstrap.Tooltip(tooltipTriggerEl);
+    });
 });

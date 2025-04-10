@@ -9,9 +9,14 @@ class User {
     public $email;
     public $username;
     public $password;
-    public $payment_method;
-    public $payment_info;
     public $country;
+    public $payment_method;
+    public $card_number;
+    public $csv;
+    public $paypal_email;
+    public $paypal_username;
+    public $iban;
+    public $bic;
 
     public function __construct(array $data) {
         foreach ($data as $key => $value) {
@@ -21,3 +26,4 @@ class User {
         }
     }
 }
+
