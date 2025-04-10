@@ -6,10 +6,9 @@ $password = "";
 
 $conn = mysqli_connect($host, $username, $password, $dbname);
 
-if(!$conn){
-    die ("Connection error occurred!" . mysqli_connect_error());
+if (!$conn) {
+    http_response_code(500);
+    echo json_encode(["error" => "Database connection failed."]);
+    exit;
 }
-
-echo "Verbindung erfolgreich!";
-
 ?>
