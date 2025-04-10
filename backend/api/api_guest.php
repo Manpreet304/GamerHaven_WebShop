@@ -10,16 +10,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_GET["register"])) {
     $data = json_decode(file_get_contents("php://input"), true);
 
     $user = new User($data);
-    $logic = new RegisterLogic();
+    $registerLogic = new RegisterLogic();
 
-    $validation = $logic->validate($user, $data["password2"], $conn);
+    $validation = $registerLogic->validate($user, $data["password2"], $conn);
     if ($validation !== true) {
         http_response_code(400);
         echo json_encode(["error" => $validation]);
         exit;
     }
 
-    if ($logic->save($user, $conn)) {
+    if ($registerLogic->save($user, $conn)) {
         http_response_code(201);
         echo json_encode(["success" => true]);
     } else {
