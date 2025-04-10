@@ -1,5 +1,5 @@
 $(document).ready(function () {
-
+    // === Länder-Dropdown befüllen ===
     const countries = [
         "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Argentina", "Armenia",
         "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados",
@@ -13,106 +13,121 @@ $(document).ready(function () {
         "Thailand", "Turkey", "Ukraine", "United Arab Emirates", "United Kingdom", "United States",
         "Vietnam", "Zimbabwe"
     ];
-
-    const $countrySelect = $("#country");
     countries.forEach(country => {
-        $countrySelect.append(new Option(country, country));
+        $("#country").append(new Option(country, country));
     });
 
-    // Dynamisch Felder anzeigen je nach ausgewählter Zahlungsmethode
+    // === Zahlungsdetails anzeigen je nach Auswahl ===
     $("#payment_method").on("change", function () {
         const selected = $(this).val();
-        $("#paymentDetailsWrapper").show();
+        $("#paymentDetailsWrapper").toggle(selected !== "");
         $("#creditFields, #paypalFields, #bankFields").hide();
 
-        if (selected === "Credit Card") {
-            $("#creditFields").show();
-        } else if (selected === "PayPal") {
-            $("#paypalFields").show();
-        } else if (selected === "Bank Transfer") {
-            $("#bankFields").show();
-        } else {
-            $("#paymentDetailsWrapper").hide();
-        }
+        if (selected === "Credit Card") $("#creditFields").show();
+        else if (selected === "PayPal") $("#paypalFields").show();
+        else if (selected === "Bank Transfer") $("#bankFields").show();
     });
 
-    // Formular absenden
+    // === Formular absenden ===
     $("#registerForm").on("submit", function (e) {
         e.preventDefault();
 
-        // Passwortabgleich
-        if ($("#password").val() !== $("#password2").val()) {
-            showMessage("error", "Passwords do not match!");
-            return;
-        }
+        // Vorherige Validierung zurücksetzen
+        $("#registerForm input, #registerForm select").each(function () {
+            $(this).removeClass("is-valid is-invalid")[0].setCustomValidity("");
+        });
 
-        const method = $("#payment_method").val();
-        const data = {
-            salutation: $("#salutation").val(),
-            first_name: $("#first_name").val(),
-            last_name: $("#last_name").val(),
-            address: $("#address").val(),
-            zip: $("#zip").val(),
-            city: $("#city").val(),
-            country: $("#country").val(),
-            email: $("#email").val(),
-            username: $("#username").val(),
-            password: $("#password").val(),
-            password2: $("#password2").val(),
-            payment_method: method
-        };
-
-        // Zahlungsfelder einzeln hinzufügen und validieren
-        if (method === "Credit Card") {
-            const card = $("#card_number").val().trim();
-            const csv = $("#csv").val().trim();
-            if (!card || !csv) {
-                showMessage("error", "Please fill in card number and CSV.");
-                return;
-            }
-            data.card_number = card;
-            data.csv = csv;
-        } else if (method === "PayPal") {
-            const paypalEmail = $("#paypal_email").val().trim();
-            const paypalUser = $("#paypal_username").val().trim();
-            if (!paypalEmail || !paypalUser) {
-                showMessage("error", "Please fill in PayPal email and username.");
-                return;
-            }
-            data.paypal_email = paypalEmail;
-            data.paypal_username = paypalUser;
-        } else if (method === "Bank Transfer") {
-            const iban = $("#iban").val().trim();
-            const bic = $("#bic").val().trim();
-            if (!iban || !bic) {
-                showMessage("error", "Please fill in IBAN and BIC.");
-                return;
-            }
-            data.iban = iban;
-            data.bic = bic;
-        }
+        const data = getFormData();
+        if (!validatePaymentFields(data)) return;
 
         $.ajax({
-            url: "/Webproject_GamerHaven/backend/api/api_guest.php?register",
+            url: "/GamerHaven_WebShop/backend/api/api_guest.php?register",
             method: "POST",
+            dataType: "json",
             contentType: "application/json",
             data: JSON.stringify(data),
             success: function () {
-                showMessage("success", "Registration successful! You will be redirected to login...");
+                markValid("#username");
+                showMessage("success", "Registration successful! Redirecting...");
                 setTimeout(() => {
                     window.location.href = "../website/login.html";
                 }, 3000);
             },
             error: function (xhr) {
-                const errorMsg = xhr.responseJSON?.error || "Registration failed. Please try again.";
-                showMessage("error", errorMsg);
+                const msg = xhr.responseJSON?.error || "Registration failed.";
+                handleValidationErrors(msg);
+                $("#registerForm").addClass("was-validated");
             }
         });
     });
 
-    // Tooltip-Initialisierung
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
-        new bootstrap.Tooltip(tooltipTriggerEl);
-    });
+    // === Bootstrap-eigene Formularvalidierung aktivieren ===
+    (function () {
+        const form = document.getElementById("registerForm");
+        form.addEventListener("submit", function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add("was-validated");
+        }, false);
+    })();
+
+    // === Tooltips aktivieren ===
+    const tooltipList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipList.forEach(el => new bootstrap.Tooltip(el));
 });
+
+// === Hilfsfunktionen ===
+
+function getFormData() {
+    return {
+        salutation: $("#salutation").val(),
+        first_name: $("#first_name").val(),
+        last_name: $("#last_name").val(),
+        address: $("#address").val(),
+        zip: $("#zip").val(),
+        city: $("#city").val(),
+        country: $("#country").val(),
+        email: $("#email").val(),
+        username: $("#username").val(),
+        password: $("#password").val(),
+        password2: $("#password2").val(),
+        payment_method: $("#payment_method").val(),
+        card_number: $("#card_number").val().trim(),
+        csv: $("#csv").val().trim(),
+        paypal_email: $("#paypal_email").val().trim(),
+        paypal_username: $("#paypal_username").val().trim(),
+        iban: $("#iban").val().trim(),
+        bic: $("#bic").val().trim()
+    };
+}
+
+function validatePaymentFields(data) {
+    if (data.payment_method === "Credit Card" && (!data.card_number || !data.csv)) {
+        setFieldError("#card_number", "Card number is required.");
+        setFieldError("#csv", "CSV is required.");
+        return false;
+    }
+
+    if (data.payment_method === "PayPal" && (!data.paypal_email || !data.paypal_username)) {
+        setFieldError("#paypal_email", "PayPal email is required.");
+        setFieldError("#paypal_username", "PayPal username is required.");
+        return false;
+    }
+
+    if (data.payment_method === "Bank Transfer" && (!data.iban || !data.bic)) {
+        setFieldError("#iban", "IBAN is required.");
+        setFieldError("#bic", "BIC is required.");
+        return false;
+    }
+
+    return true;
+}
+
+function handleValidationErrors(msg) {
+    if (msg.includes("Username")) setFieldError("#username", msg);
+    if (msg.includes("Password must")) setFieldError("#password", msg);
+    if (msg.includes("Passwords do not match")) setFieldError("#password2", msg);
+    if (msg.includes("Invalid email")) setFieldError("#email", msg);
+}
