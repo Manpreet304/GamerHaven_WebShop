@@ -2,12 +2,9 @@
 
 class RegisterLogic {
     public function validate(User $user, string $password2, $conn): true|string {
-        // Passwort-Abgleich
         if ($user->password !== $password2) {
             return "Passwords do not match.";
         }
-
-        // Passwort-Stärke
         if (strlen($user->password) < 8) {
             return "Password must be at least 8 characters long.";
         }
@@ -17,18 +14,14 @@ class RegisterLogic {
             !preg_match('/[0-9]/', $user->password)) {
             return "Password must contain uppercase, lowercase and a number.";
         }
-
-        // E-Mail Format
         if (!filter_var($user->email, FILTER_VALIDATE_EMAIL)) {
             return "Invalid email format.";
         }
 
-        // Username Länge
         if (strlen($user->username) < 5) {
             return "Username must be at least 5 characters long.";
         }
 
-        // Username existiert bereits?
         $sql = "SELECT id FROM users WHERE username = ?";
         $stmt = mysqli_prepare($conn, $sql);
         mysqli_stmt_bind_param($stmt, "s", $user->username);
@@ -46,7 +39,6 @@ class RegisterLogic {
         $conn->begin_transaction();
     
         try {
-            // 1. User speichern
             $sqlUser = "INSERT INTO users 
                 (salutation, firstname, lastname, address, zip_code, city, email, username, password, country, created_at, role)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'user')";
@@ -74,9 +66,7 @@ class RegisterLogic {
             }
     
             $userId = $conn->insert_id;
-    
-            // 2. Payment speichern
-            // Die Zahlungsfelder werden je nach payment_method einzeln aus $user gelesen.
+
             $card_number    = ($user->payment_method === "Credit Card")   ? $user->card_number    : NULL;
             $csv            = ($user->payment_method === "Credit Card")   ? $user->csv            : NULL;
             $paypal_email   = ($user->payment_method === "PayPal")        ? $user->paypal_email   : NULL;
@@ -84,7 +74,6 @@ class RegisterLogic {
             $iban           = ($user->payment_method === "Bank Transfer") ? $user->iban           : NULL;
             $bic            = ($user->payment_method === "Bank Transfer") ? $user->bic            : NULL;
     
-            // Zahlungsdaten in der Tabelle payments speichern
             $sqlPayment = "INSERT INTO payments 
                 (user_id, method, card_number, csv, paypal_email, paypal_username, iban, bic, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";

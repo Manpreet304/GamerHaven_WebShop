@@ -5,7 +5,9 @@ session_start();
 require_once("../db/dbaccess.php");
 require_once("../models/user_class.php");
 require_once("../logic/register_logic.php");
+require_once("../logic/login_logic.php");
 
+// === Registrierung ===
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_GET["register"])) {
     $data = json_decode(file_get_contents("php://input"), true);
 
@@ -26,7 +28,33 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_GET["register"])) {
         http_response_code(500);
         echo json_encode(["error" => "Error saving user: " . mysqli_error($conn)]);
     }
-} else {
+}
+
+// === Login ===
+elseif ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_GET["login"])) {
+    $data = json_decode(file_get_contents("php://input"), true);
+    $remember = $data["remember"] ?? false;
+
+    $loginLogic = new LoginLogic();
+    $result = $loginLogic->login($data, $conn);
+
+    if (is_string($result)) {
+        http_response_code(400);
+        echo json_encode(["error" => $result]);
+        exit;
+    }
+
+    if ($remember) {
+        $token = bin2hex(random_bytes(16));
+        setcookie("remember_token", $token, time() + 60 * 60 * 24 * 30, "/");
+        $loginLogic->saveRememberToken($result["id"], $token, $conn);
+    }
+
+    echo json_encode(["success" => true]);
+}
+
+// === Unbekannte Anfrage ===
+else {
     http_response_code(405);
     echo json_encode(["error" => "Invalid request"]);
 }
