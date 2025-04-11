@@ -8,7 +8,7 @@ $conn = mysqli_connect($host, $username, $password, $dbname);
 
 if (!$conn) {
     http_response_code(500);
-    echo json_encode(["error" => "Database connection failed."]);
+    echo json_encode(["error" => "Database connection failed: " . mysqli_connect_error()]);
     exit;
 }
 ?>

@@ -1,5 +1,9 @@
 <?php
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 class RegisterLogic {
     public function validate(User $user, string $password2, $conn): true|string {
         if ($user->password !== $password2) {

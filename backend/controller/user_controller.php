@@ -1,4 +1,8 @@
 <?php
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 class UserController {
 
     public function register(array $data): array {
@@ -52,4 +56,16 @@ class UserController {
             "body" => ["success" => true]
         ];
     }
+
+    public function logout(): array {
+        global $conn;
+        $logoutLogic = new LogoutLogic();
+        $logoutLogic->logout($conn);
+    
+        return [
+            "status" => 200,
+            "body" => ["success" => true]
+        ];
+    }
 }
+?>
