@@ -1,5 +1,9 @@
 <?php
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 class LoginLogic {
     public function validate(string $identifier, string $password): true|string {
         if (empty($identifier)) {
