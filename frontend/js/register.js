@@ -46,13 +46,15 @@ $(document).ready(function () {
             dataType: "json",
             contentType: "application/json",
             data: JSON.stringify(data),
-            success: function () {
-                markValid("#username");
-                showMessage("success", "Registration successful! Redirecting...");
-                setTimeout(() => {
-                    window.location.href = "../website/login.html";
-                }, 3000);
-            },
+            success: function (response) {
+                console.log("Response:", response);
+                if (response.success) {
+                    showMessage("success", "Registration successful! Redirecting...");
+                    setTimeout(() => {
+                        window.location.href = "../website/login.html";
+                    }, 3000);
+                }
+            },            
             error: function (xhr) {
                 const msg = xhr.responseJSON?.error || "Registration failed.";
                 handleValidationErrors(msg);

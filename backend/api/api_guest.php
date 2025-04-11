@@ -22,7 +22,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_GET["register"])) {
     }
 
     if ($registerLogic->save($user, $conn)) {
-        http_response_code(201);
+        http_response_code(200);
         echo json_encode(["success" => true]);
     } else {
         http_response_code(500);
