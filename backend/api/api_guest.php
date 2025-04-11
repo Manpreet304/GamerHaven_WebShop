@@ -6,55 +6,31 @@ require_once("../db/dbaccess.php");
 require_once("../models/user_class.php");
 require_once("../logic/register_logic.php");
 require_once("../logic/login_logic.php");
+require_once("../controller/user_Controller.php");
 
-// === Registrierung ===
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_GET["register"])) {
+$controller = new UserController();
+
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $data = json_decode(file_get_contents("php://input"), true);
 
-    $user = new User($data);
-    $registerLogic = new RegisterLogic();
-
-    $validation = $registerLogic->validate($user, $data["password2"], $conn);
-    if ($validation !== true) {
-        http_response_code(400);
-        echo json_encode(["error" => $validation]);
+    // === Registrierung ===
+    if (isset($_GET["register"])) {
+        $response = $controller->register($data);
+        http_response_code($response["status"]);
+        echo json_encode($response["body"]);
         exit;
     }
 
-    if ($registerLogic->save($user, $conn)) {
-        http_response_code(200);
-        echo json_encode(["success" => true]);
-    } else {
-        http_response_code(500);
-        echo json_encode(["error" => "Error saving user: " . mysqli_error($conn)]);
-    }
-}
-
-// === Login ===
-elseif ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_GET["login"])) {
-    $data = json_decode(file_get_contents("php://input"), true);
-    $remember = $data["remember"] ?? false;
-
-    $loginLogic = new LoginLogic();
-    $result = $loginLogic->login($data, $conn);
-
-    if (is_string($result)) {
-        http_response_code(400);
-        echo json_encode(["error" => $result]);
+    // === Login ===
+    if (isset($_GET["login"])) {
+        $remember = $data["remember"] ?? false;
+        $response = $controller->login($data, $remember);
+        http_response_code($response["status"]);
+        echo json_encode($response["body"]);
         exit;
     }
-
-    if ($remember) {
-        $token = bin2hex(random_bytes(16));
-        setcookie("remember_token", $token, time() + 60 * 60 * 24 * 30, "/");
-        $loginLogic->saveRememberToken($result["id"], $token, $conn);
-    }
-
-    echo json_encode(["success" => true]);
 }
 
 // === Unbekannte Anfrage ===
-else {
-    http_response_code(405);
-    echo json_encode(["error" => "Invalid request"]);
-}
+http_response_code(405);
+echo json_encode(["error" => "Invalid request"]);
