@@ -17,7 +17,6 @@ $(document).ready(function () {
         $("#country").append(new Option(country, country));
     });
 
-    // === Zahlungsdetails anzeigen je nach Auswahl ===
     $("#payment_method").on("change", function () {
         const selected = $(this).val();
         $("#paymentDetailsWrapper").toggle(selected !== "");
@@ -28,17 +27,21 @@ $(document).ready(function () {
         else if (selected === "Bank Transfer") $("#bankFields").show();
     });
 
-    // === Formular absenden ===
     $("#registerForm").on("submit", function (e) {
         e.preventDefault();
 
-        // Vorherige Validierung zurücksetzen
         $("#registerForm input, #registerForm select").each(function () {
             $(this).removeClass("is-valid is-invalid")[0].setCustomValidity("");
         });
 
         const data = getFormData();
         if (!validatePaymentFields(data)) return;
+
+        const form = document.getElementById("registerForm");
+        if (!form.checkValidity()) {
+            form.classList.add("was-validated");
+            return;
+        }
 
         $.ajax({
             url: "/GamerHaven_WebShop/backend/api/api_guest.php?register",
@@ -47,40 +50,25 @@ $(document).ready(function () {
             contentType: "application/json",
             data: JSON.stringify(data),
             success: function (response) {
-                console.log("Response:", response);
                 if (response.success) {
                     showMessage("success", "Registration successful! Redirecting...");
                     setTimeout(() => {
                         window.location.href = "../website/login.html";
                     }, 3000);
                 }
-            },            
+            },
             error: function (xhr) {
-                const msg = xhr.responseJSON?.error || "Registration failed.";
-                handleValidationErrors(msg);
+                const msg = xhr.responseJSON?.errors || { general: "Registration failed." };
+                if (msg.general) showMessage("danger", msg.general);
+                applyFieldErrors(msg);
                 $("#registerForm").addClass("was-validated");
             }
         });
     });
 
-    // === Bootstrap-eigene Formularvalidierung aktivieren ===
-    (function () {
-        const form = document.getElementById("registerForm");
-        form.addEventListener("submit", function (event) {
-            if (!form.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            form.classList.add("was-validated");
-        }, false);
-    })();
-
-    // === Tooltips aktivieren ===
     const tooltipList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipList.forEach(el => new bootstrap.Tooltip(el));
 });
-
-// === Hilfsfunktionen ===
 
 function getFormData() {
     return {
@@ -107,29 +95,22 @@ function getFormData() {
 
 function validatePaymentFields(data) {
     if (data.payment_method === "Credit Card" && (!data.card_number || !data.csv)) {
-        setFieldError("#card_number", "Card number is required.");
-        setFieldError("#csv", "CSV is required.");
+        if (!data.card_number) setFieldError("#card_number", "Card number is required.");
+        if (!data.csv) setFieldError("#csv", "CSV is required.");
         return false;
     }
 
     if (data.payment_method === "PayPal" && (!data.paypal_email || !data.paypal_username)) {
-        setFieldError("#paypal_email", "PayPal email is required.");
-        setFieldError("#paypal_username", "PayPal username is required.");
+        if (!data.paypal_email) setFieldError("#paypal_email", "PayPal email is required.");
+        if (!data.paypal_username) setFieldError("#paypal_username", "PayPal username is required.");
         return false;
     }
 
     if (data.payment_method === "Bank Transfer" && (!data.iban || !data.bic)) {
-        setFieldError("#iban", "IBAN is required.");
-        setFieldError("#bic", "BIC is required.");
+        if (!data.iban) setFieldError("#iban", "IBAN is required.");
+        if (!data.bic) setFieldError("#bic", "BIC is required.");
         return false;
     }
 
     return true;
-}
-
-function handleValidationErrors(msg) {
-    if (msg.includes("Username")) setFieldError("#username", msg);
-    if (msg.includes("Password must")) setFieldError("#password", msg);
-    if (msg.includes("Passwords do not match")) setFieldError("#password2", msg);
-    if (msg.includes("Invalid email")) setFieldError("#email", msg);
 }

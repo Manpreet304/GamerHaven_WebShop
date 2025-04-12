@@ -1,21 +1,23 @@
 $(document).ready(function () {
-    // Formular absenden
     $("#loginForm").on("submit", function (e) {
         e.preventDefault();
 
-        // Felder zurücksetzen
         $("#loginForm input").each(function () {
             $(this).removeClass("is-valid is-invalid")[0].setCustomValidity("");
         });
 
-        // Daten sammeln
         const data = {
             identifier: $("#identifier").val(),
             password: $("#password").val(),
             remember: $("#rememberMe").is(":checked")
         };
 
-        // AJAX an das Backend senden
+        const form = document.getElementById("loginForm");
+        if (!form.checkValidity()) {
+            form.classList.add("was-validated");
+            return;
+        }
+
         $.ajax({
             url: "/GamerHaven_WebShop/backend/api/api_guest.php?login",
             method: "POST",
@@ -29,20 +31,16 @@ $(document).ready(function () {
                 }, 2000);
             },
             error: function (xhr) {
-                const msg = xhr.responseJSON?.error || "Login failed.";
-                handleLoginErrors(msg);
+                const msg = xhr.responseJSON?.errors || { general: "Login failed." };
+
+                if (msg.general) showMessage("danger", msg.general);
+                applyFieldErrors(msg);
+
                 $("#loginForm").addClass("was-validated");
             }
         });
     });
 
-    // Tooltips aktivieren
     const tooltipList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipList.forEach(el => new bootstrap.Tooltip(el));
 });
-
-// Zentrale Fehlerverarbeitung
-function handleLoginErrors(msg) {
-    if (msg.includes("identifier")) setFieldError("#identifier", msg);
-    if (msg.includes("Password")) setFieldError("#password", msg);
-}

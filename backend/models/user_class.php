@@ -21,9 +21,8 @@ class User {
     public function __construct(array $data) {
         foreach ($data as $key => $value) {
             if (property_exists($this, $key)) {
-                $this->$key = trim($value);
+                $this->$key = is_string($value) ? trim($value) : $value;
             }
         }
     }
 }
-

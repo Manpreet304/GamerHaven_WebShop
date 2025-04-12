@@ -1,27 +1,26 @@
 <?php
-
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
 class LoginLogic {
-    public function validate(string $identifier, string $password): true|string {
+    public function validate(string $identifier, string $password): true|array {
+        $errors = [];
+
         if (empty($identifier)) {
-            return "Please enter your username or email.";
+            $errors["identifier"] = "Please enter your username or email.";
         }
 
         if (empty($password)) {
-            return "Please enter your password.";
+            $errors["password"] = "Please enter your password.";
+        } elseif (strlen($password) < 8) {
+            $errors["password"] = "Password must be at least 8 characters long.";
         }
 
-        if (strlen($password) < 6) {
-            return "Password must be at least 6 characters long.";
-        }
-
-        return true;
+        return empty($errors) ? true : $errors;
     }
 
-    public function login(array $data, $conn): array|string {
+    public function login(array $data, $conn): array {
         $identifier = trim($data["identifier"] ?? "");
         $password = trim($data["password"] ?? "");
 
@@ -31,20 +30,25 @@ class LoginLogic {
         }
 
         $user = $this->attemptLogin($identifier, $password, $conn);
-        if (!$user) {
-            return "Invalid identifier or password.";
+
+        if (isset($user["id"])) {
+            $_SESSION["user"] = [
+                "id" => $user["id"],
+                "username" => $user["username"],
+                "role" => $user["role"]
+            ];
+            return $user;
         }
 
-        $_SESSION["user"] = [
-            "id" => $user["id"],
-            "username" => $user["username"],
-            "role" => $user["role"]
-        ];
+        // Feldspezifisch zurückgeben
+        if ($user === "wrong_password") {
+            return ["password" => "Incorrect password."];
+        }
 
-        return $user;
+        return ["identifier" => "Username or email not found."];
     }
 
-    public function attemptLogin(string $identifier, string $password, $conn): array|false {
+    public function attemptLogin(string $identifier, string $password, $conn): array|string {
         $sql = "SELECT id, username, password, role FROM users WHERE username = ? OR email = ? LIMIT 1";
         $stmt = mysqli_prepare($conn, $sql);
         mysqli_stmt_bind_param($stmt, "ss", $identifier, $identifier);
@@ -54,6 +58,8 @@ class LoginLogic {
         if ($row = mysqli_fetch_assoc($result)) {
             if (password_verify($password, $row["password"])) {
                 return $row;
+            } else {
+                return "wrong_password";
             }
         }
 

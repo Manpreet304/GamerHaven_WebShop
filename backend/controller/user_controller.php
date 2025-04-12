@@ -1,10 +1,9 @@
 <?php
-
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-class UserController {
 
+class UserController {
     public function register(array $data): array {
         global $conn;
 
@@ -15,7 +14,7 @@ class UserController {
         if ($validation !== true) {
             return [
                 "status" => 400,
-                "body" => ["error" => $validation]
+                "body" => ["errors" => $validation]
             ];
         }
 
@@ -24,12 +23,12 @@ class UserController {
                 "status" => 200,
                 "body" => ["success" => true]
             ];
-        } else {
-            return [
-                "status" => 500,
-                "body" => ["error" => "Error saving user: " . mysqli_error($conn)]
-            ];
         }
+
+        return [
+            "status" => 500,
+            "body" => ["errors" => ["general" => "Error saving user."]]
+        ];
     }
 
     public function login(array $data, bool $remember): array {
@@ -38,34 +37,27 @@ class UserController {
         $loginLogic = new LoginLogic();
         $result = $loginLogic->login($data, $conn);
 
-        if (is_string($result)) {
-            return [
-                "status" => 400,
-                "body" => ["error" => $result]
-            ];
+        if (isset($result["id"])) {
+            if ($remember) {
+                $token = bin2hex(random_bytes(16));
+                setcookie("remember_token", $token, time() + 60 * 60 * 24 * 30, "/");
+                $loginLogic->saveRememberToken($result["id"], $token, $conn);
+            }
+
+            return ["status" => 200, "body" => ["success" => true]];
         }
 
-        if ($remember) {
-            $token = bin2hex(random_bytes(16));
-            setcookie("remember_token", $token, time() + 60 * 60 * 24 * 30, "/");
-            $loginLogic->saveRememberToken($result["id"], $token, $conn);
-        }
-
-        return [
-            "status" => 200,
-            "body" => ["success" => true]
-        ];
+        return ["status" => 400, "body" => ["errors" => $result]];
     }
 
     public function logout(): array {
         global $conn;
         $logoutLogic = new LogoutLogic();
         $logoutLogic->logout($conn);
-    
+
         return [
             "status" => 200,
             "body" => ["success" => true]
         ];
     }
 }
-?>
