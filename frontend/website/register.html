@@ -23,253 +23,158 @@
             <form id="registerForm" novalidate>
               <div id="messageBox"></div>
 
-              <!-- Salutation -->
-              <div class="mb-3">
-                <label class="form-label">Salutation:</label>
-                <select id="salutation" class="form-select" required>
-                  <option value="">Please choose</option>
-                  <option value="Mr">Mr</option>
-                  <option value="Ms">Ms</option>
-                  <option value="Other">Other</option>
-                </select>
-                <div class="invalid-feedback">Please select a salutation.</div>
-              </div>
-
-              <!-- First Name -->
-              <div class="mb-3">
-                <label class="form-label">First Name:</label>
-                <input
-                  type="text"
-                  id="first_name"
-                  class="form-control"
-                  placeholder="Enter your first name"
-                  required
-                />
-                <div class="invalid-feedback">First name is required.</div>
-              </div>
-
-              <!-- Last Name -->
-              <div class="mb-3">
-                <label class="form-label">Last Name:</label>
-                <input
-                  type="text"
-                  id="last_name"
-                  class="form-control"
-                  placeholder="Enter your last name"
-                  required
-                />
-                <div class="invalid-feedback">Last name is required.</div>
-              </div>
-
-              <!-- Address -->
-              <div class="mb-3">
-                <label class="form-label">Address:</label>
-                <input
-                  type="text"
-                  id="address"
-                  class="form-control"
-                  placeholder="Enter your address"
-                  required
-                />
-                <div class="invalid-feedback">Address is required.</div>
-              </div>
-
-              <!-- ZIP -->
-              <div class="mb-3">
-                <label class="form-label">ZIP Code:</label>
-                <input
-                  type="text"
-                  id="zip"
-                  class="form-control"
-                  placeholder="e.g. 1200"
-                  required
-                />
-                <div class="invalid-feedback">ZIP Code is required.</div>
-              </div>
-
-              <!-- City -->
-              <div class="mb-3">
-                <label class="form-label">City:</label>
-                <input
-                  type="text"
-                  id="city"
-                  class="form-control"
-                  placeholder="Enter your city"
-                  required
-                />
-                <div class="invalid-feedback">City is required.</div>
-              </div>
-
-              <!-- Country -->
-              <div class="mb-3">
-                <label class="form-label">Country:</label>
-                <select id="country" class="form-select" required>
-                  <option value="">Select your country</option>
-                </select>
-                <div class="invalid-feedback">Please select a country.</div>
-              </div>
-
-              <!-- Email -->
-              <div class="mb-3">
-                <label class="form-label">
-                  Email:
-                  <i
-                    class="bi bi-info-circle-fill text-info ms-1"
-                    data-bs-toggle="tooltip"
-                    title="Enter a valid email address (e.g., name@example.com)"
-                  ></i>
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  class="form-control"
-                  placeholder="Enter your email"
-                  required
-                />
-                <div class="invalid-feedback">Please enter a valid email.</div>
-              </div>
-
-              <!-- Username -->
-              <div class="mb-3">
-                <label class="form-label">
-                  Username:
-                  <i
-                    class="bi bi-info-circle-fill text-info ms-1"
-                    data-bs-toggle="tooltip"
-                    title="Username must be at least 5 characters long and unique"
-                  ></i>
-                </label>
-                <input
-                  type="text"
-                  id="username"
-                  class="form-control"
-                  placeholder="Choose a username"
-                  required
-                />
-                <div class="invalid-feedback">
-                  Please enter a valid and unique username.
+              <form id="registerForm" novalidate>
+                <div id="messageBox"></div>
+              
+                <!-- Salutation -->
+                <div class="mb-3">
+                  <label class="form-label">Salutation:</label>
+                  <select id="salutation" class="form-select" required>
+                    <option value="">Please choose</option>
+                    <option value="Mr">Mr</option>
+                    <option value="Ms">Ms</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  <div class="invalid-feedback">Please select a salutation.</div>
                 </div>
-              </div>
-
-              <!-- Password -->
-              <div class="mb-3">
-                <label class="form-label">
-                  Password:
-                  <i
-                    class="bi bi-info-circle-fill text-info ms-1"
-                    data-bs-toggle="tooltip"
-                    title="At least 8 characters, with uppercase, lowercase, and a number."
-                  ></i>
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  class="form-control"
-                  placeholder="Enter password"
-                  required
-                />
-                <div class="invalid-feedback">
-                  Password must meet the complexity requirements.
+              
+                <!-- First + Last Name -->
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">First Name:</label>
+                    <input type="text" id="first_name" class="form-control" placeholder="Enter your first name" required />
+                    <div class="invalid-feedback">First name is required.</div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Last Name:</label>
+                    <input type="text" id="last_name" class="form-control" placeholder="Enter your last name" required />
+                    <div class="invalid-feedback">Last name is required.</div>
+                  </div>
                 </div>
-              </div>
-
-              <!-- Confirm Password -->
-              <div class="mb-3">
-                <label class="form-label">Confirm Password:</label>
-                <input
-                  type="password"
-                  id="password2"
-                  class="form-control"
-                  placeholder="Repeat your password"
-                  required
-                />
-                <div class="invalid-feedback">Passwords do not match.</div>
-              </div>
-
-              <!-- Payment Method -->
-              <div class="mb-3">
-                <label class="form-label">Payment Method:</label>
-                <select id="payment_method" class="form-select" required>
-                  <option value="">Choose a method</option>
-                  <option value="Credit Card">Credit Card</option>
-                  <option value="PayPal">PayPal</option>
-                  <option value="Bank Transfer">Bank Transfer</option>
-                </select>
-                <div class="invalid-feedback">Please select a payment method.</div>
-              </div>
-
-              <!-- Payment Details -->
-              <div class="mb-3" id="paymentDetailsWrapper" style="display: none;">
-                <!-- Credit Card -->
-                <div id="creditFields" style="display: none;">
-                  <label>Card Number:</label>
-                  <input
-                    type="text"
-                    id="card_number"
-                    class="form-control mb-2"
-                    placeholder="4111 1111 1111 1111"
-                  />
-                  <div class="invalid-feedback">Card number is required.</div>
-
-                  <label>CSV:</label>
-                  <input
-                    type="text"
-                    id="csv"
-                    class="form-control"
-                    placeholder="123"
-                  />
-                  <div class="invalid-feedback">CSV is required.</div>
+              
+                <!-- Address -->
+                <div class="mb-3">
+                  <label class="form-label">Address:</label>
+                  <input type="text" id="address" class="form-control" placeholder="Enter your address" required />
+                  <div class="invalid-feedback">Address is required.</div>
                 </div>
-
-                <!-- PayPal -->
-                <div id="paypalFields" style="display: none;">
-                  <label>PayPal Email:</label>
-                  <input
-                    type="email"
-                    id="paypal_email"
-                    class="form-control mb-2"
-                    placeholder="yourmail@paypal.com"
-                  />
-                  <div class="invalid-feedback">PayPal email is required.</div>
-
-                  <label>PayPal Username:</label>
-                  <input
-                    type="text"
-                    id="paypal_username"
-                    class="form-control"
-                    placeholder="yourusername"
-                  />
-                  <div class="invalid-feedback">PayPal username is required.</div>
+              
+                <!-- ZIP + City -->
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">ZIP Code:</label>
+                    <input type="text" id="zip" class="form-control" placeholder="e.g. 1200" required />
+                    <div class="invalid-feedback">ZIP Code is required.</div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">City:</label>
+                    <input type="text" id="city" class="form-control" placeholder="Enter your city" required />
+                    <div class="invalid-feedback">City is required.</div>
+                  </div>
                 </div>
-
-                <!-- Bank -->
-                <div id="bankFields" style="display: none;">
-                  <label>IBAN:</label>
-                  <input
-                    type="text"
-                    id="iban"
-                    class="form-control mb-2"
-                    placeholder="AT61 1904 3002 3457 3201"
-                  />
-                  <div class="invalid-feedback">IBAN is required.</div>
-
-                  <label>BIC:</label>
-                  <input
-                    type="text"
-                    id="bic"
-                    class="form-control"
-                    placeholder="BAWAATWW"
-                  />
-                  <div class="invalid-feedback">BIC is required.</div>
+              
+                <!-- Country -->
+                <div class="mb-3">
+                  <label class="form-label">Country:</label>
+                  <select id="country" class="form-select" required>
+                    <option value="">Select your country</option>
+                  </select>
+                  <div class="invalid-feedback">Please select a country.</div>
                 </div>
-              </div>
-
-              <button type="submit" class="btn btn-primary w-100">Register</button>
-            </form>
-
-            <div class="text-center mt-3">
-              <a href="login.html">Already have an Account? Login</a>
-            </div>
+              
+                <!-- Email + Username -->
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">
+                      Email:
+                      <i class="bi bi-info-circle-fill text-info ms-1" data-bs-toggle="tooltip" title="Enter a valid email address (e.g., name@example.com)"></i>
+                    </label>
+                    <input type="email" id="email" class="form-control" placeholder="Enter your email" required />
+                    <div class="invalid-feedback">Please enter a valid email.</div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">
+                      Username:
+                      <i class="bi bi-info-circle-fill text-info ms-1" data-bs-toggle="tooltip" title="Username must be at least 5 characters long and unique"></i>
+                    </label>
+                    <input type="text" id="username" class="form-control" placeholder="Choose a username" required />
+                    <div class="invalid-feedback">Please enter a valid and unique username.</div>
+                  </div>
+                </div>
+              
+                <!-- Password + Confirm Password -->
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">
+                      Password:
+                      <i class="bi bi-info-circle-fill text-info ms-1"
+                         data-bs-toggle="tooltip"
+                         title="At least 8 characters, with uppercase, lowercase, and a number."></i>
+                    </label>
+                    <input type="password" id="password" class="form-control" placeholder="Enter password" required />
+                    <div class="invalid-feedback">Password must meet the complexity requirements.</div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Confirm Password:</label>
+                    <input type="password" id="password2" class="form-control" placeholder="Repeat your password" required />
+                    <div class="invalid-feedback">Passwords do not match.</div>
+                  </div>
+                </div>
+              
+                <!-- Payment Method -->
+                <div class="mb-3">
+                  <label class="form-label">Payment Method:</label>
+                  <select id="payment_method" class="form-select" required>
+                    <option value="">Choose a method</option>
+                    <option value="Credit Card">Credit Card</option>
+                    <option value="PayPal">PayPal</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                  </select>
+                  <div class="invalid-feedback">Please select a payment method.</div>
+                </div>
+              
+                <!-- Dynamic Payment Fields (no change) -->
+                <div class="mb-3" id="paymentDetailsWrapper" style="display: none;">
+                  <div id="creditFields" style="display: none;">
+                    <label>Card Number:</label>
+                    <input type="text" id="card_number" class="form-control mb-2" placeholder="4111 1111 1111 1111" />
+                    <div class="invalid-feedback">Card number is required.</div>
+              
+                    <label>CSV:</label>
+                    <input type="text" id="csv" class="form-control" placeholder="123" />
+                    <div class="invalid-feedback">CSV is required.</div>
+                  </div>
+              
+                  <div id="paypalFields" style="display: none;">
+                    <label>PayPal Email:</label>
+                    <input type="email" id="paypal_email" class="form-control mb-2" placeholder="yourmail@paypal.com" />
+                    <div class="invalid-feedback">PayPal email is required.</div>
+              
+                    <label>PayPal Username:</label>
+                    <input type="text" id="paypal_username" class="form-control" placeholder="yourusername" />
+                    <div class="invalid-feedback">PayPal username is required.</div>
+                  </div>
+              
+                  <div id="bankFields" style="display: none;">
+                    <label>IBAN:</label>
+                    <input type="text" id="iban" class="form-control mb-2" placeholder="AT61 1904 3002 3457 3201" />
+                    <div class="invalid-feedback">IBAN is required.</div>
+              
+                    <label>BIC:</label>
+                    <input type="text" id="bic" class="form-control" placeholder="BAWAATWW" />
+                    <div class="invalid-feedback">BIC is required.</div>
+                  </div>
+                </div>
+              
+                <!-- Submit -->
+                <button type="submit" class="btn btn-primary w-100">Register</button>
+              
+                <!-- Login link -->
+                <div class="text-center mt-3">
+                  <a href="login.html">Already have an Account? Login</a>
+                </div>
+              </form>
+              
           </div>
         </div>
       </div>
