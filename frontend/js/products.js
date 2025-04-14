@@ -277,7 +277,7 @@ function renderAttributes(attrString) {
 
 function addToCart(productId, quantity = 1) {
     $.ajax({
-        url: "/GamerHaven_WebShop/backend/api/api_products.php?addToCart=" + productId,
+        url: "/GamerHaven_WebShop/backend/api/api_cart.php?addToCart=" + productId,
         method: "POST",
         data: JSON.stringify({ quantity }),
         contentType: "application/json",

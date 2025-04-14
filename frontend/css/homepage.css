@@ -217,3 +217,73 @@ html, body {
 label.form-label.fw-semibold.text-uppercase.small.text-muted {
   color: white !important;
 }
+
+/* ========== CART STYLES ========== */
+
+.cart-title {
+  color: #fff;
+  background: linear-gradient(90deg, #001f3f, #0074D9);
+  padding: 15px 20px;
+  border-radius: 12px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+#cartContent {
+  background-color: #101827;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.table {
+  background-color: #1f2b3a;
+  color: #e0e0e0;
+}
+
+.table thead th {
+  background-color: #0074D9;
+  color: white;
+  border: none;
+}
+
+.table tfoot th {
+  background-color: #0a0f1c;
+  border-top: 2px solid #0074D9;
+}
+
+.table td,
+.table th {
+  vertical-align: middle;
+}
+
+input.quantity-input {
+  background-color: #1c2739;
+  color: #fff;
+  border: 1px solid #344055;
+  text-align: center;
+}
+
+input.quantity-input:focus {
+  outline: none;
+  border-color: #0074D9;
+  box-shadow: 0 0 5px rgba(0, 116, 217, 0.5);
+}
+
+/* Delete Button */
+.delete-item {
+  background-color: #d9534f;
+  border: none;
+  color: white;
+}
+
+.delete-item:hover {
+  background-color: #c9302c;
+}
+
+/* Total Price Highlight */
+#total-price {
+  font-weight: bold;
+  color: #00ffae !important;
+}
