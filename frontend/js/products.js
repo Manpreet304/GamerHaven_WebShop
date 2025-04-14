@@ -1,3 +1,4 @@
+// products.js
 let filtersInitialized = false;
 let allProductsCache = [];
 
@@ -5,21 +6,15 @@ $(document).ready(function () {
     loadProducts();
     updateCartCount();
 
-    $("#applyFilters").on("click", function () {
-        const selectedCategory = $("input[name='category']:checked").val() || null;
-        const filters = collectFilters(selectedCategory);
-    
-        // Wenn alle Filter leer sind, alles zurücksetzen
-        const isEmpty = Object.values(filters).every(v => v === null || v === "" || v === undefined);
-        if (isEmpty) {
-            resetAllFilters();
-            loadProducts();
-            return;
-        }
-    
+    $(document).on("change", "#filter-category input[type='radio'], #filter-brand input[type='checkbox'], #filter-rating, #filter-stock, #priceMin, #priceMax", function () {
+        const filters = collectFilters();
         loadProducts(filters);
     });
-    
+
+    $("#applyFilters").on("click", function () {
+        const filters = collectFilters();
+        loadProducts(filters);
+    });
 
     $("#resetFilters").on("click", function () {
         resetAllFilters();
@@ -27,29 +22,34 @@ $(document).ready(function () {
     });
 });
 
-function collectFilters(selectedCategory) {
-    const filters = {
-        category: selectedCategory,
-        rating: $("#filter-rating").val(),
-        stock: $("#filter-stock").val(),
-        priceMin: $("#priceMin").val(),
-        priceMax: $("#priceMax").val(),
-    };
+function collectFilters() {
+    const filters = {};
 
-    const brands = $("#filter-brand input[type='checkbox']:checked").map((_, el) => el.value).get();
-    if (brands.length > 0) {
-        filters.brand = brands.join(",");
-    }
+    const selectedCategory = $("input[name='category']:checked").val();
+    if (selectedCategory) filters.category = selectedCategory;
+
+    const selectedBrands = $("#filter-brand input[type='checkbox']:checked").map((_, el) => el.value).get();
+    if (selectedBrands.length > 0) filters.brand = selectedBrands.join(",");
+
+    const rating = $("#filter-rating").val();
+    if (rating) filters.rating = rating;
+
+    const stock = $("#filter-stock").val();
+    if (stock) filters.stock = stock;
+
+    const priceMin = $("#priceMin").val();
+    if (priceMin) filters.priceMin = priceMin;
+
+    const priceMax = $("#priceMax").val();
+    if (priceMax) filters.priceMax = priceMax;
 
     return filters;
 }
 
 function resetAllFilters() {
     $("#filter-brand input[type='checkbox']").prop("checked", false);
-    $("#priceMin").val('');
-    $("#priceMax").val('');
-    $("#filter-rating").val('');
-    $("#filter-stock").val('');
+    $("#priceMin, #priceMax").val('');
+    $("#filter-rating, #filter-stock").val('');
     $("input[name='category'][value='']").prop("checked", true);
 }
 
@@ -65,13 +65,10 @@ function loadProducts(filters = {}) {
             modalsContainer.empty();
 
             if (!filtersInitialized) {
-                allProductsCache = [...products]; // Save all products
-                renderFilters(products);
+                allProductsCache = [...products];
                 filtersInitialized = true;
-            } else {
-                renderFilters(products, filters);
             }
-
+            renderFilters(allProductsCache, filters);
             renderProducts(products);
             setupHoverRotation(products);
             updateCartCount();
@@ -83,43 +80,32 @@ function loadProducts(filters = {}) {
 }
 
 function renderFilters(products, filters = {}) {
-    const selectedCategory = $("input[name='category']:checked").val() || "";
-    const selectedBrands = $("#filter-brand input[type='checkbox']:checked").map((_, el) => $(el).val()).get();
+    const selectedCategory = filters.category || "";
+    const selectedBrands = (filters.brand || "").split(",").filter(Boolean);
 
     const categories = [...new Set(allProductsCache.map(p => p.category))].sort();
-
     const categoryHTML = [`<div class="form-check">
         <input class="form-check-input" type="radio" name="category" value="" ${!selectedCategory ? "checked" : ""}>
         <label class="form-check-label">All Products</label>
     </div>`];
 
     categories.forEach(cat => {
-        const checked = selectedCategory === cat ? "checked" : "";
         categoryHTML.push(`
             <div class="form-check">
-                <input class="form-check-input" type="radio" name="category" value="${cat}" ${checked}>
+                <input class="form-check-input" type="radio" name="category" value="${cat}" ${selectedCategory === cat ? "checked" : ""}>
                 <label class="form-check-label">${cat}</label>
-            </div>
-        `);
+            </div>`);
     });
 
     $("#filter-category").html(categoryHTML.join(""));
 
-    const filteredProducts = selectedCategory
-        ? allProductsCache.filter(p => p.category === selectedCategory)
-        : allProductsCache;
-
+    const filteredProducts = selectedCategory ? allProductsCache.filter(p => p.category === selectedCategory) : allProductsCache;
     const brands = [...new Set(filteredProducts.map(p => p.brand))].sort();
-
-    const brandHTML = brands.map(brand => {
-        const checked = selectedBrands.includes(brand) ? "checked" : "";
-        return `
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" value="${brand}" ${checked}>
-                <label class="form-check-label">${brand}</label>
-            </div>
-        `;
-    });
+    const brandHTML = brands.map(brand => `
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="${brand}" ${selectedBrands.includes(brand) ? "checked" : ""}>
+            <label class="form-check-label">${brand}</label>
+        </div>`);
 
     $("#filter-brand").html(brandHTML.join(""));
 }
