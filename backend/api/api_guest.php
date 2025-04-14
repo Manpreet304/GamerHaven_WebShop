@@ -4,7 +4,6 @@ header("Content-Type: application/json");
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-
 require_once("../db/dbaccess.php");
 require_once("../models/user_class.php");
 require_once("../logic/register_logic.php");

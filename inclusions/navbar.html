@@ -38,11 +38,15 @@
   
             <!-- 🛒 Warenkorb -->
             <li class="nav-item">
-              <a class="nav-link" href="../website/cart.html">
-                <i class="bi bi-cart"></i>
-              </a>
+                <!-- 🛒 Warenkorb-Icon mit Count -->
+                <a class="nav-link position-relative" href="../website/cart.html" id="cart-dropzone">
+                    <i class="bi bi-cart"></i>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="cart-count" style="font-size: 0.75rem;">
+                    0
+                    </span>
+                </a>
             </li>
-  
+
             <!-- 👤 Benutzer-Menü -->
             <li class="nav-item dropdown" id="user-dropdown-container">
               <!-- Wird per JS ersetzt -->

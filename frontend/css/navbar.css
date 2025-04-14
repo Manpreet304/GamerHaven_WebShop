@@ -65,3 +65,14 @@ html, body {
     pointer-events: none; 
 }
 
+/* Sicherstellen, dass der Warenkorb-Zähler immer sichtbar ist */
+#cart-count {
+    visibility: visible !important;
+    opacity: 1 !important;
+    transition: opacity 0.3s ease;
+  }
+  
+  /* Optional: Hover-Effekte, wenn gewünscht */
+  #cart-dropzone:hover #cart-count {
+    opacity: 1;  /* Die Zahl bleibt sichtbar bei Hover */
+  }
