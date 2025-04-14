@@ -18,37 +18,34 @@
   <div class="container-fluid mt-4">
     <div class="row">
 
-      <!-- Filter Sidebar -->
       <aside class="col-md-3">
-        <div class="card p-3 shadow-sm">
-          <h5>Filter Options</h5>
-
+        <div class="filter-card card shadow-sm p-4">
+          <h5 class="filter-title mb-4"><i class="bi bi-funnel-fill me-2"></i>Filters</h5>
+      
           <!-- Category -->
-          <div class="mb-3">
-            <label class="form-label">Category</label>
-            <div id="filter-category"></div>
+          <div class="mb-4">
+            <label class="form-label fw-semibold text-uppercase small text-muted">Category</label>
+            <div id="filter-category" class="filter-section"></div>
           </div>
-
+      
           <!-- Brand -->
-          <div class="mb-3" id="filter-brand-group">
-            <label class="form-label">Brand</label>
-            <div id="filter-brand">
-              <!-- Wird von JS automatisch gefüllt -->
-            </div>
+          <div class="mb-4">
+            <label class="form-label fw-semibold text-uppercase small text-muted">Brand</label>
+            <div id="filter-brand" class="filter-section"></div>
           </div>
-
+      
           <!-- Price -->
-          <div class="mb-3">
-            <label class="form-label">Price Range</label>
-            <div class="d-flex">
-              <input type="number" class="form-control me-2" id="priceMin" placeholder="Min €">
+          <div class="mb-4">
+            <label class="form-label fw-semibold text-uppercase small text-muted">Price Range</label>
+            <div class="d-flex gap-2">
+              <input type="number" class="form-control" id="priceMin" placeholder="Min €">
               <input type="number" class="form-control" id="priceMax" placeholder="Max €">
             </div>
           </div>
-
+      
           <!-- Rating -->
-          <div class="mb-3">
-            <label class="form-label">Minimum Rating</label>
+          <div class="mb-4">
+            <label class="form-label fw-semibold text-uppercase small text-muted">Minimum Rating</label>
             <select class="form-select" id="filter-rating">
               <option value="">Any</option>
               <option value="4.5">4.5★+</option>
@@ -56,21 +53,25 @@
               <option value="3.5">3.5★+</option>
             </select>
           </div>
-
+      
           <!-- Availability -->
-          <div class="mb-3">
-            <label class="form-label">Availability</label>
+          <div class="mb-4">
+            <label class="form-label fw-semibold text-uppercase small text-muted">Availability</label>
             <select class="form-select" id="filter-stock">
               <option value="">Any</option>
               <option value="1">In Stock</option>
               <option value="0">Out of Stock</option>
             </select>
           </div>
-
-          <button class="btn btn-primary w-100" id="applyFilters">Apply Filters</button>
-          <button class="btn btn-secondary btn-sm w-100 mt-2" id="resetFilters">Reset</button>
+      
+          <button class="btn btn-primary w-100 mb-2" id="applyFilters">
+            <i class="bi bi-sliders me-1"></i> Apply Filters
+          </button>
+          <button class="btn btn-outline-secondary w-100 btn-sm" id="resetFilters">
+            <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+          </button>
         </div>
-      </aside>
+      </aside>      
 
       <!-- Product Grid -->
       <section class="col-md-9">

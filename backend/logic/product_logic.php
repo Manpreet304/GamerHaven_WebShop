@@ -94,4 +94,4 @@ class ProductLogic {
 
         return $products;
     }
-}
+};
