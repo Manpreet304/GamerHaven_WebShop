@@ -3,7 +3,7 @@
 class ProductLogic {
     public function getAllProducts($conn): array {
         $products = [];
-        $stmt = $conn->prepare("SELECT id, name, price, stock, brand, category, sub_category, attributes, image_url, rating FROM products ORDER BY created_at DESC");
+        $stmt = $conn->prepare("SELECT id, name, description, price, stock, brand, category, sub_category, attributes, image_url, rating FROM products ORDER BY created_at DESC");
         $stmt->execute();
         $result = $stmt->get_result();
 
