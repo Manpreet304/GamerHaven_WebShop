@@ -11,6 +11,26 @@ $(document).ready(function () {
         loadProducts(filters);
     });
 
+    $(document).on("click", ".product-card .add-to-cart", function () {
+        const card = $(this).closest(".product-card");
+        const productId = card.data("product-id");
+        const quantity = parseInt(card.find(".quantity-input").val()) || 1;
+        addToCart(productId, quantity);
+    });
+
+    $(document).on("click", ".product-card .view-details", function () {
+        const card = $(this).closest(".product-card");
+        const modalId = $(this).attr("data-bs-target");
+        $(modalId).modal("show");
+    });
+
+    $(document).on("click", ".product-modal .add-to-cart", function () {
+        const modal = $(this).closest(".modal");
+        const productId = modal.attr("id").replace("productModal", "");
+        const quantity = parseInt(modal.find(".quantity-input").val()) || 1;
+        addToCart(productId, quantity);
+    });
+
     $("#applyFilters").on("click", function () {
         const filters = collectFilters();
         loadProducts(filters);
@@ -132,9 +152,28 @@ function renderProducts(products) {
         title.text(product.name);
         meta.text(`${product.category} · ${product.brand}`);
         price.text(`€${product.price}`);
-        rating.html(renderStars(product.rating));
 
-        addToCartBtn.on("click", () => addToCart(product.id, 1));
+        const ratingVal = parseFloat(product.rating);
+        const ratingHtml = !isNaN(ratingVal)
+            ? `${renderStars(ratingVal)} <small class="text-muted ms-1">(${ratingVal.toFixed(1)})</small>`
+            : renderStars(0);
+        rating.html(ratingHtml);
+
+        const cardFooter = $(cardClone).find(".card-body");
+        const quantityGroup = $(
+          `<div class="mb-2">
+            <label class="form-label d-block small mb-1" for="quantity-${product.id}">Quantity</label>
+            <input type="number" id="quantity-${product.id}" class="form-control quantity-input" value="1" min="1" max="99" />
+          </div>`);
+        rating.after(quantityGroup);
+
+        card.attr("data-product-id", product.id);
+
+        const btnGroup = $('<div class="d-flex gap-2 mt-2"></div>');
+        addToCartBtn.addClass("flex-fill");
+        viewDetailsBtn.addClass("flex-fill");
+        btnGroup.append(addToCartBtn, viewDetailsBtn);
+        cardFooter.append(btnGroup);
 
         const modalId = `productModal${product.id}`;
         const carouselId = `carousel${product.id}`;
@@ -152,13 +191,14 @@ function renderProducts(products) {
         modal.find(".product-price-text").html(`<strong>Price:</strong> €${product.price}`);
         modal.find(".product-stock").html(`<strong>Stock:</strong> ${product.stock > 0 ? '✅ In Stock' : '❌ Out of Stock'}`);
         modal.find(".product-category").html(`<strong>Category:</strong> ${product.category} / ${product.sub_category}`);
-        modal.find(".product-rating").html(`<strong>Rating:</strong> ${renderStars(product.rating)}`);
-        modal.find(".attributes").html(`<strong>Attributes:</strong><br>${renderAttributes(product.attributes)}`);
 
-        modal.find(".add-to-cart").on("click", () => {
-            const quantity = parseInt(modal.find(".quantity-input").val()) || 1;
-            addToCart(product.id, quantity);
-        });
+        const modalRatingVal = parseFloat(product.rating);
+        const modalRatingHtml = !isNaN(modalRatingVal)
+            ? `${renderStars(modalRatingVal)} <small class="text-muted ms-1">(${modalRatingVal.toFixed(1)})</small>`
+            : renderStars(0);
+        modal.find(".product-rating").html(`<strong>Rating:</strong> ${modalRatingHtml}`);
+
+        modal.find(".attributes").html(`<strong>Attributes:</strong><br>${renderAttributes(product.attributes)}`);
 
         const carouselInner = modal.find(".carousel-inner");
         carouselInner.empty();

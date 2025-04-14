@@ -153,3 +153,67 @@ html, body {
   font-size: 14px;
   color: #003366;
 }
+
+/* Modern Filter Card */
+.filter-card {
+  background: linear-gradient(135deg, #0a0f1c, #1c2739);
+  border-radius: 16px;
+  color: white;
+  border: none;
+}
+
+.filter-title {
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: 1px;
+}
+
+.filter-section .form-check-label {
+  color: #e0e0e0;
+  font-size: 14px;
+}
+
+.filter-section .form-check-input:checked {
+  background-color: #0074D9;
+  border-color: #0074D9;
+}
+
+.filter-section .form-check-input {
+  cursor: pointer;
+}
+
+.filter-card input.form-control,
+.filter-card select.form-select {
+  background-color: #1c2739;
+  color: #fff;
+  border: 1px solid #344055;
+}
+
+.filter-card input.form-control::placeholder {
+  color: #aaa;
+}
+
+.filter-card input.form-control:focus,
+.filter-card select.form-select:focus {
+  border-color: #0074D9;
+  box-shadow: 0 0 5px rgba(0, 116, 217, 0.5);
+}
+
+.filter-card .btn-primary {
+  background: linear-gradient(90deg, #001f3f, #0074D9);
+  border: none;
+}
+
+.filter-card .btn-outline-secondary {
+  border: 1px solid #4c5a6a;
+  color: #ccc;
+}
+
+.filter-card .btn-outline-secondary:hover {
+  background-color: #344055;
+  color: white;
+}
+
+label.form-label.fw-semibold.text-uppercase.small.text-muted {
+  color: white !important;
+}

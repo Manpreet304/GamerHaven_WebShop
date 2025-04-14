@@ -53,4 +53,4 @@ class ProductController {
             "body" => ["count" => $count]
         ];
     }
-}
+} ;
