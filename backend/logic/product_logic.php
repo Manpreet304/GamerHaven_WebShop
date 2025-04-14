@@ -2,24 +2,16 @@
 
 class ProductLogic {
     public function getAllProducts($conn): array {
-        $products = [];
         $stmt = $conn->prepare("SELECT id, name, description, price, stock, brand, category, sub_category, attributes, image_url, rating FROM products ORDER BY created_at DESC");
         $stmt->execute();
         $result = $stmt->get_result();
+        $products = [];
 
         while ($row = $result->fetch_assoc()) {
-            $decoded = json_decode($row["image_url"], true);
-            if (is_array($decoded)) {
-                $row["images"] = array_map(fn($img) => "/GamerHaven_WebShop/" . ltrim($img, "/"), $decoded);
-            } else {
-                $imageList = array_map('trim', explode(",", $row["image_url"]));
-                $row["images"] = array_map(fn($img) => "/GamerHaven_WebShop/" . ltrim($img, "/"), $imageList);
-            }
-
+            $row["images"] = $this->processImages($row["image_url"]);
             unset($row["image_url"]);
             $products[] = $row;
         }
-
         return $products;
     }
 
@@ -28,18 +20,18 @@ class ProductLogic {
         $params = [];
         $types = "";
 
-        if (isset($filters["category"]) && $filters["category"] !== "") {
+        if (!empty($filters["category"])) {
             $sql .= " AND category = ?";
             $params[] = $filters["category"];
             $types .= "s";
         }
 
         if (!empty($filters["brand"])) {
-            $brandList = explode(",", $filters["brand"]);
-            $placeholders = implode(",", array_fill(0, count($brandList), "?"));
+            $brands = explode(",", $filters["brand"]);
+            $placeholders = implode(",", array_fill(0, count($brands), "?"));
             $sql .= " AND brand IN ($placeholders)";
-            $params = array_merge($params, $brandList);
-            $types .= str_repeat("s", count($brandList));
+            $params = array_merge($params, $brands);
+            $types .= str_repeat("s", count($brands));
         }
 
         if (!empty($filters["priceMin"])) {
@@ -61,37 +53,32 @@ class ProductLogic {
         }
 
         if ($filters["stock"] !== null && $filters["stock"] !== "") {
-            if ($filters["stock"] == "1") {
-                $sql .= " AND stock > 0";
-            } elseif ($filters["stock"] == "0") {
-                $sql .= " AND stock = 0";
-            }
+            if ($filters["stock"] == "1") $sql .= " AND stock > 0";
+            if ($filters["stock"] == "0") $sql .= " AND stock = 0";
         }
 
         $sql .= " ORDER BY created_at DESC";
         $stmt = $conn->prepare($sql);
-
-        if (!empty($params)) {
-            $stmt->bind_param($types, ...$params);
-        }
-
+        if (!empty($params)) $stmt->bind_param($types, ...$params);
         $stmt->execute();
         $result = $stmt->get_result();
         $products = [];
 
         while ($row = $result->fetch_assoc()) {
-            $decoded = json_decode($row["image_url"], true);
-            if (is_array($decoded)) {
-                $row["images"] = array_map(fn($img) => "/GamerHaven_WebShop/" . ltrim($img, "/"), $decoded);
-            } else {
-                $imageList = array_map('trim', explode(",", $row["image_url"]));
-                $row["images"] = array_map(fn($img) => "/GamerHaven_WebShop/" . ltrim($img, "/"), $imageList);
-            }
-
+            $row["images"] = $this->processImages($row["image_url"]);
             unset($row["image_url"]);
             $products[] = $row;
         }
-
         return $products;
     }
-};
+
+    private function processImages($imageData): array {
+        $decoded = json_decode($imageData, true);
+        if (is_array($decoded)) {
+            return array_map(fn($img) => "/GamerHaven_WebShop/" . ltrim($img, "/"), $decoded);
+        } else {
+            $fallback = array_map('trim', explode(",", $imageData));
+            return array_map(fn($img) => "/GamerHaven_WebShop/" . ltrim($img, "/"), $fallback);
+        }
+    }
+}
