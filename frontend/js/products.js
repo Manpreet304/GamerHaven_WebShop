@@ -1,10 +1,8 @@
-// products.js
 let filtersInitialized = false;
 let allProductsCache = [];
 
 $(document).ready(function () {
     loadProducts();
-    updateCartCount();
 
     $(document).on("change", "#filter-category input[type='radio'], #filter-brand input[type='checkbox'], #filter-rating, #filter-stock, #priceMin, #priceMax", function () {
         const filters = collectFilters();
@@ -19,7 +17,6 @@ $(document).ready(function () {
     });
 
     $(document).on("click", ".product-card .view-details", function () {
-        const card = $(this).closest(".product-card");
         const modalId = $(this).attr("data-bs-target");
         $(modalId).modal("show");
     });
@@ -44,7 +41,6 @@ $(document).ready(function () {
 
 function collectFilters() {
     const filters = {};
-
     const selectedCategory = $("input[name='category']:checked").val();
     if (selectedCategory) filters.category = selectedCategory;
 
@@ -91,7 +87,6 @@ function loadProducts(filters = {}) {
             renderFilters(allProductsCache, filters);
             renderProducts(products);
             setupHoverRotation(products);
-            updateCartCount();
         },
         error: () => {
             showMessage("danger", "Products could not be loaded.");
@@ -102,8 +97,8 @@ function loadProducts(filters = {}) {
 function renderFilters(products, filters = {}) {
     const selectedCategory = filters.category || "";
     const selectedBrands = (filters.brand || "").split(",").filter(Boolean);
-
     const categories = [...new Set(allProductsCache.map(p => p.category))].sort();
+
     const categoryHTML = [`<div class="form-check">
         <input class="form-check-input" type="radio" name="category" value="" ${!selectedCategory ? "checked" : ""}>
         <label class="form-check-label">All Products</label>
@@ -159,9 +154,8 @@ function renderProducts(products) {
             : renderStars(0);
         rating.html(ratingHtml);
 
-        const cardFooter = $(cardClone).find(".card-body");
-        const quantityGroup = $(
-          `<div class="mb-2">
+        const quantityGroup = $(`
+          <div class="mb-2">
             <label class="form-label d-block small mb-1" for="quantity-${product.id}">Quantity</label>
             <input type="number" id="quantity-${product.id}" class="form-control quantity-input" value="1" min="1" max="99" />
           </div>`);
@@ -173,7 +167,7 @@ function renderProducts(products) {
         addToCartBtn.addClass("flex-fill");
         viewDetailsBtn.addClass("flex-fill");
         btnGroup.append(addToCartBtn, viewDetailsBtn);
-        cardFooter.append(btnGroup);
+        $(cardClone).find(".card-body").append(btnGroup);
 
         const modalId = `productModal${product.id}`;
         const carouselId = `carousel${product.id}`;
@@ -200,9 +194,7 @@ function renderProducts(products) {
 
         modal.find(".attributes").html(`<strong>Attributes:</strong><br>${renderAttributes(product.attributes)}`);
 
-        const carouselInner = modal.find(".carousel-inner");
-        carouselInner.empty();
-
+        const carouselInner = modal.find(".carousel-inner").empty();
         if (product.images && product.images.length) {
             product.images.forEach((imgSrc, index) => {
                 const isActive = index === 0 ? "active" : "";
@@ -212,12 +204,6 @@ function renderProducts(products) {
                     </div>
                 `);
             });
-        } else {
-            carouselInner.append(`
-                <div class="carousel-item active">
-                    <img src="pictures/placeholder.jpg" class="d-block w-100" alt="No image">
-                </div>
-            `);
         }
 
         viewDetailsBtn.attr("data-bs-toggle", "modal");
@@ -273,34 +259,4 @@ function renderAttributes(attrString) {
     } catch {
         return "<i>No attributes</i>";
     }
-}
-
-function addToCart(productId, quantity = 1) {
-    $.ajax({
-        url: "/GamerHaven_WebShop/backend/api/api_cart.php?addToCart=" + productId,
-        method: "POST",
-        data: JSON.stringify({ quantity }),
-        contentType: "application/json",
-        success: (data) => {
-            if (data.success) {
-                showMessage("success", "Product added to cart.");
-                updateCartCount();
-            } else {
-                showMessage("danger", "Could not add to cart.");
-            }
-        },
-        error: (xhr) => {
-            if (xhr.status === 401) {
-                showMessage("danger", "Please login or register to use the cart.");
-            } else {
-                showMessage("danger", "An error occurred while adding to cart.");
-            }
-        }
-    });
-}
-
-function updateCartCount() {
-    $.get("/GamerHaven_WebShop/backend/api/api_products.php?cartCount", function (data) {
-        $("#cart-count").text(data.count);
-    });
 }
