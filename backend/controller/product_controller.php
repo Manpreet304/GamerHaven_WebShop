@@ -16,9 +16,13 @@ class ProductController {
         global $conn;
         require_once("../logic/product_logic.php");
         $logic = new ProductLogic();
+    
+        $filters["search"] = $filters["search"] ?? null;
+    
         return [
             "status" => 200,
             "body" => $logic->getFilteredProducts($conn, $filters)
         ];
     }
+    
 }

@@ -60,4 +60,36 @@ class CartLogic {
         $stmt->bind_param("i", $cartId);
         return $stmt->execute();
     }
+
+    public function getCartWithSummary(int $userId, $conn): array {
+        $stmt = $conn->prepare("
+            SELECT c.id, c.product_id, p.name, p.price, c.quantity
+            FROM cart c
+            JOIN products p ON c.product_id = p.id
+            WHERE c.user_id = ?
+        ");
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $items = [];
+        $subtotal = 0;
+
+        while ($row = $result->fetch_assoc()) {
+            $row["price"] = floatval($row["price"]);
+            $row["quantity"] = intval($row["quantity"]);
+            $items[] = $row;
+            $subtotal += $row["price"] * $row["quantity"];
+        }
+
+        $shipping = $subtotal >= 300 ? 0 : 9.90;
+        $total = $subtotal + $shipping;
+
+        return [
+            "items" => $items,
+            "subtotal" => round($subtotal, 2),
+            "shipping" => round($shipping, 2),
+            "total" => round($total, 2)
+        ];
+    }
 }

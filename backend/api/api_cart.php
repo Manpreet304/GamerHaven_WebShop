@@ -21,7 +21,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET["cartCount"])) {
     exit;
 }
 
-// ✅ Get all cart items (GET)
+// ✅ Cart Summary (items + subtotal + shipping + total)
 if ($_SERVER["REQUEST_METHOD"] === "GET") {
     if (!isset($_SESSION["user"]["id"])) {
         http_response_code(401);
@@ -29,7 +29,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
         exit;
     }
 
-    $result = $controller->getItems($_SESSION["user"]["id"]);
+    $result = $controller->getCartWithSummary($_SESSION["user"]["id"]);
     http_response_code($result["status"]);
     echo json_encode($result["body"]);
     exit;

@@ -13,7 +13,7 @@ function loadNavbar() {
             navbarPlaceholder.appendChild(template.content.cloneNode(true));
 
             // Danach User-Daten laden
-            fetch("/GamerHaven_WebShop/backend/api/api_guest.php?me")
+            fetch("../../backend/api/api_guest.php?me")
                 .then(res => res.json())
                 .then(user => updateUserNavbar(user))
                 .catch(err => console.error("User fetch failed", err));
@@ -78,7 +78,7 @@ function updateUserNavbar(user) {
     document.querySelectorAll(".logout-link").forEach(link => {
         link.addEventListener("click", (e) => {
             e.preventDefault();
-            fetch("/GamerHaven_WebShop/backend/api/api_guest.php?logout", {
+            fetch("../../backend/api/api_guest.php?logout", {
                 method: "POST"
             })
             .then(res => res.json())

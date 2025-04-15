@@ -19,6 +19,11 @@ $(document).ready(function () {
     $(document).on("click", ".product-card .view-details", function () {
         const modalId = $(this).attr("data-bs-target");
         $(modalId).modal("show");
+    
+        // 🔵 Klick-Effekt: Button pulsiert kurz
+        const btn = $(this);
+        btn.addClass("clicked");
+        setTimeout(() => btn.removeClass("clicked"), 350);
     });
 
     $(document).on("click", ".product-modal .add-to-cart", function () {
@@ -37,6 +42,22 @@ $(document).ready(function () {
         resetAllFilters();
         loadProducts();
     });
+
+    let liveSearchTimeout = null;
+
+    $(document).on("input", "#liveSearchInput", function () {
+        clearTimeout(liveSearchTimeout);
+        const term = $(this).val().trim();
+
+        liveSearchTimeout = setTimeout(() => {
+            const filters = collectFilters();
+            if (term.length > 0) {
+                filters.search = term;
+            }
+            loadProducts(filters);
+        }, 300); // Verzögert leicht, um nicht bei jedem Tastendruck direkt zu feuern
+    });
+
 });
 
 function collectFilters() {
@@ -72,7 +93,7 @@ function resetAllFilters() {
 function loadProducts(filters = {}) {
     const query = new URLSearchParams(filters).toString();
     $.ajax({
-        url: "/GamerHaven_WebShop/backend/api/api_products.php" + (query ? `?${query}` : ""),
+        url: "../../backend/api/api_products.php" + (query ? `?${query}` : ""),
         method: "GET",
         success: function (products) {
             const grid = $("#productGrid");
