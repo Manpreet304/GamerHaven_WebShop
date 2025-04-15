@@ -57,6 +57,15 @@ class ProductLogic {
             if ($filters["stock"] == "0") $sql .= " AND stock = 0";
         }
 
+        if (!empty($filters["search"])) {
+            $sql .= " AND (name LIKE ? OR brand LIKE ? OR category LIKE ?)";
+            $searchTerm = "%" . $filters["search"] . "%";
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $types .= "sss";
+        }        
+        
         $sql .= " ORDER BY created_at DESC";
         $stmt = $conn->prepare($sql);
         if (!empty($params)) $stmt->bind_param($types, ...$params);

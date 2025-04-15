@@ -39,4 +39,10 @@ class CartController {
         $success = $this->logic->deleteCartItem($cartId, $conn);
         return ["status" => $success ? 200 : 500, "body" => ["success" => $success]];
     }
+
+    public function getCartWithSummary(int $userId): array {
+        global $conn;
+        $summary = $this->logic->getCartWithSummary($userId, $conn);
+        return ["status" => 200, "body" => $summary];
+    }
 }
