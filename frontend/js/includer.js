@@ -9,4 +9,4 @@ fetch("../../inclusions/navbar.html")
         script.src = "../../frontend/js/navbar.js"; 
         document.body.appendChild(script);
     })
-    .catch(error => console.error("Fehler beim Laden der Navbar:", error));
+

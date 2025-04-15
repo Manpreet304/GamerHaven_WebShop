@@ -45,4 +45,4 @@ class CartController {
         $summary = $this->logic->getCartWithSummary($userId, $conn);
         return ["status" => 200, "body" => $summary];
     }
-}
+
