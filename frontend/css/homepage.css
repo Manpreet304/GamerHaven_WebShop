@@ -109,24 +109,49 @@ html, body {
   transform: translateY(-1px);
 }
 
-/* ========== VIEW DETAILS BUTTON STYLE (umgekehrter Verlauf) ========== */
+/* View Details Standardstil */
 .btn-view-details {
   background: linear-gradient(90deg, #0074D9, #001f3f);
   color: white !important;
-  border: none;
+  border: 2px solid #00bfff; /* 🟦 Sichtbarer Rand */
   border-radius: 10px;
   font-weight: 500;
   font-size: 16px;
   padding: 10px 16px;
-  transition: background 0.3s ease, color 0.3s ease, transform 0.2s ease;
+  transition: background 0.3s ease, color 0.3s ease, transform 0.2s ease, border-color 0.3s ease;
 }
 
+/* Hover- und Glow-Effekt */
 .btn-view-details:hover {
-  animation: blink-cart 1s infinite alternate ease-in-out;
+  animation: glowDetail 0.8s ease-in-out infinite alternate;
   background: linear-gradient(90deg, #0088ff, #002a5c);
   color: #43ebf4;
   transform: translateY(-1px);
+  border-color: #43ebf4;
 }
+
+/* Animation bei Hover */
+@keyframes glowDetail {
+  from {
+    box-shadow: 0 0 8px rgba(0, 200, 255, 0.3);
+  }
+  to {
+    box-shadow: 0 0 16px rgba(0, 255, 255, 0.6);
+  }
+}
+
+/* Klick-Feedback */
+.btn-view-details.clicked {
+  animation: detailClickPulse 0.35s ease-in-out;
+}
+
+@keyframes detailClickPulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+
 
 /* ========== MODAL KARUSSELL ========== */
 .carousel-control-prev-icon,
@@ -286,4 +311,36 @@ input.quantity-input:focus {
 #total-price {
   font-weight: bold;
   color: #00ffae !important;
+}
+
+.text-end{
+  color: white !important;
+}
+
+/* ✅ Grün bei Erfolg */
+.button-added {
+  background: #28a745 !important; /* Bootstrap-success */
+  color: white !important;
+  border-color: #28a745 !important;
+  animation: fadeSuccess 0.3s ease-in-out;
+}
+
+/* ❌ Rot bei Fehler */
+.button-error {
+  background: #dc3545 !important; /* Bootstrap-danger */
+  color: white !important;
+  border-color: #dc3545 !important;
+  animation: fadeError 0.3s ease-in-out;
+}
+
+/* Schöner Skalierungs-Effekt */
+@keyframes fadeSuccess {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+@keyframes fadeError {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.05); }
+  100% { transform: scale(1); }
 }

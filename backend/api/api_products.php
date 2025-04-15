@@ -17,6 +17,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
         "priceMax"  => $_GET["priceMax"] ?? null,
         "rating"    => $_GET["rating"] ?? null,
         "stock"     => $_GET["stock"] ?? null,
+        "search"    => $_GET["search"] ?? null // 🆕 Hinzugefügt für Live-Suche
     ];
 
     $result = $controller->getAllFiltered($filters);
