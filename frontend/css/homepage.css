@@ -128,28 +128,6 @@ html, body {
   color: #43ebf4;
   transform: translateY(-1px);
   border-color: #43ebf4;
-}
-
-/* Animation bei Hover */
-@keyframes glowDetail {
-  from {
-    box-shadow: 0 0 8px rgba(0, 200, 255, 0.3);
-  }
-  to {
-    box-shadow: 0 0 16px rgba(0, 255, 255, 0.6);
-  }
-}
-
-/* Klick-Feedback */
-.btn-view-details.clicked {
-  animation: detailClickPulse 0.35s ease-in-out;
-}
-
-@keyframes detailClickPulse {
-  0%   { transform: scale(1); }
-  50%  { transform: scale(1.08); }
-  100% { transform: scale(1); }
-}
 
 
 
@@ -343,5 +321,4 @@ input.quantity-input:focus {
   0%   { transform: scale(1); }
   50%  { transform: scale(1.05); }
   100% { transform: scale(1); }
-}
-
+n

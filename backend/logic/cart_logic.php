@@ -92,4 +92,4 @@ class CartLogic {
             "total" => round($total, 2)
         ];
     }
-}
+
