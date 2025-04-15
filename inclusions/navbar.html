@@ -1,60 +1,58 @@
 <template id="navbar-template">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
-  
-    <nav class="navbar navbar-expand-lg navbar-dark custom-navbar">
-      <div class="container">
-        <a class="navbar-brand d-flex align-items-center" href="../website/homepage.html">
-          <span class="logo-wrapper">
-            <img src="\GamerHaven_WebShop\pictures\GamerHaven_Logo.png" alt="GamerHaven Logo" class="navbar-logo">
-          </span>
-        </a>
-  
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-  
-        <div class="collapse navbar-collapse" id="navbarNav">
-  
-          <!-- 🔍 Suchleiste -->
-          <form class="d-flex me-auto ms-3" role="search">
-            <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-            <button class="btn btn-outline-success" type="submit">Search</button>
-          </form>
-  
-          <ul class="navbar-nav ms-auto align-items-center">
-  
-            <!-- ℹ️ About Us Dropdown -->
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="aboutDropdown" role="button"
-                 data-bs-toggle="dropdown" aria-expanded="false">
-                About Us
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+
+  <nav class="navbar navbar-expand-lg navbar-dark custom-navbar">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="../website/homepage.html">
+        <span class="logo-wrapper">
+          <img src="\GamerHaven_WebShop\pictures\GamerHaven_Logo.png" alt="GamerHaven Logo" class="navbar-logo">
+        </span>
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+              aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarNav">
+
+        <!-- 🔍 Suchleiste -->
+        <form class="d-flex me-auto ms-3" role="search" onsubmit="return false;">
+          <input id="liveSearchInput" class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+        </form>          
+
+        <ul class="navbar-nav ms-auto align-items-center">
+
+          <!-- ℹ️ About Us Dropdown -->
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="aboutDropdown" role="button"
+               data-bs-toggle="dropdown" aria-expanded="false">
+              About Us
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="aboutDropdown">
+              <li><a class="dropdown-item" href="../website/imprint.html">Imprint</a></li>
+              <li><a class="dropdown-item" href="../website/help&faq.html">Help & FAQ</a></li>
+            </ul>
+          </li>
+
+          <!-- 🛒 Warenkorb -->
+          <li class="nav-item">
+              <!-- 🛒 Warenkorb-Icon mit Count -->
+              <a class="nav-link position-relative" href="../website/cart.html" id="cart-dropzone">
+                  <i class="bi bi-cart"></i>
+                  <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="cart-count">
+                    0
+                  </span>
               </a>
-              <ul class="dropdown-menu" aria-labelledby="aboutDropdown">
-                <li><a class="dropdown-item" href="../website/imprint.html">Imprint</a></li>
-                <li><a class="dropdown-item" href="../website/help&faq.html">Help & FAQ</a></li>
-              </ul>
-            </li>
-  
-            <!-- 🛒 Warenkorb -->
-            <li class="nav-item">
-                <!-- 🛒 Warenkorb-Icon mit Count -->
-                <a class="nav-link position-relative" href="../website/cart.html" id="cart-dropzone">
-                    <i class="bi bi-cart"></i>
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="cart-count">
-                      0
-                    </span>
-                </a>
-            </li>
+          </li>
 
-            <!-- 👤 Benutzer-Menü -->
-            <li class="nav-item dropdown" id="user-dropdown-container">
-              <!-- Wird per JS ersetzt -->
-            </li>
+          <!-- 👤 Benutzer-Menü -->
+          <li class="nav-item dropdown" id="user-dropdown-container">
+            <!-- Wird per JS ersetzt -->
+          </li>
 
-          </ul>
-        </div>
+        </ul>
       </div>
-    </nav>
-  </template>
-  
+    </div>
+  </nav>
+</template>

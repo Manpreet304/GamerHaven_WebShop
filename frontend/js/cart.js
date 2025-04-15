@@ -17,7 +17,8 @@ function loadCart() {
     });
 }
 
-function renderCartItems(items) {
+function renderCartItems(response) {
+    const items = response.items || [];
     const tbody = $("#cart-items");
     tbody.empty();
 
@@ -27,17 +28,13 @@ function renderCartItems(items) {
         return;
     }
 
-    let total = 0;
-
     items.forEach((item) => {
-        const price = parseFloat(item.price);
-        const subtotal = price * item.quantity;
-        total += subtotal;
+        const subtotal = item.price * item.quantity;
 
         tbody.append(`
             <tr data-id="${item.id}">
               <td>${item.name}</td>
-              <td>€${price.toFixed(2)}</td>
+              <td>€${item.price.toFixed(2)}</td>
               <td>
                 <input type="number" class="form-control quantity-input" min="1" value="${item.quantity}" style="width: 80px; margin: auto;">
               </td>
@@ -49,8 +46,9 @@ function renderCartItems(items) {
         `);
     });
 
-    $("#total-price").text(`€${total.toFixed(2)}`);
+    $("#total-price").text(`€${response.total.toFixed(2)}`);
 }
+
 
 $(document).on("change", ".quantity-input", function () {
     const tr = $(this).closest("tr");
@@ -94,8 +92,12 @@ function addToCart(productId, quantity = 1) {
             if (data.success) {
                 showMessage("success", "Product added to cart.");
                 updateCartCount();
+
+                // Visual Feedback – Karte + Modal
+                updateAddToCartButtons(productId, true);
             } else {
                 showMessage("danger", "Could not add to cart.");
+                updateAddToCartButtons(productId, false);
             }
         },
         error: (xhr) => {
@@ -104,9 +106,35 @@ function addToCart(productId, quantity = 1) {
             } else {
                 showMessage("danger", "An error occurred.");
             }
+            updateAddToCartButtons(productId, false);
         }
     });
 }
+
+function updateAddToCartButtons(productId, success) {
+    const cardBtn = $(`.product-card[data-product-id='${productId}'] .add-to-cart`);
+    const modalBtn = $(`#productModal${productId} .add-to-cart`);
+    const btns = [cardBtn, modalBtn];
+
+    btns.forEach(btn => {
+        if (btn.length) {
+            btn.removeClass("button-added button-error");
+
+            if (success) {
+                btn.addClass("button-added").html('<i class="bi bi-check-lg me-1"></i> Added');
+            } else {
+                btn.addClass("button-error").html('<i class="bi bi-x-circle me-1"></i> Error');
+            }
+
+            // Rücksetzen nach 2 Sekunden
+            setTimeout(() => {
+                btn.removeClass("button-added button-error");
+                btn.html('<i class="bi bi-cart-plus me-1"></i> Add to Cart');
+            }, 2000);
+        }
+    });
+}
+
 
 function updateCartCount() {
     $.get("/GamerHaven_WebShop/backend/api/api_cart.php?cartCount", function (data) {
