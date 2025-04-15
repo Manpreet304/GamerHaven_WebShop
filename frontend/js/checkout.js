@@ -17,7 +17,7 @@ $(document).ready(function () {
         }
 
         $.ajax({
-            url: "/GamerHaven_WebShop/backend/api/api_order.php",
+            url: "../../backend/api/api_order.php",
             method: "POST",
             contentType: "application/json",
             data: JSON.stringify({ payment_id: paymentId, voucher }),
@@ -39,7 +39,7 @@ $(document).ready(function () {
 
 function loadCartSummary() {
     $.ajax({
-        url: "/GamerHaven_WebShop/backend/api/api_cart.php",
+        url: "../../backend/api/api_cart.php",
         method: "GET",
         success: function (data) {
             const list = $("#checkout-cart-items");

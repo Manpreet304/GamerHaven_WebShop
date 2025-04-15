@@ -93,7 +93,7 @@ function resetAllFilters() {
 function loadProducts(filters = {}) {
     const query = new URLSearchParams(filters).toString();
     $.ajax({
-        url: "/GamerHaven_WebShop/backend/api/api_products.php" + (query ? `?${query}` : ""),
+        url: "../../backend/api/api_products.php" + (query ? `?${query}` : ""),
         method: "GET",
         success: function (products) {
             const grid = $("#productGrid");

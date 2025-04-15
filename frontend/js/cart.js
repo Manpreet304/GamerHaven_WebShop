@@ -5,7 +5,7 @@ $(document).ready(function () {
 
 function loadCart() {
     $.ajax({
-        url: "/GamerHaven_WebShop/backend/api/api_cart.php",
+        url: "../../backend/api/api_cart.php",
         method: "GET",
         success: function (cartItems) {
             renderCartItems(cartItems);
@@ -57,7 +57,7 @@ $(document).on("change", ".quantity-input", function () {
     if (quantity < 1) return;
 
     $.ajax({
-        url: "/GamerHaven_WebShop/backend/api/api_cart.php",
+        url: "../../backend/api/api_cart.php",
         method: "POST",
         contentType: "application/json",
         data: JSON.stringify({ action: "update", id: cartId, quantity }),
@@ -72,7 +72,7 @@ $(document).on("click", ".delete-item", function () {
     const cartId = tr.data("id");
 
     $.ajax({
-        url: "/GamerHaven_WebShop/backend/api/api_cart.php",
+        url: "../../backend/api/api_cart.php",
         method: "POST",
         contentType: "application/json",
         data: JSON.stringify({ action: "delete", id: cartId }),
@@ -84,7 +84,7 @@ $(document).on("click", ".delete-item", function () {
 
 function addToCart(productId, quantity = 1) {
     $.ajax({
-        url: "/GamerHaven_WebShop/backend/api/api_cart.php?addToCart=" + productId,
+        url: "../../backend/api/api_cart.php?addToCart=" + productId,
         method: "POST",
         contentType: "application/json",
         data: JSON.stringify({ quantity }),
@@ -137,7 +137,7 @@ function updateAddToCartButtons(productId, success) {
 
 
 function updateCartCount() {
-    $.get("/GamerHaven_WebShop/backend/api/api_cart.php?cartCount", function (data) {
+    $.get("../../backend/api/api_cart.php?cartCount", function (data) {
         $("#cart-count").text(data.count || 0);
     });
 }

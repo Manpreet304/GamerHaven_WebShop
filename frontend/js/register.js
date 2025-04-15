@@ -44,7 +44,7 @@ $(document).ready(function () {
         }
 
         $.ajax({
-            url: "/GamerHaven_WebShop/backend/api/api_guest.php?register",
+            url: "../../backend/api/api_guest.php?register",
             method: "POST",
             dataType: "json",
             contentType: "application/json",
