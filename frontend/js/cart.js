@@ -20,6 +20,8 @@ function loadCart() {
 function renderCartItems(response) {
     const items = response.items || [];
     const tbody = $("#cart-items");
+    const template = document.getElementById("cart-item-template");
+
     tbody.empty();
 
     if (!items.length) {
@@ -28,32 +30,29 @@ function renderCartItems(response) {
         return;
     }
 
-    items.forEach((item) => {
-        const subtotal = item.price * item.quantity;
+    items.forEach(item => {
+        const clone = template.content.cloneNode(true);
+        const row = $(clone).find("tr");
 
-        tbody.append(`
-            <tr data-id="${item.id}">
-              <td>${item.name}</td>
-              <td>€${item.price.toFixed(2)}</td>
-              <td>
-                <input type="number" class="form-control quantity-input" min="1" value="${item.quantity}" style="width: 80px; margin: auto;">
-              </td>
-              <td>€${subtotal.toFixed(2)}</td>
-              <td>
-                <button class="btn btn-danger btn-sm delete-item"><i class="bi bi-trash"></i></button>
-              </td>
-            </tr>
-        `);
+        row.attr("data-id", item.id);
+        row.find(".cart-name").text(item.name);
+        row.find(".cart-price").text(`€${item.price.toFixed(2)}`);
+        row.find(".cart-subtotal").text(`€${(item.price * item.quantity).toFixed(2)}`);
+        row.find(".quantity-input").val(item.quantity);
+
+        tbody.append(row);
     });
 
+    $("#shipping-price").text(response.shipping === 0 ? "Free" : `€${response.shipping.toFixed(2)}`);
     $("#total-price").text(`€${response.total.toFixed(2)}`);
 }
 
-
+// === Mengenänderung
 $(document).on("change", ".quantity-input", function () {
     const tr = $(this).closest("tr");
     const cartId = tr.data("id");
     const quantity = parseInt($(this).val());
+
     if (quantity < 1) return;
 
     $.ajax({
@@ -61,12 +60,11 @@ $(document).on("change", ".quantity-input", function () {
         method: "POST",
         contentType: "application/json",
         data: JSON.stringify({ action: "update", id: cartId, quantity }),
-        success: () => {
-            loadCart();
-        }
+        success: loadCart
     });
 });
 
+// === Entfernen
 $(document).on("click", ".delete-item", function () {
     const tr = $(this).closest("tr");
     const cartId = tr.data("id");
@@ -76,9 +74,7 @@ $(document).on("click", ".delete-item", function () {
         method: "POST",
         contentType: "application/json",
         data: JSON.stringify({ action: "delete", id: cartId }),
-        success: () => {
-            loadCart();
-        }
+        success: loadCart
     });
 });
 
@@ -92,8 +88,6 @@ function addToCart(productId, quantity = 1) {
             if (data.success) {
                 showMessage("success", "Product added to cart.");
                 updateCartCount();
-
-                // Visual Feedback – Karte + Modal
                 updateAddToCartButtons(productId, true);
             } else {
                 showMessage("danger", "Could not add to cart.");
@@ -112,29 +106,28 @@ function addToCart(productId, quantity = 1) {
 }
 
 function updateAddToCartButtons(productId, success) {
-    const cardBtn = $(`.product-card[data-product-id='${productId}'] .add-to-cart`);
-    const modalBtn = $(`#productModal${productId} .add-to-cart`);
-    const btns = [cardBtn, modalBtn];
+    const btns = [
+        $(`.product-card[data-product-id='${productId}'] .add-to-cart`),
+        $(`#productModal${productId} .add-to-cart`)
+    ];
 
     btns.forEach(btn => {
-        if (btn.length) {
-            btn.removeClass("button-added button-error");
+        if (!btn.length) return;
 
-            if (success) {
-                btn.addClass("button-added").html('<i class="bi bi-check-lg me-1"></i> Added');
-            } else {
-                btn.addClass("button-error").html('<i class="bi bi-x-circle me-1"></i> Error');
-            }
+        btn.removeClass("button-added button-error");
 
-            // Rücksetzen nach 2 Sekunden
-            setTimeout(() => {
-                btn.removeClass("button-added button-error");
-                btn.html('<i class="bi bi-cart-plus me-1"></i> Add to Cart');
-            }, 2000);
+        if (success) {
+            btn.addClass("button-added").html('<i class="bi bi-check-lg me-1"></i> Added');
+        } else {
+            btn.addClass("button-error").html('<i class="bi bi-x-circle me-1"></i> Error');
         }
+
+        setTimeout(() => {
+            btn.removeClass("button-added button-error");
+            btn.html('<i class="bi bi-cart-plus me-1"></i> Add to Cart');
+        }, 2000);
     });
 }
-
 
 function updateCartCount() {
     $.get("/GamerHaven_WebShop/backend/api/api_cart.php?cartCount", function (data) {

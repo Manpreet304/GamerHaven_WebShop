@@ -1,28 +1,26 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) session_start();
+require_once("../logic/product_logic.php");
 
 class ProductController {
+    private ProductLogic $logic;
+
+    public function __construct() {
+        $this->logic = new ProductLogic();
+    }
+
     public function getAll(): array {
         global $conn;
-        require_once("../logic/product_logic.php");
-        $logic = new ProductLogic();
         return [
             "status" => 200,
-            "body" => $logic->getAllProducts($conn)
+            "body" => $this->logic->getAllProducts($conn)
         ];
     }
 
     public function getAllFiltered(array $filters): array {
         global $conn;
-        require_once("../logic/product_logic.php");
-        $logic = new ProductLogic();
-    
-        $filters["search"] = $filters["search"] ?? null;
-    
         return [
             "status" => 200,
-            "body" => $logic->getFilteredProducts($conn, $filters)
+            "body" => $this->logic->getFilteredProducts($conn, $filters)
         ];
     }
-    
 }

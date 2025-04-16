@@ -1,7 +1,8 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once("../logic/register_logic.php");
+require_once("../logic/login_logic.php");
+require_once("../logic/logout_logic.php");
+require_once("../models/user_class.php");
 
 class UserController {
     public function register(array $data): array {
@@ -12,28 +13,18 @@ class UserController {
 
         $validation = $registerLogic->validate($user, $data["password2"] ?? '', $conn);
         if ($validation !== true) {
-            return [
-                "status" => 400,
-                "body" => ["errors" => $validation]
-            ];
+            return ["status" => 400, "body" => ["errors" => $validation]];
         }
 
-        if ($registerLogic->save($user, $conn)) {
-            return [
-                "status" => 200,
-                "body" => ["success" => true]
-            ];
-        }
-
+        $saved = $registerLogic->save($user, $conn);
         return [
-            "status" => 500,
-            "body" => ["errors" => ["general" => "Error saving user."]]
+            "status" => $saved ? 200 : 500,
+            "body" => ["success" => $saved]
         ];
     }
 
     public function login(array $data, bool $remember): array {
         global $conn;
-
         $loginLogic = new LoginLogic();
         $result = $loginLogic->login($data, $conn);
 
@@ -43,8 +34,6 @@ class UserController {
                 setcookie("remember_token", $token, time() + 60 * 60 * 24 * 30, "/");
                 $loginLogic->saveRememberToken($result["id"], $token, $conn);
             }
-
-            // Optional: ganze Userdaten für Account-Seite speichern
             $_SESSION["user"] = $result;
 
             return ["status" => 200, "body" => ["success" => true]];
@@ -61,6 +50,16 @@ class UserController {
         return [
             "status" => 200,
             "body" => ["success" => true]
+        ];
+    }
+
+    public function removePayment(int $paymentId, $conn): array {
+        require_once("../logic/account_logic.php");
+        $logic = new AccountLogic();
+        $success = $logic->removePaymentMethod($paymentId, $conn);
+        return [
+            "status" => $success ? 200 : 500,
+            "body" => ["success" => $success]
         ];
     }
 }

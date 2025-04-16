@@ -5,7 +5,7 @@
     <div class="container">
       <a class="navbar-brand d-flex align-items-center" href="../website/homepage.html">
         <span class="logo-wrapper">
-          <img src="\GamerHaven_WebShop\pictures\GamerHaven_Logo.png" alt="GamerHaven Logo" class="navbar-logo">
+          <img src="/GamerHaven_WebShop/pictures/GamerHaven_Logo.png" alt="GamerHaven Logo" class="navbar-logo">
         </span>
       </a>
 
@@ -15,41 +15,33 @@
       </button>
 
       <div class="collapse navbar-collapse" id="navbarNav">
-
-        <!-- 🔍 Suchleiste -->
+        <!-- 🔍 Live Search -->
         <form class="d-flex me-auto ms-3" role="search" onsubmit="return false;">
           <input id="liveSearchInput" class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-        </form>          
+        </form>
 
         <ul class="navbar-nav ms-auto align-items-center">
 
-          <!-- ℹ️ About Us Dropdown -->
+          <!-- ℹ️ About Us -->
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="aboutDropdown" role="button"
-               data-bs-toggle="dropdown" aria-expanded="false">
-              About Us
-            </a>
+               data-bs-toggle="dropdown" aria-expanded="false">About Us</a>
             <ul class="dropdown-menu" aria-labelledby="aboutDropdown">
               <li><a class="dropdown-item" href="../website/imprint.html">Imprint</a></li>
               <li><a class="dropdown-item" href="../website/help&faq.html">Help & FAQ</a></li>
             </ul>
           </li>
 
-          <!-- 🛒 Warenkorb -->
+          <!-- 🛒 Cart -->
           <li class="nav-item">
-              <!-- Statt direktem Link wird ID verwendet -->
-              <a class="nav-link position-relative" href="#" id="nav-cart-link">
-                  <i class="bi bi-cart"></i>
-                  <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="cart-count">
-                    0
-                  </span>
-              </a>
+            <a class="nav-link position-relative" href="#" id="nav-cart-link">
+              <i class="bi bi-cart"></i>
+              <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="cart-count">0</span>
+            </a>
           </li>
 
-          <!-- 👤 Benutzer-Menü -->
-          <li class="nav-item dropdown" id="user-dropdown-container">
-            <!-- Wird per JS ersetzt -->
-          </li>
+          <!-- 👤 User Dropdown Placeholder -->
+          <li class="nav-item dropdown" id="user-dropdown-container"></li>
 
         </ul>
       </div>

@@ -38,7 +38,6 @@
               <strong id="checkout-total">€0.00</strong>
             </li>
           </ul>
-          
       </div>
     </div>
 
@@ -71,6 +70,17 @@
   </div>
 
   <div id="footer-placeholder" class="mt-5"></div>
+
+  <!-- Template für Cart-Zeile -->
+  <template id="checkout-item-template">
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      <div>
+        <strong class="item-name"></strong><br>
+        <span class="item-details small text-muted"></span>
+      </div>
+      <span class="item-subtotal fw-bold"></span>
+    </li>
+  </template>
 
   <!-- Scripts -->
   <script src="../js/includer.js"></script>
