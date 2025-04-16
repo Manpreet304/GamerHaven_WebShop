@@ -105,12 +105,6 @@ $(document).on("click", ".delete-item", function () {
     });
 });
 
-function updateCartCount() {
-    $.get("/GamerHaven_WebShop/backend/api/api_cart.php?cartCount", function (data) {
-        $("#cart-count").text(data.count || 0);
-    });
-}
-
 // === Checkout-Modalfunktionen ===
 function loadCheckoutSummary() {
     $.get("../../backend/api/api_cart.php", function (data) {

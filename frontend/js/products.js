@@ -184,7 +184,6 @@ function updateAddToCartButtons(productId, success) {
     });
 }
 
-
 function renderCarouselImages(images) {
     return images.map((src, i) => `
         <div class="carousel-item ${i === 0 ? "active" : ""}">
