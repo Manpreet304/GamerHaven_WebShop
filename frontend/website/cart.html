@@ -27,9 +27,7 @@
             <th>Action</th>
           </tr>
         </thead>
-        <tbody id="cart-items">
-          <!-- Populated by JS -->
-        </tbody>
+        <tbody id="cart-items"></tbody>
         <tfoot>
           <tr>
             <th colspan="3" class="text-end">Shipping:</th>
@@ -40,18 +38,16 @@
             <th colspan="3" class="text-end">Total:</th>
             <th id="total-price" class="text-success fs-5">€0.00</th>
             <th></th>
-          </tr>          
+          </tr>
         </tfoot>
       </table>
       <div class="text-end mt-3">
-        <a href="checkout.html" class="btn btn-success btn-lg">
+        <button id="proceedToCheckout" class="btn btn-success btn-lg">
           <i class="bi bi-arrow-right-circle me-1"></i> Proceed to Checkout
-        </a>
-      </div>      
+        </button>
+      </div>
     </div>
   </div>
-
-  <div id="footer-placeholder" class="mt-5"></div>
 
   <!-- Template für Cart-Zeile -->
   <template id="cart-item-template">
@@ -70,8 +66,79 @@
     </tr>
   </template>
 
+  <!-- ✅ Checkout Modal -->
+  <div class="modal fade" id="checkoutModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-credit-card me-2"></i>Checkout</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="messageBox" class="mb-3"></div>
+
+          <div class="card shadow-sm mb-4">
+            <div class="card-body">
+              <h5>Your Order Summary</h5>
+              <ul id="checkout-cart-items" class="list-group mb-3"></ul>
+              <ul class="list-group">
+                <li class="list-group-item d-flex justify-content-between">
+                  <span>Subtotal:</span>
+                  <strong id="checkout-subtotal">€0.00</strong>
+                </li>
+                <li class="list-group-item d-flex justify-content-between">
+                  <span>Shipping:</span>
+                  <strong id="checkout-shipping">€0.00</strong>
+                </li>
+                <li class="list-group-item d-flex justify-content-between fs-5">
+                  <span>Total:</span>
+                  <strong id="checkout-total">€0.00</strong>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <form id="checkout-form" novalidate>
+                <div class="mb-3">
+                  <label for="paymentMethod" class="form-label">Payment Method</label>
+                  <select id="paymentMethod" class="form-select" required>
+                    <option value="">Choose payment method</option>
+                  </select>
+                  <div class="invalid-feedback">Please select a payment method.</div>
+                </div>
+                <div class="mb-3">
+                  <label for="voucher" class="form-label">Voucher Code (optional)</label>
+                  <input type="text" id="voucher" class="form-control" placeholder="Enter voucher code">
+                </div>
+                <div class="d-grid">
+                  <button type="submit" class="btn btn-success btn-lg">
+                    <i class="bi bi-bag-check-fill me-2"></i>Place Order
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Template für Checkout-Modal-Zeile -->
+  <template id="checkout-item-template">
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      <div>
+        <strong class="item-name"></strong><br>
+        <span class="item-details small text-muted"></span>
+      </div>
+      <span class="item-subtotal fw-bold"></span>
+    </li>
+  </template>
+
   <!-- Scripts -->
   <script src="../js/includer.js"></script>
+  <script src="../js/messages.js"></script>
   <script src="../js/cart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
