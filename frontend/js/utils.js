@@ -41,9 +41,9 @@ function applyFieldErrors(errors) {
     });
 }
 
-//wird in cart.html und homepage.html gebraucht und gibt fehler wenn in cart.js ist und products.js
 function updateCartCount() {
     $.get("../../backend/api/api_cart.php?cartCount", function (data) {
         $("#cart-count").text(data.count || 0);
     });
 }
+
