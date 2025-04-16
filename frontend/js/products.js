@@ -113,7 +113,6 @@ function renderProducts(products, grid, modalsContainer) {
         $card.find(".product-price").text(`€${product.price}`);
         $card.find(".rating").html(renderRating(product.rating));
 
-        // Modal Setup
         const modalId = `productModal${product.id}`;
         const $modal = $(modalClone).find(".product-modal").attr("id", modalId).attr("data-product-id", product.id);
         const $carousel = $modal.find(".product-carousel").attr("id", `carousel${product.id}`);
@@ -127,13 +126,64 @@ function renderProducts(products, grid, modalsContainer) {
         $modal.find(".attributes").html(`<strong>Attributes:</strong><br>${renderAttributes(product.attributes)}`);
         $modal.find(".carousel-inner").html(renderCarouselImages(product.images || []));
 
-        // Modal Trigger
         $card.find(".view-details").attr({ "data-bs-toggle": "modal", "data-bs-target": `#${modalId}` });
 
         grid.append(cardClone);
         modalsContainer.append(modalClone);
     });
 }
+
+function addToCart(productId, quantity = 1) {
+    $.ajax({
+        url: "../../backend/api/api_cart.php?addToCart=" + productId,
+        method: "POST",
+        contentType: "application/json",
+        data: JSON.stringify({ quantity }),
+        success: (data) => {
+            if (data.success) {
+                showMessage("success", "Product added to cart.");
+                updateCartCount();
+                updateAddToCartButtons(productId, true);
+            } else {
+                showMessage("danger", "Could not add to cart.");
+                updateAddToCartButtons(productId, false);
+            }
+        },
+        error: (xhr) => {
+            if (xhr.status === 401) {
+                showMessage("danger", "Please login to use the cart.");
+            } else {
+                showMessage("danger", "An error occurred.");
+            }
+            updateAddToCartButtons(productId, false);
+        }
+    });
+}
+
+function updateAddToCartButtons(productId, success) {
+    const btns = [
+        $(`.product-card[data-product-id='${productId}'] .add-to-cart`),
+        $(`#productModal${productId} .add-to-cart`)
+    ];
+
+    btns.forEach(btn => {
+        if (!btn.length) return;
+
+        btn.removeClass("button-added button-error");
+
+        if (success) {
+            btn.addClass("button-added").html('<i class="bi bi-check-lg me-1"></i> Added');
+        } else {
+            btn.addClass("button-error").html('<i class="bi bi-x-circle me-1"></i> Error');
+        }
+
+        setTimeout(() => {
+            btn.removeClass("button-added button-error");
+            btn.html('<i class="bi bi-cart-plus me-1"></i> Add to Cart');
+        }, 2000);
+    });
+}
+
 
 function renderCarouselImages(images) {
     return images.map((src, i) => `
