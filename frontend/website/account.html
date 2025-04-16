@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My Account - GamerHaven</title>
+
+  <link rel="stylesheet" href="../css/homepage.css">
+  <link rel="stylesheet" href="../css/navbar.css" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css"/>
+  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+</head>
+<body>
+  <div id="navbar-placeholder"></div>
+
+  <div class="container my-5">
+    <h2 class="mb-4"><i class="bi bi-person-circle me-2"></i>My Account</h2>
+
+    <!-- Account Info -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h5 class="card-title"><i class="bi bi-person-lines-fill me-2"></i>Account Information</h5>
+        <div id="account-info" class="mb-3">
+          <!-- Account info will be loaded here -->
+        </div>
+        <button id="edit-account-btn" class="btn btn-primary">
+          <i class="bi bi-pencil-square me-1"></i>Edit Account
+        </button>
+      </div>
+    </div>
+
+    <!-- Payment Methods -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h5 class="card-title"><i class="bi bi-credit-card me-2"></i>Payment Methods</h5>
+        <div id="payment-methods" class="mb-3"></div>
+        <button id="add-payment-method-btn" class="btn btn-success">
+          <i class="bi bi-plus-circle me-1"></i>Add Payment Method
+        </button>
+      </div>
+    </div>
+
+    <!-- Orders -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h5 class="card-title"><i class="bi bi-bag-check me-2"></i>Your Orders</h5>
+        <div id="order-list">
+          <!-- Orders will be dynamically loaded here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="footer-placeholder" class="mt-5"></div>
+
+  <!-- Scripts -->
+  <script src="../js/includer.js"></script>
+  <script src="../js/messages.js"></script>
+  <script src="../js/account.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

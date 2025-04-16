@@ -44,6 +44,9 @@ class UserController {
                 $loginLogic->saveRememberToken($result["id"], $token, $conn);
             }
 
+            // Optional: ganze Userdaten für Account-Seite speichern
+            $_SESSION["user"] = $result;
+
             return ["status" => 200, "body" => ["success" => true]];
         }
 

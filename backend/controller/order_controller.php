@@ -10,10 +10,21 @@ class OrderController {
 
     public function placeOrder(int $userId, int $paymentId, ?string $voucher): array {
         global $conn;
-        $success = $this->logic->createOrder($userId, $paymentId, $voucher, $conn);
-        return [
-            "status" => $success ? 200 : 500,
-            "body" => ["success" => $success]
-        ];
+
+        try {
+            $success = $this->logic->createOrder($userId, $paymentId, $voucher, $conn);
+            return [
+                "status" => 200,
+                "body" => ["success" => true]
+            ];
+        } catch (Exception $e) {
+            return [
+                "status" => 500,
+                "body" => [
+                    "success" => false,
+                    "error" => $e->getMessage()
+                ]
+            ];
+        }
     }
 }

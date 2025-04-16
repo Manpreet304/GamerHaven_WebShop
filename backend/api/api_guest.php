@@ -29,13 +29,31 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET["me"])) {
     $user = $_SESSION["user"];
     $userId = $user["id"];
 
-    // Zahlungsmethoden abrufen
+    // === Nutzerdetails abrufen (mit Alias!) ===
     $stmt = $conn->prepare("
-    SELECT id, method, 
-           RIGHT(card_number, 4) AS last_digits,
-           paypal_email, iban
-    FROM payments
-    WHERE user_id = ?");
+        SELECT 
+            firstname AS first_name, 
+            lastname AS last_name, 
+            email, 
+            address, 
+            zip_code, 
+            city, 
+            country
+        FROM users 
+        WHERE id = ?
+    ");
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $userData = $stmt->get_result()->fetch_assoc();
+
+    // === Zahlungsmethoden abrufen ===
+    $stmt = $conn->prepare("
+        SELECT id, method, 
+               RIGHT(card_number, 4) AS last_digits,
+               paypal_email, iban
+        FROM payments
+        WHERE user_id = ?
+    ");
     $stmt->bind_param("i", $userId);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -46,38 +64,21 @@ if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET["me"])) {
     }
 
     echo json_encode([
-        "loggedIn" => true,
-        "username" => $user["username"],
-        "role"     => $user["role"],
-        "payment_id" => $user["payment_id"] ?? null, // optional, falls du es brauchst
-        "payments" => $payments
+        "loggedIn"   => true,
+        "username"   => $user["username"],
+        "role"       => $user["role"],
+        "payment_id" => $user["payment_id"] ?? null,
+        "payments"   => $payments,
+        "first_name" => $userData["first_name"],
+        "last_name"  => $userData["last_name"],
+        "email"      => $userData["email"],
+        "address"    => $userData["address"],
+        "zip_code"   => $userData["zip_code"],
+        "city"       => $userData["city"],
+        "country"    => $userData["country"]
     ]);
     exit;
 }
 
-// === POST-Anfragen: login, register, logout ===
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $data = json_decode(file_get_contents("php://input"), true);
-
-    if (isset($_GET["register"])) {
-        $response = $controller->register($data);
-    } elseif (isset($_GET["login"])) {
-        $remember = $data["remember"] ?? false;
-        $response = $controller->login($data, $remember);
-    } elseif (isset($_GET["logout"])) {
-        $response = $controller->logout();
-    } else {
-        $response = [
-            "status" => 405,
-            "body" => ["errors" => ["general" => "Invalid action."]]
-        ];
-    }
-
-    http_response_code($response["status"]);
-    echo json_encode($response["body"]);
-    exit;
-}
-
-// Fallback für andere Methoden
 http_response_code(405);
 echo json_encode(["errors" => ["general" => "Invalid request method."]]);
