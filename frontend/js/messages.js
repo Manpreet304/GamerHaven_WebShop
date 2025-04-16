@@ -1,4 +1,8 @@
 function showMessage(type, text, target = "#messageBox") {
+    const existingAlert = $(target).find(".alert");
+    if (existingAlert.length) {
+        existingAlert.alert("close");  // Schließt den vorherigen Alert
+    }
     const alertClass = type === "success" ? "alert-success" : "alert-danger";
     const message = `
         <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
@@ -6,11 +10,11 @@ function showMessage(type, text, target = "#messageBox") {
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>`;
     $(target).html(message);
-
     setTimeout(() => {
         $(target + " .alert").alert("close");
     }, 5000);
 }
+
 
 function setFieldError(selector, message) {
     const $field = $(selector);

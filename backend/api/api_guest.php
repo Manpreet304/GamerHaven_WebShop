@@ -9,17 +9,48 @@ require_once("../db/dbaccess.php");
 require_once("../models/user_class.php");
 require_once("../logic/register_logic.php");
 require_once("../logic/login_logic.php");
-require_once("../controller/user_controller.php");
 require_once("../logic/logout_logic.php");
+require_once("../controller/user_controller.php");
 
 $controller = new UserController();
 
-// === GET-Anfragen: Nutzer-Status abrufen ===
+// === GET-Anfragen: Nutzerstatus & Zahlungsmethoden ===
 if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET["me"])) {
+    if (!isset($_SESSION["user"])) {
+        echo json_encode([
+            "loggedIn" => false,
+            "username" => null,
+            "role" => null,
+            "payments" => []
+        ]);
+        exit;
+    }
+
+    $user = $_SESSION["user"];
+    $userId = $user["id"];
+
+    // Zahlungsmethoden abrufen
+    $stmt = $conn->prepare("
+    SELECT id, method, 
+           RIGHT(card_number, 4) AS last_digits,
+           paypal_email, iban
+    FROM payments
+    WHERE user_id = ?");
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $payments = [];
+    while ($row = $result->fetch_assoc()) {
+        $payments[] = $row;
+    }
+
     echo json_encode([
-        "loggedIn" => isset($_SESSION["user"]),
-        "username" => $_SESSION["user"]["username"] ?? null,
-        "role"     => $_SESSION["user"]["role"]     ?? null
+        "loggedIn" => true,
+        "username" => $user["username"],
+        "role"     => $user["role"],
+        "payment_id" => $user["payment_id"] ?? null, // optional, falls du es brauchst
+        "payments" => $payments
     ]);
     exit;
 }

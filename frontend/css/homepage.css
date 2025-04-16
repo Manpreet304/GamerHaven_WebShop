@@ -1,0 +1,347 @@
+html, body {
+  height: 100%; /* Stellt sicher, dass der Body die volle Höhe nutzt */
+  margin: 0;
+  display: block;
+  flex-direction: column;
+}
+
+/* ========== PRODUKT-KARTEN ========== */
+.product-card {
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+  cursor: pointer;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+  background-color: white;
+  position: relative;
+  color: white;
+}
+
+@keyframes cardBlink {
+  0% { box-shadow: 0 0 0 rgba(0,123,255,0); }
+  50% { box-shadow: 0 0 12px rgba(0,123,255,0.4); }
+  100% { box-shadow: 0 0 0 rgba(0,123,255,0); }
+}
+
+.product-card:hover {
+  animation: cardBlink 1.2s infinite alternate;
+  transform: translateY(-2px);
+  border-color: #0074D9;
+}
+
+.product-card .img-wrapper {
+  height: 200px;
+  width: 100%;
+  overflow: hidden;
+  background-color: #fff;
+  padding: 0;
+  border: none;
+  display: block;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+}
+
+.product-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0;
+  margin: 0;
+  padding: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* ========== MODAL ========== */
+.modal .modal-body {
+  font-size: 16px;
+  color: #333;
+}
+
+.modal .modal-body img {
+  max-height: 300px;
+  object-fit: contain;
+}
+
+.modal .modal-header {
+  background: linear-gradient(90deg, #001f3f, #0074D9);
+  color: white;
+}
+
+.modal .modal-title {
+  font-weight: bold;
+}
+
+.modal .btn-close {
+  filter: invert(1);
+}
+
+.modal ul {
+  padding-left: 20px;
+}
+
+.modal ul li {
+  margin-bottom: 6px;
+}
+
+/* ========== ADD TO CART BUTTON STYLE ========== */
+.btn-add-to-cart {
+  background: linear-gradient(90deg, #001f3f, #0074D9);
+  color: white !important;
+  border: none;
+  border-radius: 10px;
+  font-weight: 500;
+  font-size: 16px;
+  padding: 10px 16px;
+  transition: background 0.3s ease, color 0.3s ease, transform 0.2s ease;
+}
+
+@keyframes blink-cart {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+.btn-add-to-cart:hover {
+  animation: blink-cart 1s infinite alternate ease-in-out;
+  background: linear-gradient(90deg, #002a5c, #0088ff);
+  color: #43ebf4;
+  transform: translateY(-1px);
+}
+
+/* View Details Standardstil */
+.btn-view-details {
+  background: linear-gradient(90deg, #0074D9, #001f3f);
+  color: white !important;
+  border: 2px solid #00bfff; /* 🟦 Sichtbarer Rand */
+  border-radius: 10px;
+  font-weight: 500;
+  font-size: 16px;
+  padding: 10px 16px;
+  transition: background 0.3s ease, color 0.3s ease, transform 0.2s ease, border-color 0.3s ease;
+}
+
+/* Hover- und Glow-Effekt */
+.btn-view-details:hover {
+  animation: glowDetail 0.8s ease-in-out infinite alternate;
+  background: linear-gradient(90deg, #0088ff, #002a5c);
+  color: #43ebf4;
+  transform: translateY(-1px);
+  border-color: #43ebf4;
+}
+
+/* Animation bei Hover */
+@keyframes glowDetail {
+  from {
+    box-shadow: 0 0 8px rgba(0, 200, 255, 0.3);
+  }
+  to {
+    box-shadow: 0 0 16px rgba(0, 255, 255, 0.6);
+  }
+}
+
+/* Klick-Feedback */
+.btn-view-details.clicked {
+  animation: detailClickPulse 0.35s ease-in-out;
+}
+
+@keyframes detailClickPulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+
+
+/* ========== MODAL KARUSSELL ========== */
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+  filter: invert(1);
+}
+
+.carousel-inner {
+  border-radius: 12px;
+  background-color: #f0f2f5;
+  padding: 8px;
+}
+
+.carousel-item img {
+  border-radius: 12px;
+}
+
+/* Modal Attribute Box */
+.attributes {
+  background-color: #eaf4ff;
+  padding: 10px;
+  border-left: 4px solid #0074D9;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #003366;
+}
+
+/* Modern Filter Card */
+.filter-card {
+  background: linear-gradient(135deg, #0a0f1c, #1c2739);
+  border-radius: 16px;
+  color: white;
+  border: none;
+}
+
+.filter-title {
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: 1px;
+}
+
+.filter-section .form-check-label {
+  color: #e0e0e0;
+  font-size: 14px;
+}
+
+.filter-section .form-check-input:checked {
+  background-color: #0074D9;
+  border-color: #0074D9;
+}
+
+.filter-section .form-check-input {
+  cursor: pointer;
+}
+
+.filter-card input.form-control,
+.filter-card select.form-select {
+  background-color: #1c2739;
+  color: #fff;
+  border: 1px solid #344055;
+}
+
+.filter-card input.form-control::placeholder {
+  color: #aaa;
+}
+
+.filter-card input.form-control:focus,
+.filter-card select.form-select:focus {
+  border-color: #0074D9;
+  box-shadow: 0 0 5px rgba(0, 116, 217, 0.5);
+}
+
+.filter-card .btn-primary {
+  background: linear-gradient(90deg, #001f3f, #0074D9);
+  border: none;
+}
+
+.filter-card .btn-outline-secondary {
+  border: 1px solid #4c5a6a;
+  color: #ccc;
+}
+
+.filter-card .btn-outline-secondary:hover {
+  background-color: #344055;
+  color: white;
+}
+
+label.form-label.fw-semibold.text-uppercase.small.text-muted {
+  color: white !important;
+}
+
+/* ========== CART STYLES ========== */
+
+.cart-title {
+  color: #fff;
+  background: linear-gradient(90deg, #001f3f, #0074D9);
+  padding: 15px 20px;
+  border-radius: 12px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+#cartContent {
+  background-color: #101827;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.table {
+  background-color: #1f2b3a;
+  color: #e0e0e0;
+}
+
+.table thead th {
+  background-color: #0074D9;
+  color: white;
+  border: none;
+}
+
+.table tfoot th {
+  background-color: #0a0f1c;
+  border-top: 2px solid #0074D9;
+}
+
+.table td,
+.table th {
+  vertical-align: middle;
+}
+
+input.quantity-input {
+  background-color: #1c2739;
+  color: #fff;
+  border: 1px solid #344055;
+  text-align: center;
+}
+
+input.quantity-input:focus {
+  outline: none;
+  border-color: #0074D9;
+  box-shadow: 0 0 5px rgba(0, 116, 217, 0.5);
+}
+
+/* Delete Button */
+.delete-item {
+  background-color: #d9534f;
+  border: none;
+  color: white;
+}
+
+.delete-item:hover {
+  background-color: #c9302c;
+}
+
+/* Total Price Highlight */
+#total-price {
+  font-weight: bold;
+  color: #00ffae !important;
+}
+
+.text-end{
+  color: white !important;
+}
+
+/* ✅ Grün bei Erfolg */
+.button-added {
+  background: #28a745 !important; /* Bootstrap-success */
+  color: white !important;
+  border-color: #28a745 !important;
+  animation: fadeSuccess 0.3s ease-in-out;
+}
+
+/* ❌ Rot bei Fehler */
+.button-error {
+  background: #dc3545 !important; /* Bootstrap-danger */
+  color: white !important;
+  border-color: #dc3545 !important;
+  animation: fadeError 0.3s ease-in-out;
+}
+
+/* Schöner Skalierungs-Effekt */
+@keyframes fadeSuccess {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+@keyframes fadeError {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+

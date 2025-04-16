@@ -19,7 +19,7 @@ $(document).ready(function () {
         }
 
         $.ajax({
-            url: "/GamerHaven_WebShop/backend/api/api_guest.php?login",
+            url: "../../backend/api/api_guest.php?login",
             method: "POST",
             dataType: "json",
             contentType: "application/json",

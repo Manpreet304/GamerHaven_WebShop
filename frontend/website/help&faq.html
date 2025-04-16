@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Help & FAQ - GamerHaven</title>
-  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="../css/navbar.css" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" />
 </head>
@@ -13,108 +13,152 @@
   <!-- NAVBAR -->
   <div id="navbar-placeholder"></div>
 
-  <!-- CONTENT -->
+  <!-- PAGE CONTENT -->
   <div class="container mt-5">
-    <h1 class="mb-4">Help & FAQ</h1>
+    <div class="text-center mb-4">
+      <h1>Help & FAQ</h1>
+      <p class="text-muted">Everything you need to know about shopping with GamerHaven</p>
+    </div>
 
     <div class="card p-4 shadow-sm">
-      <p>Welcome to the GamerHaven Help Center! Below you'll find answers to the most frequently asked questions.</p>
+      <p><i class="bi bi-info-circle-fill text-primary me-2"></i>Welcome to the GamerHaven Help Center! Below you'll find answers to the most relevant questions about your shopping experience.</p>
 
       <div class="accordion mt-4" id="faqAccordion">
 
         <!-- Question 1 -->
         <div class="accordion-item">
-          <h2 class="accordion-header" id="headingOne">
-            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1" aria-expanded="true">
-              How do I place an order?
+          <h2 class="accordion-header" id="heading1">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+              Do I need an account to place an order?
             </button>
           </h2>
           <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
             <div class="accordion-body">
-              To place an order, simply browse our shop, add items to your cart, and proceed to checkout. You’ll need to log in or register to complete your purchase.
+              Yes, an account is required to place orders, manage your shopping cart, track previous orders, and access personalized features.
             </div>
           </div>
         </div>
 
         <!-- Question 2 -->
         <div class="accordion-item">
-          <h2 class="accordion-header" id="headingTwo">
+          <h2 class="accordion-header" id="heading2">
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
-              What payment methods are accepted?
+              How can I save my login securely?
             </button>
           </h2>
           <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
             <div class="accordion-body">
-              We accept all major credit cards (Visa, MasterCard, American Express), PayPal, and Klarna for your convenience.
+              You can check "Remember me" during login. This securely stores a cookie so you're logged in even after restarting the browser — unless you manually log out.
             </div>
           </div>
         </div>
 
         <!-- Question 3 -->
         <div class="accordion-item">
-          <h2 class="accordion-header" id="headingThree">
+          <h2 class="accordion-header" id="heading3">
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
-              How can I track my order?
+              How does the shopping cart work without page reloads?
             </button>
           </h2>
           <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
             <div class="accordion-body">
-              After your order has been shipped, you’ll receive an email with a tracking number and a link to track your delivery.
+              Thanks to AJAX, you can add items to your cart instantly — no page reload is needed. Your cart icon updates live while you browse.
             </div>
           </div>
         </div>
 
         <!-- Question 4 -->
         <div class="accordion-item">
-          <h2 class="accordion-header" id="headingFour">
+          <h2 class="accordion-header" id="heading4">
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
-              Can I return or exchange a product?
+              Can I pay with a voucher code?
             </button>
           </h2>
           <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
             <div class="accordion-body">
-              Yes, returns and exchanges are accepted within 14 days of delivery. Please visit our <a href="#">Returns Policy</a> page for more details.
+              Yes! Enter your voucher code during checkout to reduce your total amount. Partial voucher usage is supported and the remaining balance is saved for later.
             </div>
           </div>
         </div>
 
         <!-- Question 5 -->
         <div class="accordion-item">
-          <h2 class="accordion-header" id="headingFive">
+          <h2 class="accordion-header" id="heading5">
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
-              Need more help?
+              What happens if I forget to log in before ordering?
             </button>
           </h2>
           <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
             <div class="accordion-body">
-              You can reach our support team via email at <a href="mailto:support@gamerhaven.com">support@gamerhaven.com</a> or call us at <a href="tel:+4313334077">+43 1 333 40 77</a>.
+              No problem! Your cart is stored temporarily. Once you log in, your products will remain in your cart, ready for checkout.
+            </div>
+          </div>
+        </div>
+
+        <!-- Question 6 -->
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="heading6">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq6">
+              Where can I manage my account and orders?
+            </button>
+          </h2>
+          <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">
+              Visit "My Account" to update your personal data, add payment methods, and review all your past orders. You can also download invoices there.
+            </div>
+          </div>
+        </div>
+
+        <!-- Question 7 -->
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="heading7">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq7">
+              What if my order data is incomplete?
+            </button>
+          </h2>
+          <div id="faq7" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">
+              If important information is missing, your order cannot be processed and the products will remain in your cart. You can complete the missing data later.
+            </div>
+          </div>
+        </div>
+
+        <!-- Question 8 -->
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="heading8">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq8">
+              Can I build my own frontend for GamerHaven?
+            </button>
+          </h2>
+          <div id="faq8" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">
+              Yes. GamerHaven uses a JSON-based API structure, so you can connect custom apps or mobile frontends (like Android/iOS) to the same backend.
             </div>
           </div>
         </div>
 
       </div>
     </div>
-    
-    <script>
-      type="text/javascript"
-      var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-      (function(){
-      var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-      s1.async=true;
-      s1.src='https://embed.tawk.to/67e072afb7a41119109d0719/1in2bvv84';
-      s1.charset='UTF-8';
-      s1.setAttribute('crossorigin','*');
-      s0.parentNode.insertBefore(s1,s0);
-      })();
-    </script>
+  </div>
 
   <!-- FOOTER -->
-  <div id="footer-placeholder"></div>
+  <div id="footer-placeholder" class="mt-5"></div>
 
   <!-- SCRIPTS -->
   <script src="../js/includer.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  
+  <!-- Tawk Chat Widget -->
+  <script type="text/javascript">
+    var Tawk_API = Tawk_API || {}, Tawk_LoadStart = new Date();
+    (function () {
+      var s1 = document.createElement("script"), s0 = document.getElementsByTagName("script")[0];
+      s1.async = true;
+      s1.src = 'https://embed.tawk.to/67e072afb7a41119109d0719/1in2bvv84';
+      s1.charset = 'UTF-8';
+      s1.setAttribute('crossorigin', '*');
+      s0.parentNode.insertBefore(s1, s0);
+    })();
+  </script>
 </body>
 </html>
