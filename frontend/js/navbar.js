@@ -51,7 +51,7 @@ function updateUserNavbar(user) {
         links += `
             <li class="nav-item">
                 <a class="nav-link" href="../website/account.html" title="My Account">
-                    <i class="bi bi-person-circle fs-5"></i>
+                    <i class="bi bi-person-circle fs-5"></i> My Account
                 </a>
             </li>`;
     } else if (user.role === "admin") {
@@ -69,18 +69,20 @@ function updateUserNavbar(user) {
             </li>`;
     }
 
+    // Für eingeloggte Benutzer oder Admin - "Welcome" und Logout
     links += `
         <li class="nav-item">
             <span class="nav-link">Welcome, ${user.username}</span>
         </li>
         <li class="nav-item">
             <a class="nav-link logout-link text-danger" href="#" title="Logout">
-                <i class="bi bi-power fs-5"></i>
+                <i class="bi bi-power fs-5"></i> Logout
             </a>
         </li>`;
 
     container.outerHTML = links;
 
+    // Logout-Eventlistener
     document.querySelectorAll(".logout-link").forEach(link => {
         link.addEventListener("click", (e) => {
             e.preventDefault();
@@ -99,7 +101,7 @@ function setupCartClickInterceptor() {
     $(document).on("click", "#nav-cart-link", function (e) {
         e.preventDefault();
 
-        // Prüfen, ob user geladen wurde
+        // Prüfen, ob der Benutzer eingeloggt ist
         if (window.currentUser && window.currentUser.loggedIn) {
             window.location.href = "cart.html";
         } else {
