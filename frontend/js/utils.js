@@ -1,17 +1,19 @@
 function showMessage(type, text, target = "#messageBox") {
-    const existingAlert = $(target).find(".alert");
-    if (existingAlert.length) {
-        existingAlert.alert("close");  // Schließt den vorherigen Alert
-    }
     const alertClass = type === "success" ? "alert-success" : "alert-danger";
-    const message = `
+    const message = $(`
         <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
             ${text}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>`;
-    $(target).html(message);
+        </div>
+    `);
+
+    const container = $(target);
+    container.find(".alert").alert("close");
+
+    container.empty().append(message); 
+
     setTimeout(() => {
-        $(target + " .alert").alert("close");
+        container.find(".alert").alert("close");
     }, 5000);
 }
 
@@ -36,5 +38,12 @@ function setFieldValid(selector) {
 function applyFieldErrors(errors) {
     Object.entries(errors).forEach(([field, message]) => {
         setFieldError(`#${field}`, message);
+    });
+}
+
+//wird in cart.html und homepage.html gebraucht und gibt fehler wenn in cart.js ist und products.js
+function updateCartCount() {
+    $.get("../../backend/api/api_cart.php?cartCount", function (data) {
+        $("#cart-count").text(data.count || 0);
     });
 }
