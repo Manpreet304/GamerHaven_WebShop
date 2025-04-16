@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Erstellungszeit: 15. Apr 2025 um 20:21
+-- Erstellungszeit: 16. Apr 2025 um 13:01
 -- Server-Version: 10.4.32-MariaDB
 -- PHP-Version: 8.2.12
 
@@ -40,17 +40,63 @@ CREATE TABLE `cart` (
 --
 
 INSERT INTO `cart` (`id`, `user_id`, `product_id`, `quantity`, `created_at`) VALUES
-(1, 1, 1, 1, '2025-04-14 11:05:13'),
-(2, 1, 4, 1, '2025-04-14 11:05:27'),
-(3, 1, 2, 1, '2025-04-14 11:47:02'),
-(4, 1, 3, 1, '2025-04-14 11:57:00'),
-(5, 1, 5, 1, '2025-04-14 12:28:12'),
-(6, 1, 19, 1, '2025-04-14 19:59:08'),
-(7, 1, 17, 1, '2025-04-14 20:06:47'),
 (11, 2, 14, 1, '2025-04-15 15:42:11'),
 (12, 2, 7, 1, '2025-04-15 15:45:46'),
 (13, 2, 2, 1, '2025-04-15 15:54:49'),
 (14, 2, 5, 1, '2025-04-15 15:59:46');
+
+-- --------------------------------------------------------
+
+--
+-- Tabellenstruktur für Tabelle `orders`
+--
+
+CREATE TABLE `orders` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `payment_id` int(11) NOT NULL,
+  `voucher_id` int(11) DEFAULT NULL,
+  `total_amount` decimal(10,2) NOT NULL,
+  `shipping_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Daten für Tabelle `orders`
+--
+
+INSERT INTO `orders` (`id`, `user_id`, `payment_id`, `voucher_id`, `total_amount`, `shipping_amount`, `created_at`) VALUES
+(1, 1, 8, NULL, 2029.92, 0.00, '2025-04-15 20:18:46'),
+(2, 1, 8, NULL, 209.98, 0.00, '2025-04-16 07:26:08');
+
+-- --------------------------------------------------------
+
+--
+-- Tabellenstruktur für Tabelle `order_items`
+--
+
+CREATE TABLE `order_items` (
+  `id` int(11) NOT NULL,
+  `order_id` int(11) NOT NULL,
+  `product_id` int(11) NOT NULL,
+  `quantity` int(11) NOT NULL,
+  `price` decimal(10,2) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Daten für Tabelle `order_items`
+--
+
+INSERT INTO `order_items` (`id`, `order_id`, `product_id`, `quantity`, `price`) VALUES
+(1, 1, 1, 1, 129.99),
+(2, 1, 4, 2, 199.99),
+(3, 1, 2, 1, 79.99),
+(4, 1, 3, 1, 89.99),
+(5, 1, 5, 1, 129.99),
+(6, 1, 19, 1, 899.99),
+(7, 1, 17, 1, 299.99),
+(8, 2, 1, 1, 129.99),
+(9, 2, 2, 1, 79.99);
 
 -- --------------------------------------------------------
 
@@ -172,9 +218,32 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `firstname`, `lastname`, `email`, `username`, `password`, `created_at`, `role`, `address`, `zip_code`, `city`, `country`, `salutation`, `remember_token`) VALUES
 (1, 'Manpreet', 'Misson', 'wi23b122@technikum-wien.at', 'wi23b122', '$2y$10$vzakoxssTey6HGuUuFebzuwczlWkrwxouDb00ukuhI6dKTRntsCW2', '2025-04-11 18:44:57', 'admin', 'Höchstädtplatz 6', '1200', 'Vienna', 'Austria', 'Mr', NULL),
-(2, 'Felix', 'Dallinger', 'wi23b007@technikum-wien.at', 'wi23b007', '$2y$10$xBHLl.7jxnPvFNgK8MvxK.tdOd/VJU6Z3t1ZaPLBSViTnubmGIsJe', '2025-04-11 19:23:15', 'user', 'Höchstädtplatz 6', '1200', 'Vienna', 'Austria', 'Mr', '1c219083682f7cde181db2ee9014d03f'),
+(2, 'Felix', 'Dallinger', 'wi23b007@technikum-wien.at', 'wi23b007', '$2y$10$xBHLl.7jxnPvFNgK8MvxK.tdOd/VJU6Z3t1ZaPLBSViTnubmGIsJe', '2025-04-11 19:23:15', 'user', 'Höchstädtplatz 6', '1200', 'Vienna', 'Austria', 'Mr', NULL),
 (3, 'Timothy', 'Gregorian', 'wi23b027@technikum-wien.at', 'wi23b027', '$2y$10$xHC/LY4bjQ3wvT2drUg7TuJUbTMvNI82EJeRQmEuNNnNlHepYrcU6', '2025-04-12 15:58:30', 'user', 'Höchstädtplatz 6', '1200', 'Vienna', 'Austria', 'Mr', NULL),
 (4, 'Philip', 'Zeisler', 'wi23b107@technikum-wien.at', 'wi23b107', '$2y$10$MlujnEmWYt46IwkcSXIFZO9FBnoMFjsdVBKMV1vbYsMpJ6z4lrf4m', '2025-04-12 16:12:26', 'user', 'Höchstädtplatz 6', '1200', 'Vienna', 'Austria', 'Mr', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Tabellenstruktur für Tabelle `vouchers`
+--
+
+CREATE TABLE `vouchers` (
+  `id` int(11) NOT NULL,
+  `code` varchar(50) NOT NULL,
+  `value` decimal(10,2) NOT NULL,
+  `remaining_value` decimal(10,2) NOT NULL,
+  `is_active` tinyint(1) DEFAULT 1,
+  `expires_at` datetime DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Daten für Tabelle `vouchers`
+--
+
+INSERT INTO `vouchers` (`id`, `code`, `value`, `remaining_value`, `is_active`, `expires_at`, `created_at`) VALUES
+(1, 'GHWELCOME10', 10.00, 10.00, 1, '2025-12-31 23:59:59', '2025-04-15 20:22:23');
 
 --
 -- Indizes der exportierten Tabellen
@@ -187,6 +256,23 @@ ALTER TABLE `cart`
   ADD PRIMARY KEY (`id`),
   ADD KEY `fk_cart_user` (`user_id`),
   ADD KEY `fk_cart_product` (`product_id`);
+
+--
+-- Indizes für die Tabelle `orders`
+--
+ALTER TABLE `orders`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `payment_id` (`payment_id`),
+  ADD KEY `voucher_id` (`voucher_id`);
+
+--
+-- Indizes für die Tabelle `order_items`
+--
+ALTER TABLE `order_items`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `order_id` (`order_id`),
+  ADD KEY `product_id` (`product_id`);
 
 --
 -- Indizes für die Tabelle `payments`
@@ -218,6 +304,13 @@ ALTER TABLE `users`
   ADD UNIQUE KEY `username` (`username`);
 
 --
+-- Indizes für die Tabelle `vouchers`
+--
+ALTER TABLE `vouchers`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `code` (`code`);
+
+--
 -- AUTO_INCREMENT für exportierte Tabellen
 --
 
@@ -225,7 +318,19 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT für Tabelle `cart`
 --
 ALTER TABLE `cart`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+
+--
+-- AUTO_INCREMENT für Tabelle `orders`
+--
+ALTER TABLE `orders`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT für Tabelle `order_items`
+--
+ALTER TABLE `order_items`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT für Tabelle `payments`
@@ -252,6 +357,12 @@ ALTER TABLE `users`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
+-- AUTO_INCREMENT für Tabelle `vouchers`
+--
+ALTER TABLE `vouchers`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- Constraints der exportierten Tabellen
 --
 
@@ -261,6 +372,21 @@ ALTER TABLE `users`
 ALTER TABLE `cart`
   ADD CONSTRAINT `fk_cart_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_cart_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints der Tabelle `orders`
+--
+ALTER TABLE `orders`
+  ADD CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `orders_ibfk_2` FOREIGN KEY (`payment_id`) REFERENCES `payments` (`id`),
+  ADD CONSTRAINT `orders_ibfk_3` FOREIGN KEY (`voucher_id`) REFERENCES `vouchers` (`id`);
+
+--
+-- Constraints der Tabelle `order_items`
+--
+ALTER TABLE `order_items`
+  ADD CONSTRAINT `order_items_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`),
+  ADD CONSTRAINT `order_items_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
 
 --
 -- Constraints der Tabelle `payments`

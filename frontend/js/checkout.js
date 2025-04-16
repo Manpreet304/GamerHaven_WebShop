@@ -78,7 +78,7 @@ function updatePriceDisplay(subtotal, shipping, total) {
 }
 
 function loadPaymentMethods() {
-    $.get("/GamerHaven_WebShop/backend/api/api_guest.php?me", function (user) {
+    $.get("../../backend/api/api_guest.php?me", function (user) {
         const select = $("#paymentMethod");
         select.empty().append(`<option value="">Choose payment method</option>`);
 

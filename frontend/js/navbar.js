@@ -9,13 +9,19 @@ function loadNavbar() {
             if (!template) return;
 
             const navbarPlaceholder = document.getElementById("navbar-placeholder");
-            navbarPlaceholder.innerHTML = ""; // leeren
+            navbarPlaceholder.innerHTML = "";
             navbarPlaceholder.appendChild(template.content.cloneNode(true));
+
+            // Eventlistener für Cart-Link NACH dem Einfügen setzen
+            setupCartClickInterceptor();
 
             // Danach User-Daten laden
             fetch("../../backend/api/api_guest.php?me")
                 .then(res => res.json())
-                .then(user => updateUserNavbar(user))
+                .then(user => {
+                    updateUserNavbar(user);
+                    window.currentUser = user; // Global für Cart-Intercept
+                })
                 .catch(err => console.error("User fetch failed", err));
         })
         .catch(error => console.error("Navbar loading failed", error));
@@ -86,6 +92,19 @@ function updateUserNavbar(user) {
                 if (data.success) location.reload();
             });
         });
+    });
+}
+
+function setupCartClickInterceptor() {
+    $(document).on("click", "#nav-cart-link", function (e) {
+        e.preventDefault();
+
+        // Prüfen, ob user geladen wurde
+        if (window.currentUser && window.currentUser.loggedIn) {
+            window.location.href = "cart.html";
+        } else {
+            showMessage("danger", "Please login to use the cart.");
+        }
     });
 }
 
