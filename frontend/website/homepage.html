@@ -83,72 +83,83 @@
   <!-- Modal placeholders -->
   <div id="modals-container"></div>
 
-  <!-- Product Card Template -->
-  <template id="product-template">
-    <div class="col-md-4">
-      <div class="card h-100 shadow-sm product-card">
-        <div class="img-wrapper text-center">
-          <img class="product-image" />
+ <!-- Product Card Template -->
+<template id="product-template">
+  <div class="col-md-4">
+    <div class="card h-100 shadow-sm product-card">
+      <div class="img-wrapper text-center">
+        <img class="product-image" />
+      </div>
+      <div class="card-body text-center">
+        <h5 class="card-title"></h5>
+        <p class="card-meta text-muted"></p>
+        <p class="fw-bold product-price"></p>
+        <div class="rating mb-2"></div>
+
+        <!-- Quantity Input -->
+        <div class="mb-2">
+          <label class="form-label d-block small mb-1">Quantity</label>
+          <input type="number" class="form-control quantity-input" value="1" min="1" max="99" />
         </div>
-        <div class="card-body text-center">
-          <h5 class="card-title"></h5>
-          <p class="card-meta text-muted"></p>
-          <p class="fw-bold product-price"></p>
-          <div class="rating mb-2"></div>
-          <button class="btn btn-add-to-cart w-100 add-to-cart">
+
+        <!-- Button Group -->
+        <div class="d-flex gap-2 mt-2">
+          <button class="btn btn-add-to-cart flex-fill add-to-cart">
             <i class="bi bi-cart-plus me-1"></i> Add to Cart
           </button>
-          <button class="btn btn-view-details w-100 view-details">
+          <button class="btn btn-view-details flex-fill view-details">
             View Details
           </button>
         </div>
       </div>
     </div>
-  </template>
+  </div>
+</template>
 
-  <!-- Product Modal Template -->
-  <template id="product-modal-template">
-    <div class="modal fade product-modal" tabindex="-1">
-      <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title"></h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body">
-            <div class="row g-3">
-              <div class="col-md-6">
-                <div class="carousel slide product-carousel" data-bs-ride="carousel">
-                  <div class="carousel-inner"></div>
-                  <button class="carousel-control-prev" type="button" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon"></span>
-                  </button>
-                  <button class="carousel-control-next" type="button" data-bs-slide="next">
-                    <span class="carousel-control-next-icon"></span>
-                  </button>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <p class="product-description"></p>
-                <p class="product-price-text"></p>
-                <p class="product-stock"></p>
-                <p class="product-category"></p>
-                <p class="product-rating"></p>
-                <div class="mb-3">
-                  <label for="quantity" class="form-label">Quantity</label>
-                  <input type="number" class="form-control quantity-input" value="1" min="1" max="99" />
-                </div>
-                <div class="attributes"></div>
-                <button class="btn btn-add-to-cart w-100 add-to-cart">
-                  <i class="bi bi-cart-plus me-1"></i> Add to Cart
+<!-- Product Modal Template -->
+<template id="product-modal-template">
+  <div class="modal fade product-modal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="carousel slide product-carousel" data-bs-ride="carousel">
+                <div class="carousel-inner"></div>
+                <button class="carousel-control-prev" type="button" data-bs-slide="prev">
+                  <span class="carousel-control-prev-icon"></span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-slide="next">
+                  <span class="carousel-control-next-icon"></span>
                 </button>
               </div>
+            </div>
+            <div class="col-md-6">
+              <p class="product-description"></p>
+              <p class="product-price-text"></p>
+              <p class="product-stock"></p>
+              <p class="product-category"></p>
+              <p class="product-rating"></p>
+              <div class="mb-3">
+                <label class="form-label">Quantity</label>
+                <input type="number" class="form-control quantity-input" value="1" min="1" max="99" />
+              </div>
+              <div class="attributes"></div>
+              <button class="btn btn-add-to-cart w-100 add-to-cart">
+                <i class="bi bi-cart-plus me-1"></i> Add to Cart
+              </button>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </template>
+  </div>
+</template>
+
 
   <!-- Scripts -->
   <script src="../js/messages.js"></script>

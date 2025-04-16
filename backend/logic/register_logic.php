@@ -1,8 +1,4 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
 class RegisterLogic {
     public function validate(User $user, string $password2, $conn): true|array {
         $errors = [];
@@ -25,34 +21,12 @@ class RegisterLogic {
             $errors["email"] = "Invalid email format.";
         }
 
-        if (strlen($user->username) < 5) {
-            $errors["username"] = "Username must be at least 5 characters long.";
-        } else {
-            $sql = "SELECT id FROM users WHERE username = ?";
-            $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "s", $user->username);
-            mysqli_stmt_execute($stmt);
-            mysqli_stmt_store_result($stmt);
-
-            if (mysqli_stmt_num_rows($stmt) > 0) {
-                $errors["username"] = "Username already taken.";
-            }
-        }
-
-        // Zahlungsdaten prüfen
-        if ($user->payment_method === "Credit Card") {
-            if (empty($user->card_number)) $errors["card_number"] = "Card number is required.";
-            if (empty($user->csv)) $errors["csv"] = "CSV is required.";
-        }
-
-        if ($user->payment_method === "PayPal") {
-            if (empty($user->paypal_email)) $errors["paypal_email"] = "PayPal email is required.";
-            if (empty($user->paypal_username)) $errors["paypal_username"] = "PayPal username is required.";
-        }
-
-        if ($user->payment_method === "Bank Transfer") {
-            if (empty($user->iban)) $errors["iban"] = "IBAN is required.";
-            if (empty($user->bic)) $errors["bic"] = "BIC is required.";
+        $stmt = $conn->prepare("SELECT id FROM users WHERE username = ?");
+        $stmt->bind_param("s", $user->username);
+        $stmt->execute();
+        $stmt->store_result();
+        if ($stmt->num_rows > 0) {
+            $errors["username"] = "Username already taken.";
         }
 
         return empty($errors) ? true : $errors;
@@ -62,15 +36,13 @@ class RegisterLogic {
         $conn->begin_transaction();
 
         try {
-            $sqlUser = "INSERT INTO users 
-                (salutation, firstname, lastname, address, zip_code, city, email, username, password, country, created_at, role)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'user')";
+            $sql = "INSERT INTO users (salutation, firstname, lastname, address, zip_code, city, email, username, password, country, created_at, role)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'user')";
 
-            $stmtUser = mysqli_prepare($conn, $sqlUser);
-            $createdAt = date("Y-m-d H:i:s");
-            $hashedPassword = password_hash($user->password, PASSWORD_DEFAULT);
+            $stmt = $conn->prepare($sql);
+            $hashed = password_hash($user->password, PASSWORD_DEFAULT);
 
-            mysqli_stmt_bind_param($stmtUser, "sssssssssss",
+            $stmt->bind_param("ssssssssss",
                 $user->salutation,
                 $user->first_name,
                 $user->last_name,
@@ -79,48 +51,30 @@ class RegisterLogic {
                 $user->city,
                 $user->email,
                 $user->username,
-                $hashedPassword,
-                $user->country,
-                $createdAt
+                $hashed,
+                $user->country
             );
-
-            if (!mysqli_stmt_execute($stmtUser)) {
-                throw new Exception("Failed to save user");
-            }
-
+            $stmt->execute();
             $userId = $conn->insert_id;
 
-            $card_number     = $user->payment_method === "Credit Card"   ? $user->card_number    : null;
-            $csv             = $user->payment_method === "Credit Card"   ? $user->csv            : null;
-            $paypal_email    = $user->payment_method === "PayPal"        ? $user->paypal_email   : null;
-            $paypal_username = $user->payment_method === "PayPal"        ? $user->paypal_username: null;
-            $iban            = $user->payment_method === "Bank Transfer" ? $user->iban           : null;
-            $bic             = $user->payment_method === "Bank Transfer" ? $user->bic            : null;
+            $sql2 = "INSERT INTO payments (user_id, method, card_number, csv, paypal_email, paypal_username, iban, bic, created_at)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())";
 
-            $sqlPayment = "INSERT INTO payments 
-                (user_id, method, card_number, csv, paypal_email, paypal_username, iban, bic, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-            $stmtPayment = mysqli_prepare($conn, $sqlPayment);
-            mysqli_stmt_bind_param($stmtPayment, "issssssss",
+            $stmt2 = $conn->prepare($sql2);
+            $stmt2->bind_param("isssssss",
                 $userId,
                 $user->payment_method,
-                $card_number,
-                $csv,
-                $paypal_email,
-                $paypal_username,
-                $iban,
-                $bic,
-                $createdAt
+                $user->card_number,
+                $user->csv,
+                $user->paypal_email,
+                $user->paypal_username,
+                $user->iban,
+                $user->bic
             );
-
-            if (!mysqli_stmt_execute($stmtPayment)) {
-                throw new Exception("Failed to save payment");
-            }
+            $stmt2->execute();
 
             $conn->commit();
             return true;
-
         } catch (Exception $e) {
             $conn->rollback();
             return false;

@@ -15,7 +15,7 @@ class OrderController {
             $success = $this->logic->createOrder($userId, $paymentId, $voucher, $conn);
             return [
                 "status" => 200,
-                "body" => ["success" => true]
+                "body" => ["success" => $success]
             ];
         } catch (Exception $e) {
             return [

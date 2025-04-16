@@ -21,9 +21,7 @@
     <div class="card shadow-sm mb-4">
       <div class="card-body">
         <h5 class="card-title"><i class="bi bi-person-lines-fill me-2"></i>Account Information</h5>
-        <div id="account-info" class="mb-3">
-          <!-- Account info will be loaded here -->
-        </div>
+        <div id="account-info" class="mb-3"></div>
         <button id="edit-account-btn" class="btn btn-primary">
           <i class="bi bi-pencil-square me-1"></i>Edit Account
         </button>
@@ -45,14 +43,75 @@
     <div class="card shadow-sm mb-4">
       <div class="card-body">
         <h5 class="card-title"><i class="bi bi-bag-check me-2"></i>Your Orders</h5>
-        <div id="order-list">
-          <!-- Orders will be dynamically loaded here -->
-        </div>
+        <div id="order-list"></div>
       </div>
     </div>
   </div>
 
   <div id="footer-placeholder" class="mt-5"></div>
+
+  <!-- TEMPLATES -->
+  <template id="account-edit-template">
+    <form id="edit-account-form">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">First Name</label>
+          <input type="text" id="first_name" class="form-control" required />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Last Name</label>
+          <input type="text" id="last_name" class="form-control" required />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Email</label>
+          <input type="email" id="email" class="form-control" required />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Password (confirm changes)</label>
+          <input type="password" id="password" class="form-control" required />
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">Address</label>
+          <input type="text" id="address" class="form-control" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Zip Code</label>
+          <input type="text" id="zip_code" class="form-control" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">City</label>
+          <input type="text" id="city" class="form-control" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Country</label>
+          <input type="text" id="country" class="form-control" />
+        </div>
+      </div>
+      <div class="mt-4">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-save"></i> Save Changes
+        </button>
+      </div>
+    </form>
+  </template>
+
+  <template id="add-payment-template">
+    <form id="add-payment-method-form">
+      <div class="mb-3">
+        <label class="form-label">Payment Method</label>
+        <select id="new-payment-method" class="form-select" required>
+          <option value="">Choose...</option>
+          <option value="Credit Card">Credit Card</option>
+          <option value="PayPal">PayPal</option>
+          <option value="Bank Transfer">Bank Transfer</option>
+        </select>
+      </div>
+      <!-- Optional: Dynamische Felder je nach Methode -->
+      <button type="submit" class="btn btn-success">
+        <i class="bi bi-plus-circle"></i> Add Method
+      </button>
+    </form>
+  </template>
 
   <!-- Scripts -->
   <script src="../js/includer.js"></script>

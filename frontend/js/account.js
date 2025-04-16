@@ -3,13 +3,8 @@ $(document).ready(function () {
     loadPaymentMethods();
     loadOrders();
 
-    $("#edit-account-btn").on("click", function () {
-        openAccountEditForm();
-    });
-
-    $("#add-payment-method-btn").on("click", function () {
-        openAddPaymentMethodForm();
-    });
+    $("#edit-account-btn").on("click", openAccountEditForm);
+    $("#add-payment-method-btn").on("click", openAddPaymentMethodForm);
 
     $(document).on("submit", "#edit-account-form", function (e) {
         e.preventDefault();
@@ -24,21 +19,20 @@ $(document).ready(function () {
 
 function loadAccountInfo() {
     $.get("../../backend/api/api_guest.php?me", function(user) {
-        $("#account-info").html(`
+        const info = `
             <p><strong>Name:</strong> ${user.first_name} ${user.last_name}</p>
             <p><strong>Email:</strong> ${user.email}</p>
-            <p><strong>Address:</strong> ${user.address}, ${user.zip_code} ${user.city}, ${user.country}</p>
-        `);
+            <p><strong>Address:</strong> ${user.address}, ${user.zip_code} ${user.city}, ${user.country}</p>`;
+        $("#account-info").html(info);
     });
 }
 
 function loadPaymentMethods() {
     $.get("../../backend/api/api_guest.php?me", function (user) {
         const container = $("#payment-methods").empty();
-
-        if (user.payments && user.payments.length) {
+        if (user.payments?.length) {
             user.payments.forEach(p => {
-                container.append(`
+                const html = `
                     <div class="mb-3">
                         <p><strong>Method:</strong> ${p.method}</p>
                         ${p.method === "Credit Card" ? `<p><strong>Card:</strong> **** ${p.last_digits}</p>` : ""}
@@ -47,8 +41,8 @@ function loadPaymentMethods() {
                         <button class="btn btn-sm btn-danger" onclick="removePaymentMethod(${p.id})">
                           <i class="bi bi-trash"></i> Remove
                         </button>
-                    </div>
-                `);
+                    </div>`;
+                container.append(html);
             });
         } else {
             container.html("<p>No payment methods found.</p>");
@@ -59,14 +53,13 @@ function loadPaymentMethods() {
 function loadOrders() {
     $.get("../../backend/api/api_order.php?orders", function (orders) {
         const container = $("#order-list").empty();
-
         if (!orders.length) {
             container.html("<p>You have no orders.</p>");
             return;
         }
 
         orders.forEach(order => {
-            container.append(`
+            const html = `
                 <div class="border rounded p-3 mb-3 bg-light">
                     <h6>Order #${order.id} - <small>${order.created_at}</small></h6>
                     <p><strong>Total:</strong> €${order.total_amount}</p>
@@ -77,56 +70,31 @@ function loadOrders() {
                     <button class="btn btn-primary btn-sm" onclick="downloadInvoice(${order.id})">
                       <i class="bi bi-printer"></i> Download Invoice
                     </button>
-                </div>
-            `);
+                </div>`;
+            container.append(html);
         });
     });
 }
 
 function openAccountEditForm() {
     $.get("../../backend/api/api_guest.php?me", function(user) {
-        $("#account-info").html(`
-            <form id="edit-account-form">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label for="first_name" class="form-label">First Name</label>
-                        <input type="text" id="first_name" class="form-control" value="${user.first_name}" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="last_name" class="form-label">Last Name</label>
-                        <input type="text" id="last_name" class="form-control" value="${user.last_name}" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" id="email" class="form-control" value="${user.email}" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="password" class="form-label">Password</label>
-                        <input type="password" id="password" class="form-control" placeholder="Enter password to confirm changes" required>
-                    </div>
-                    <div class="col-md-12">
-                        <label for="address" class="form-label">Address</label>
-                        <input type="text" id="address" class="form-control" value="${user.address}">
-                    </div>
-                    <div class="col-md-4">
-                        <label for="zip_code" class="form-label">Zip Code</label>
-                        <input type="text" id="zip_code" class="form-control" value="${user.zip_code}">
-                    </div>
-                    <div class="col-md-4">
-                        <label for="city" class="form-label">City</label>
-                        <input type="text" id="city" class="form-control" value="${user.city}">
-                    </div>
-                    <div class="col-md-4">
-                        <label for="country" class="form-label">Country</label>
-                        <input type="text" id="country" class="form-control" value="${user.country}">
-                    </div>
-                </div>
-                <div class="mt-4">
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Save Changes</button>
-                </div>
-            </form>
-        `);
+        const template = document.getElementById("account-edit-template");
+        const clone = template.content.cloneNode(true);
+        clone.querySelector("#first_name").value = user.first_name;
+        clone.querySelector("#last_name").value = user.last_name;
+        clone.querySelector("#email").value = user.email;
+        clone.querySelector("#address").value = user.address;
+        clone.querySelector("#zip_code").value = user.zip_code;
+        clone.querySelector("#city").value = user.city;
+        clone.querySelector("#country").value = user.country;
+        $("#account-info").html(clone);
     });
+}
+
+function openAddPaymentMethodForm() {
+    const template = document.getElementById("add-payment-template");
+    const clone = template.content.cloneNode(true);
+    $("#payment-methods").html(clone);
 }
 
 function updateAccountInfo() {
