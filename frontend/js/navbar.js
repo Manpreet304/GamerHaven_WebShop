@@ -12,10 +12,11 @@ function loadNavbar() {
             document.getElementById("navbar-placeholder").appendChild(template.content.cloneNode(true));
 
             setupCartClickInterceptor(); // Nur eingeloggte User → cart.html
-            fetchUserData();
+            fetchUserData();             // 🔁 Userdaten laden → updateNavbar
         })
         .catch(err => console.error("Navbar loading failed", err));
 }
+
 
 function fetchUserData() {
     fetch("../../backend/api/api_guest.php?me")
@@ -23,9 +24,21 @@ function fetchUserData() {
         .then(user => {
             window.currentUser = user;
             updateUserNavbar(user);
+
+            // ✅ Sicherstellen, dass cart-count da ist und user eingeloggt
+            if (user && user.loggedIn) {
+                const cartCountElement = document.getElementById("cart-count");
+                if (cartCountElement) {
+                    updateCartCount(); // ✅ jetzt ist cart-count sicher im DOM!
+                } else {
+                    console.warn("Cartcount failed to load!");
+                }
+            }
+            
         })
         .catch(err => console.error("User fetch failed", err));
 }
+
 
 function updateUserNavbar(user) {
     const container = document.getElementById("user-dropdown-container");
