@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 class AccountLogic {
     public function updateUser(int $userId, array $data, $conn): bool {
         $sql = "UPDATE users
@@ -28,7 +30,7 @@ class AccountLogic {
     }
 
     public function changePassword(int $userId, array $data, $conn) {
-        // verify old password
+        // verify old
         $stmt = $conn->prepare("SELECT password FROM users WHERE id = ?");
         $stmt->bind_param("i", $userId);
         $stmt->execute();
@@ -41,31 +43,6 @@ class AccountLogic {
         $upd = $conn->prepare("UPDATE users SET password = ? WHERE id = ?");
         $upd->bind_param("si", $newHash, $userId);
         return $upd->execute() ? true : "Could not update password.";
-    }
-
-    public function addPaymentMethod(int $userId, array $data, $conn): bool {
-        $sql = "INSERT INTO payments
-                (user_id, method, card_number, csv, paypal_email, paypal_username, iban, bic, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param(
-            "isssssss",
-            $userId,
-            $data["method"],
-            $data["card_number"]    ?? null,
-            $data["csv"]            ?? null,
-            $data["paypal_email"]   ?? null,
-            $data["paypal_username"]?? null,
-            $data["iban"]           ?? null,
-            $data["bic"]            ?? null
-        );
-        return $stmt->execute();
-    }
-
-    public function removePaymentMethod(int $paymentId, $conn): bool {
-        $stmt = $conn->prepare("DELETE FROM payments WHERE id = ?");
-        $stmt->bind_param("i", $paymentId);
-        return $stmt->execute();
     }
 
     public function getUserOrders(int $userId, $conn): array {

@@ -20,7 +20,9 @@
     <!-- Account Information -->
     <div class="card shadow-sm mb-4">
       <div class="card-body">
-        <h5 class="card-title"><i class="bi bi-person-lines-fill me-2"></i>Account Information</h5>
+        <h5 class="card-title">
+          <i class="bi bi-person-lines-fill me-2"></i>Account Information
+        </h5>
         <div id="account-info" class="mb-3"></div>
         <button id="edit-account-btn" class="btn btn-primary">
           <i class="bi bi-pencil-square me-1"></i>Edit Account
@@ -31,7 +33,14 @@
     <!-- Payment Methods -->
     <div class="card shadow-sm mb-4">
       <div class="card-body">
-        <h5 class="card-title"><i class="bi bi-credit-card me-2"></i>Payment Methods</h5>
+        <h5 class="card-title">
+          <i class="bi bi-credit-card me-2"></i>Payment Methods
+          <i
+            class="bi bi-info-circle-fill text-info ms-1"
+            data-bs-toggle="tooltip"
+            title="To remove a payment method, please contact support at info@gamerhaven.com">
+          </i>
+        </h5>
         <div id="payment-methods" class="mb-3"></div>
         <button id="add-payment-method-btn" class="btn btn-success">
           <i class="bi bi-plus-circle me-1"></i>Add Payment Method
@@ -42,7 +51,9 @@
     <!-- Your Orders -->
     <div class="card shadow-sm mb-4">
       <div class="card-body">
-        <h5 class="card-title"><i class="bi bi-bag-check me-2"></i>Your Orders</h5>
+        <h5 class="card-title">
+          <i class="bi bi-bag-check me-2"></i>Your Orders
+        </h5>
         <div id="order-list"></div>
       </div>
     </div>
@@ -50,7 +61,9 @@
     <!-- Change Password -->
     <div class="card shadow-sm mb-4">
       <div class="card-body">
-        <h5 class="card-title"><i class="bi bi-key-fill me-2"></i>Change Password</h5>
+        <h5 class="card-title">
+          <i class="bi bi-key-fill me-2"></i>Change Password
+        </h5>
         <div id="password-change-section"></div>
       </div>
     </div>
@@ -62,6 +75,7 @@
   <template id="account-edit-template">
     <form id="edit-account-form" novalidate>
       <div class="row g-3">
+        <!-- First/Last Name, Email, Current Password… -->
         <div class="col-md-6">
           <label class="form-label">First Name</label>
           <input type="text" id="first_name" class="form-control" required />
@@ -79,9 +93,10 @@
         </div>
         <div class="col-md-6">
           <label class="form-label">Current Password (confirm changes)</label>
-          <input type="password" id="password" class="form-control" placeholder="Please enter your password" required />
+          <input type="password" id="password" class="form-control" placeholder="Enter your current password" required />
           <div class="invalid-feedback">Please enter your current password.</div>
         </div>
+        <!-- Address, Zip, City, Country… -->
         <div class="col-md-12">
           <label class="form-label">Address</label>
           <input type="text" id="address" class="form-control" />
@@ -135,9 +150,9 @@
       <div class="mb-3">
         <label for="new_password" class="form-label">New Password</label>
         <i
-            class="bi bi-info-circle-fill text-info ms-1"
-            data-bs-toggle="tooltip"
-            title="At least 8 characters, with uppercase, lowercase, and a number.">
+          class="bi bi-info-circle-fill text-info ms-1"
+          data-bs-toggle="tooltip"
+          title="At least 8 characters, with uppercase, lowercase, and a number.">
         </i>
         <input type="password" id="new_password" class="form-control" placeholder="Please enter your new password" required>
         <div class="invalid-feedback">Please enter a new password.</div>
@@ -152,6 +167,43 @@
       </button>
     </form>
   </template>
+
+    <!-- Order Details Modal -->
+    <div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-labelledby="orderDetailsLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="orderDetailsLabel">Order Details</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p><strong>Order #<span id="modal-order-id"></span></strong> – <span id="modal-order-date"></span></p>
+            <p>
+              <strong>Subtotal:</strong> €<span id="modal-subtotal"></span>,
+              <strong>Discount:</strong> €<span id="modal-discount"></span>,
+              <strong>Shipping:</strong> €<span id="modal-shipping"></span>,
+              <strong>Total:</strong> €<span id="modal-total"></span>
+            </p>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Unit Price</th>
+                  <th>Qty</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody id="modal-items-body">
+                <!-- wird per JS befüllt -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+  </html>
+  
 
   <!-- Scripts -->
   <script src="../js/includer.js"></script>

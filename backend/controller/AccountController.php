@@ -1,5 +1,7 @@
 <?php
-require_once("../logic/AccountLogic.php");
+declare(strict_types=1);
+
+require_once __DIR__ . '/../logic/AccountLogic.php';
 
 class AccountController {
     private AccountLogic $logic;
@@ -10,8 +12,8 @@ class AccountController {
 
     public function updateAccount(int $userId, array $data, $conn): array {
         // 1) confirm current password
-        if (empty($data['password'])
-            || ! $this->logic->verifyPassword($userId, $data['password'], $conn)
+        if (empty($data['password']) ||
+            ! $this->logic->verifyPassword($userId, $data['password'], $conn)
         ) {
             return [
                 "status" => 401,
@@ -43,16 +45,6 @@ class AccountController {
             return ["status" => 200, "body" => ["success" => true]];
         }
         return ["status" => 400, "body" => ["success" => false, "error" => $result]];
-    }
-
-    public function addPaymentMethod(int $userId, array $data, $conn): array {
-        $success = $this->logic->addPaymentMethod($userId, $data, $conn);
-        return ["status" => $success ? 200 : 500, "body" => ["success" => $success]];
-    }
-
-    public function removePaymentMethod(int $paymentId, $conn): array {
-        $success = $this->logic->removePaymentMethod($paymentId, $conn);
-        return ["status" => $success ? 200 : 500, "body" => ["success" => $success]];
     }
 
     public function getOrders(int $userId, $conn): array {

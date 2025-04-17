@@ -67,9 +67,6 @@ switch ($_SERVER["REQUEST_METHOD"]) {
             $response = $controller->login($data, $remember);
         } elseif (isset($_GET["logout"])) {
             $response = $controller->logout();
-        } elseif (isset($_GET["removePayment"])) {
-            $paymentId = $data["paymentId"] ?? 0;
-            $response = $controller->removePayment($paymentId, $conn);
         } else {
             $response = [
                 "status" => 400,

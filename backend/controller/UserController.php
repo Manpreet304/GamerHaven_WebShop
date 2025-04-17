@@ -1,6 +1,6 @@
 <?php
 require_once("../logic/RegisterLogic.php");
-require_once("../logic/LogicLogic.php");
+require_once("../logic/LoginLogic.php");
 require_once("../logic/LogoutLogic.php");
 require_once("../models/UserModel.php");
 
@@ -50,16 +50,6 @@ class UserController {
         return [
             "status" => 200,
             "body" => ["success" => true]
-        ];
-    }
-
-    public function removePayment(int $paymentId, $conn): array {
-        require_once("../logic/account_logic.php");
-        $logic = new AccountLogic();
-        $success = $logic->removePaymentMethod($paymentId, $conn);
-        return [
-            "status" => $success ? 200 : 500,
-            "body" => ["success" => $success]
         ];
     }
 }
