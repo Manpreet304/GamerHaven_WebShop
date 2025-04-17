@@ -19,7 +19,7 @@ function loadNavbar() {
 
 
 function fetchUserData() {
-    fetch("../../backend/api/api_guest.php?me")
+    fetch("../../backend/api/ApiGuest.php?me")
         .then(res => res.json())
         .then(user => {
             window.currentUser = user;
@@ -89,7 +89,7 @@ function updateUserNavbar(user) {
     document.querySelectorAll(".logout-link").forEach(link => {
         link.addEventListener("click", (e) => {
             e.preventDefault();
-            fetch("../../backend/api/api_guest.php?logout", { method: "POST" })
+            fetch("../../backend/api/ApiGuest.php?logout", { method: "POST" })
                 .then(res => res.json())
                 .then(data => data.success && location.reload());
         });

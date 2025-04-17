@@ -1,5 +1,5 @@
 <?php
-require_once("../logic/cart_logic.php");
+require_once("../logic/CartLogic.php");
 
 class CartController {
     private CartLogic $logic;

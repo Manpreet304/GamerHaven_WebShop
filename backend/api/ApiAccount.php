@@ -3,8 +3,8 @@ header("Content-Type: application/json");
 if (session_status() === PHP_SESSION_NONE) session_start();
 
 // adjust these paths to your structure:
-require_once __DIR__ . '/../db/dbaccess.php';
-require_once __DIR__ . '/../controller/account_controller.php';
+require_once("../db/dbaccess.php");
+require_once("../controller/AccountController.php");
 
 if (!isset($_SESSION['user'])) {
     http_response_code(401);

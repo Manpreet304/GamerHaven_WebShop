@@ -23,7 +23,7 @@ $(document).ready(function () {
         }
 
         $.ajax({
-            url: "../../backend/api/api_order.php",
+            url: "../../backend/api/ApiOrder.php",
             method: "POST",
             contentType: "application/json",
             data: JSON.stringify({ payment_id: paymentId, voucher }),
@@ -44,7 +44,7 @@ $(document).ready(function () {
 });
 
 function loadCart() {
-    $.get("../../backend/api/api_cart.php", function (data) {
+    $.get("../../backend/api/ApiCart.php", function (data) {
         const items = data.items || [];
         const tbody = $("#cart-items");
         const template = document.getElementById("cart-item-template");
@@ -84,7 +84,7 @@ $(document).on("change", ".quantity-input", function () {
     if (quantity < 1) return;
 
     $.ajax({
-        url: "../../backend/api/api_cart.php",
+        url: "../../backend/api/ApiCart.php",
         method: "POST",
         contentType: "application/json",
         data: JSON.stringify({ action: "update", id: cartId, quantity }),
@@ -97,7 +97,7 @@ $(document).on("click", ".delete-item", function () {
     const cartId = tr.data("id");
 
     $.ajax({
-        url: "../../backend/api/api_cart.php",
+        url: "../../backend/api/ApiCart.php",
         method: "POST",
         contentType: "application/json",
         data: JSON.stringify({ action: "delete", id: cartId }),
@@ -107,7 +107,7 @@ $(document).on("click", ".delete-item", function () {
 
 // === Checkout-Modalfunktionen ===
 function loadCheckoutSummary() {
-    $.get("../../backend/api/api_cart.php", function (data) {
+    $.get("../../backend/api/ApiCart.php", function (data) {
         const list = $("#checkout-cart-items").empty();
         const template = document.getElementById("checkout-item-template");
         const items = data.items || [];
@@ -132,7 +132,7 @@ function loadCheckoutSummary() {
 }
 
 function loadPaymentMethods() {
-    $.get("../../backend/api/api_guest.php?me", function (user) {
+    $.get("../../backend/api/ApiGuest.php?me", function (user) {
         const select = $("#paymentMethod");
         select.empty().append(`<option value="">Choose payment method</option>`);
 

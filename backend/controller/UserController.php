@@ -1,8 +1,8 @@
 <?php
-require_once("../logic/register_logic.php");
-require_once("../logic/login_logic.php");
-require_once("../logic/logout_logic.php");
-require_once("../models/user_class.php");
+require_once("../logic/RegisterLogic.php");
+require_once("../logic/LogicLogic.php");
+require_once("../logic/LogoutLogic.php");
+require_once("../models/UserModel.php");
 
 class UserController {
     public function register(array $data): array {

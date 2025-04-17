@@ -3,7 +3,7 @@ header("Content-Type: application/json");
 if (session_status() === PHP_SESSION_NONE) session_start();
 
 require_once("../db/dbaccess.php");
-require_once("../controller/cart_controller.php");
+require_once("../controller/CartController.php");
 
 if (!isset($_SESSION["user"]["id"])) {
     http_response_code(401);

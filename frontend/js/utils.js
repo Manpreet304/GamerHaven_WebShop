@@ -42,7 +42,7 @@ function applyFieldErrors(errors) {
 }
 
 function updateCartCount() {
-    $.get("../../backend/api/api_cart.php?cartCount", function (data) {
+    $.get("../../backend/api/ApiCart.php?cartCount", function (data) {
         $("#cart-count").text(data.count || 0);
     });
 }

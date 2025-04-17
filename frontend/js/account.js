@@ -70,7 +70,7 @@ $(document).ready(function () {
   
   // === Account Info ===
   function loadAccountInfo() {
-    $.get("../../backend/api/api_guest.php?me", function(user) {
+    $.get("../../backend/api/ApiGuest.php?me", function(user) {
       const html = `
         <p><strong>Name:</strong> ${user.first_name} ${user.last_name}</p>
         <p><strong>Email:</strong> ${user.email}</p>
@@ -81,7 +81,7 @@ $(document).ready(function () {
   }
   
   function openAccountEditForm() {
-    $.get("../../backend/api/api_guest.php?me", function(user) {
+    $.get("../../backend/api/ApiGuest.php?me", function(user) {
       const tpl   = document.getElementById("account-edit-template");
       const clone = tpl.content.cloneNode(true);
       clone.querySelector("#first_name").value = user.first_name;
@@ -108,7 +108,7 @@ $(document).ready(function () {
     };
   
     $.ajax({
-      url: "../../backend/api/api_account.php?update",
+      url: "../../backend/api/ApiAccount.php?update",
       method: "POST",
       contentType: "application/json",
       data: JSON.stringify(payload),
@@ -128,7 +128,7 @@ $(document).ready(function () {
   
   // === Payment Methods ===
   function loadPaymentMethods() {
-    $.get("../../backend/api/api_guest.php?me", function(user) {
+    $.get("../../backend/api/ApiGuest.php?me", function(user) {
       const c = $("#payment-methods").empty();
       if (user.payments?.length) {
         user.payments.forEach(p => {
@@ -160,7 +160,7 @@ $(document).ready(function () {
   function addPaymentMethod() {
     const method = $("#new-payment-method").val();
     $.ajax({
-      url: "../../backend/api/api_guest.php?addPayment",
+      url: "../../backend/api/ApiGuest.php?addPayment",
       method: "POST",
       contentType: "application/json",
       data: JSON.stringify({ method }),
@@ -180,7 +180,7 @@ $(document).ready(function () {
   
   function removePaymentMethod(id) {
     $.ajax({
-      url: "../../backend/api/api_guest.php?removePayment",
+      url: "../../backend/api/ApiGuest.php?removePayment",
       method: "POST",
       contentType: "application/json",
       data: JSON.stringify({ paymentId: id }),
@@ -197,7 +197,7 @@ $(document).ready(function () {
   
   // === Orders ===
   function loadOrders() {
-    $.get("../../backend/api/api_order.php?orders", function(orders) {
+    $.get("../../backend/api/ApiOrder.php?orders", function(orders) {
       const c = $("#order-list").empty();
       if (!orders.length) {
         c.html("<p>You have no orders.</p>");
@@ -236,7 +236,7 @@ $(document).ready(function () {
           newP = $("#new_password").val().trim();
   
     $.ajax({
-      url: "../../backend/api/api_account.php?password",
+      url: "../../backend/api/ApiAccount.php?password",
       method: "POST",
       contentType: "application/json",
       data: JSON.stringify({ old_password: oldP, new_password: newP }),

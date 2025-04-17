@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../logic/account_logic.php';
+require_once("../logic/AccountLogic.php");
 
 class AccountController {
     private AccountLogic $logic;

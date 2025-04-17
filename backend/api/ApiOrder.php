@@ -3,8 +3,8 @@ header("Content-Type: application/json");
 if (session_status() === PHP_SESSION_NONE) session_start();
 
 require_once("../db/dbaccess.php");
-require_once("../controller/order_controller.php");
-require_once("../controller/account_controller.php");
+require_once("../controller/OrderController.php");
+require_once("../controller/AccountController.php");
 
 if (!isset($_SESSION["user"]["id"])) {
     http_response_code(401);

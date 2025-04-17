@@ -92,7 +92,7 @@ function resetAllFilters() {
 function loadProducts(filters = {}) {
     const query = new URLSearchParams(filters).toString();
     $.ajax({
-        url: "../../backend/api/api_products.php" + (query ? `?${query}` : ""),
+        url: "../../backend/api/ApiProducts.php" + (query ? `?${query}` : ""),
         method: "GET",
         success: function (products) {
             const grid = $("#productGrid");
@@ -116,7 +116,7 @@ function loadProducts(filters = {}) {
 
 function addToCart(productId, quantity = 1) {
     $.ajax({
-        url: "../../backend/api/api_cart.php?addToCart=" + productId,
+        url: "../../backend/api/ApiCart.php?addToCart=" + productId,
         method: "POST",
         contentType: "application/json",
         data: JSON.stringify({ quantity }),

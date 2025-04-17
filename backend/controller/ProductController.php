@@ -1,5 +1,5 @@
 <?php
-require_once("../logic/product_logic.php");
+require_once("../logic/ProductLogic.php");
 
 class ProductController {
     private ProductLogic $logic;

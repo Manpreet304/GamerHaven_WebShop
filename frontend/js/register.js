@@ -44,7 +44,7 @@ $(document).ready(function () {
         }
 
         $.ajax({
-            url: "../../backend/api/api_guest.php?register",
+            url: "../../backend/api/ApiGuest.php?register",
             method: "POST",
             dataType: "json",
             contentType: "application/json",

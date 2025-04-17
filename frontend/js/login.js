@@ -19,7 +19,7 @@ $(document).ready(function () {
         }
 
         $.ajax({
-            url: "../../backend/api/api_guest.php?login",
+            url: "../../backend/api/ApiGuest.php?login",
             method: "POST",
             dataType: "json",
             contentType: "application/json",

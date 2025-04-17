@@ -1,5 +1,5 @@
 <?php
-require_once("../logic/order_logic.php");
+require_once("../logic/OrderLogic.php");
 
 class OrderController {
     private OrderLogic $logic;
