@@ -18,20 +18,28 @@ $accountController = new AccountController();
 
 switch ($_SERVER["REQUEST_METHOD"]) {
     case "POST":
-        $data     = json_decode(file_get_contents("php://input"), true);
-        $response = $orderController->placeOrder($userId, $data["payment_id"], $data["voucher"] ?? null);
-        break;
+        // Bestellung anlegen und orderId zurückliefern
+        $data   = json_decode(file_get_contents("php://input"), true);
+        $result = $orderController->placeOrder(
+            $userId,
+            $data["payment_id"],
+            $data["voucher"] ?? null
+        );
+        // Statuscode und Body genau so weitergeben
+        http_response_code($result["status"]);
+        echo json_encode($result["body"]);
+        exit;
 
     case "GET":
         if (isset($_GET["orders"])) {
-            // list orders
+            // Liste aller Bestellungen
             $response = $accountController->getOrders($userId, $conn);
 
         } elseif (isset($_GET["orderDetails"]) && isset($_GET["orderId"])) {
-            // einzelne Bestellung + Items
+            // Detaildaten einer einzelnen Bestellung
             $orderId = intval($_GET["orderId"]);
 
-            // 1) Metadaten
+            // 1) Metadaten aus orders
             $stmt = $conn->prepare(
                 "SELECT id, created_at, subtotal, discount, shipping_amount, total_amount
                  FROM orders
@@ -41,7 +49,7 @@ switch ($_SERVER["REQUEST_METHOD"]) {
             $stmt->execute();
             $orderData = $stmt->get_result()->fetch_assoc();
 
-            // 2) Positionsdaten
+            // 2) Positionen aus order_items
             $itemsResult = $accountController->getOrderDetails($orderId, $conn);
             $items       = $itemsResult["body"];
 
@@ -63,5 +71,6 @@ switch ($_SERVER["REQUEST_METHOD"]) {
         exit;
 }
 
+// Für GET‑Zweige: Status und Body senden
 http_response_code($response["status"]);
 echo json_encode($response["body"]);

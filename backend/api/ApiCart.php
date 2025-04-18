@@ -12,7 +12,8 @@ if (!isset($_SESSION["user"]["id"])) {
 }
 
 $controller = new CartController();
-$userId = $_SESSION["user"]["id"];
+$userId     = $_SESSION["user"]["id"];
+$result     = ["status" => 400, "body" => ["error" => "Invalid request"]];
 
 switch ($_SERVER["REQUEST_METHOD"]) {
     case "GET":
@@ -25,17 +26,14 @@ switch ($_SERVER["REQUEST_METHOD"]) {
 
     case "POST":
         $data = json_decode(file_get_contents("php://input"), true);
-
         if (isset($_GET["addToCart"])) {
-            $productId = intval($_GET["addToCart"]);
-            $quantity = max(1, intval($data["quantity"] ?? 1));
-            $result = $controller->addToCart($userId, $productId, $quantity);
-        } elseif ($data["action"] === "update") {
+            $pid     = intval($_GET["addToCart"]);
+            $qty     = max(1, intval($data["quantity"] ?? 1));
+            $result  = $controller->addToCart($userId, $pid, $qty);
+        } elseif (!empty($data["action"]) && $data["action"] === "update") {
             $result = $controller->updateQuantity(intval($data["id"]), intval($data["quantity"]));
-        } elseif ($data["action"] === "delete") {
+        } elseif (!empty($data["action"]) && $data["action"] === "delete") {
             $result = $controller->removeItem(intval($data["id"]));
-        } else {
-            $result = ["status" => 400, "body" => ["error" => "Invalid action"]];
         }
         break;
 

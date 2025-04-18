@@ -189,7 +189,6 @@ function loadOrders() {
         <div class="border rounded p-3 mb-3 bg-light">
           <h6>Order #${o.id} - <small>${o.created_at}</small></h6>
           <p><strong>Total:</strong> €${o.total_amount}</p>
-          <p><strong>Shipping:</strong> €${o.shipping_amount}</p>
           <button class="btn btn-info btn-sm me-2" onclick="viewOrderDetails(${o.id})">
             <i class="bi bi-eye"></i> View Details
           </button>
@@ -235,9 +234,10 @@ function viewOrderDetails(orderId) {
 }
 
 
-function downloadInvoice(id) {
-  window.open(`../../backend/invoices/invoice_${id}.pdf`, "_blank");
+function downloadInvoice(orderId) {
+  window.open(`../../backend/invoices/Invoice.php?orderId=${orderId}`, "_blank");
 }
+
 
 function changePassword() {
   const oldP = $("#old_password").val().trim(),

@@ -22,19 +22,19 @@ class CartController {
 
     public function addToCart(int $userId, int $productId, int $quantity): array {
         global $conn;
-        $success = $this->logic->addToCart($userId, $productId, $quantity, $conn);
-        return ["status" => $success ? 200 : 500, "body" => ["success" => $success]];
+        $ok = $this->logic->addToCart($userId, $productId, $quantity, $conn);
+        return ["status" => $ok ? 200 : 500, "body" => ["success" => $ok]];
     }
 
     public function updateQuantity(int $cartId, int $quantity): array {
         global $conn;
-        $success = $this->logic->updateQuantity($cartId, $quantity, $conn);
-        return ["status" => $success ? 200 : 500, "body" => ["success" => $success]];
+        $ok = $this->logic->updateQuantity($cartId, $quantity, $conn);
+        return ["status" => $ok ? 200 : 500, "body" => ["success" => $ok]];
     }
 
     public function removeItem(int $cartId): array {
         global $conn;
-        $success = $this->logic->deleteCartItem($cartId, $conn);
-        return ["status" => $success ? 200 : 500, "body" => ["success" => $success]];
+        $ok = $this->logic->deleteCartItem($cartId, $conn);
+        return ["status" => $ok ? 200 : 500, "body" => ["success" => $ok]];
     }
 }
