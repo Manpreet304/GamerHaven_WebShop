@@ -19,11 +19,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (isset($_GET['update'])) {
         $response = $ctrl->updateAccount($userId, $payload, $conn);
-
-    } elseif (isset($_GET['password'])) {
+    }
+    elseif (isset($_GET['password'])) {
         $response = $ctrl->changePassword($userId, $payload, $conn);
-
-    } else {
+    }
+    elseif (isset($_GET['addPayment'])) {
+        $response = $ctrl->addPayment($userId, $payload, $conn);
+    }
+    else {
         $response = ['status'=>400,'body'=>['error'=>'Invalid request']];
     }
 

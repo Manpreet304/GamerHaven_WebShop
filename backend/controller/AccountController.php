@@ -1,6 +1,5 @@
 <?php
 declare(strict_types=1);
-
 require_once __DIR__ . '/../logic/AccountLogic.php';
 
 class AccountController {
@@ -11,7 +10,6 @@ class AccountController {
     }
 
     public function updateAccount(int $userId, array $data, $conn): array {
-        // 1) confirm current password
         if (empty($data['password']) ||
             ! $this->logic->verifyPassword($userId, $data['password'], $conn)
         ) {
@@ -21,7 +19,6 @@ class AccountController {
             ];
         }
 
-        // 2) remap fields
         $fields = [
             "firstname" => $data['first_name'],
             "lastname"  => $data['last_name'],
@@ -55,5 +52,16 @@ class AccountController {
     public function getOrderDetails(int $orderId, $conn): array {
         $items = $this->logic->getOrderDetails($orderId, $conn);
         return ["status" => 200, "body" => $items];
+    }
+
+    /**
+     * API‑Methode: neue Zahlungsmethode anlegen
+     */
+    public function addPayment(int $userId, array $data, $conn): array {
+        $success = $this->logic->addPaymentMethod($userId, $data, $conn);
+        return [
+            "status" => $success ? 200 : 500,
+            "body"   => ["success" => $success]
+        ];
     }
 }

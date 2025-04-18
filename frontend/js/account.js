@@ -1,6 +1,6 @@
 $(document).ready(function () {
-  // Tooltips initialisieren
-  const tipList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  // Tooltips...
+  const tipList = [...document.querySelectorAll('[data-bs-toggle="tooltip"]')];
   tipList.forEach(el => new bootstrap.Tooltip(el));
 
   // Initial load
@@ -9,83 +9,35 @@ $(document).ready(function () {
   loadOrders();
 
   // Button-Handler
-  $("#edit-account-btn").on("click", openAccountEditForm);
-  $("#add-payment-method-btn").on("click", openAddPaymentMethodForm);
+  $("#edit-account-btn").click(openAccountEditForm);
+  $("#add-payment-method-btn").click(openAddPaymentMethodForm);
 
-  // Edit‑Form mit Validierung
-  $(document).on("submit", "#edit-account-form", function (e) {
-    e.preventDefault();
-    const form = this;
-    $(form).removeClass("was-validated");
-    $(form).find("input").removeClass("is-valid is-invalid").each(function() {
-      this.setCustomValidity("");
-    });
-    if (!form.checkValidity()) {
-      form.classList.add("was-validated");
-      return;
-    }
-    updateAccountInfo();
-  });
-
-  // Add Payment Method mit Validierung
-  $(document).on("submit", "#add-payment-method-form", function (e) {
-    e.preventDefault();
-    const form = this;
-    $(form).removeClass("was-validated");
-    $(form).find("select,input").removeClass("is-valid is-invalid").each(function() {
-      this.setCustomValidity("");
-    });
-    if (!form.checkValidity()) {
-      form.classList.add("was-validated");
-      return;
-    }
-    addPaymentMethod();
-  });
+  // Forms mit Validierung
+  $(document).on("submit", "#edit-account-form", handleEditAccount);
+  $(document).on("submit", "#add-payment-method-form", handleAddPayment);
+  $(document).on("change", "#new-payment-method", renderPaymentFields);
+  $(document).on("submit", "#change-password-form", handleChangePassword);
 
   // Inject Change‑Password Form
   const pwTpl = document.getElementById("password-change-template");
   $("#password-change-section").html(pwTpl.content.cloneNode(true));
-
-  // Change Password mit Validierung
-  $(document).on("submit", "#change-password-form", function (e) {
-    e.preventDefault();
-    const form = this;
-    $(form).removeClass("was-validated");
-    $(form).find("input").removeClass("is-valid is-invalid").each(function() {
-      this.setCustomValidity("");
-    });
-    if (!form.checkValidity()) {
-      form.classList.add("was-validated");
-      return;
-    }
-    const newP = $("#new_password").val().trim(),
-          conf = $("#confirm_password").val().trim();
-    if (newP !== conf) {
-      setFieldError("#confirm_password", "Passwords do not match.");
-      return;
-    }
-    setFieldValid("#confirm_password");
-    changePassword();
-  });
 });
 
-// === Account Info ===
+// === Account ===
 function loadAccountInfo() {
-  $.get("../../backend/api/ApiGuest.php?me", function(user) {
-    const html = `
+  $.get("../../backend/api/ApiGuest.php?me", user => {
+    $("#account-info").html(`
       <p><strong>Name:</strong> ${user.first_name} ${user.last_name}</p>
       <p><strong>Email:</strong> ${user.email}</p>
       <p><strong>Address:</strong> ${user.address}, ${user.zip_code} ${user.city}, ${user.country}</p>
-    `;
-    $("#account-info").html(html);
+    `);
   });
 }
 
 function openAccountEditForm() {
-  $.get("../../backend/api/ApiGuest.php?me", function(user) {
+  $.get("../../backend/api/ApiGuest.php?me", user => {
     const tpl   = document.getElementById("account-edit-template");
     const clone = tpl.content.cloneNode(true);
-    // Werte vorbefüllen
     clone.querySelector("#first_name").value = user.first_name;
     clone.querySelector("#last_name").value  = user.last_name;
     clone.querySelector("#email").value      = user.email;
@@ -93,14 +45,20 @@ function openAccountEditForm() {
     clone.querySelector("#zip_code").value   = user.zip_code;
     clone.querySelector("#city").value       = user.city;
     clone.querySelector("#country").value    = user.country;
-    // In Modal-body einfügen
-    const body = document.getElementById("edit-account-modal-body");
-    body.innerHTML = "";
-    body.appendChild(clone);
-    // Modal anzeigen
-    const modal = new bootstrap.Modal(document.getElementById("editAccountModal"));
-    modal.show();
+    $("#edit-account-modal-body").html("").append(clone);
+    new bootstrap.Modal($("#editAccountModal")).show();
   });
+}
+
+function handleEditAccount(e) {
+  e.preventDefault();
+  const form = this;
+  form.classList.remove("was-validated");
+  if (!form.checkValidity()) {
+    form.classList.add("was-validated");
+    return;
+  }
+  updateAccountInfo();
 }
 
 function updateAccountInfo() {
@@ -114,43 +72,51 @@ function updateAccountInfo() {
     country:    $("#country").val().trim(),
     password:   $("#password").val().trim()
   };
-
   $.ajax({
     url: "../../backend/api/ApiAccount.php?update",
     method: "POST",
     contentType: "application/json",
     data: JSON.stringify(payload),
-    success(response) {
-      if (response.success) {
+    success(resp) {
+      if (resp.success) {
         showMessage("success", "Account updated successfully.");
-        // Modal schließen
-        bootstrap.Modal.getInstance(document.getElementById("editAccountModal")).hide();
+        bootstrap.Modal.getInstance($("#editAccountModal")).hide();
         loadAccountInfo();
       } else {
-        showMessage("danger", response.error || "Update failed.");
+        showMessage("danger", resp.error || "Update failed.");
       }
     },
-    error(xhr) {
-      showMessage("danger", xhr.responseJSON?.error || "An error occurred.");
+    error() {
+      showMessage("danger", "An error occurred.");
     }
   });
 }
 
-// === Payment Methods ===
+// === Payment ===
 function loadPaymentMethods() {
-  $.get("../../backend/api/ApiGuest.php?me", function(user) {
+  $.get("../../backend/api/ApiGuest.php?me", user => {
     const c = $("#payment-methods").empty();
     if (user.payments?.length) {
       user.payments.forEach(p => {
-        const html = `
+        let extra = "";
+        if (p.method === "Credit Card") {
+          extra = `<p><strong>Card:</strong> ****${p.last_digits}</p>`;
+        }
+        else if (p.method === "PayPal") {
+          extra = `
+            <p><strong>PayPal Email:</strong> ${p.paypal_email}</p>
+            <p><strong>PayPal Username:</strong> ${p.paypal_username}</p>
+          `;
+        }
+        else if (p.method === "Bank Transfer") {
+          extra = `<p><strong>IBAN:</strong> ****${p.iban.slice(-4)}</p>`;
+        }
+        c.append(`
           <div class="mb-3">
             <p><strong>Method:</strong> ${p.method}</p>
-            ${p.method==="Credit Card"  ? `<p><strong>Card:</strong> ****${p.last_digits}</p>` : ""}
-            ${p.method==="PayPal"       ? `<p><strong>PayPal Email:</strong> ${p.paypal_email}</p>` : ""}
-            ${p.method==="Bank Transfer"? `<p><strong>IBAN:</strong> ****${p.iban.slice(-4)}</p>` : ""}
+            ${extra}
           </div>
-        `;
-        c.append(html);
+        `);
       });
     } else {
       c.html("<p>No payment methods found.</p>");
@@ -159,28 +125,100 @@ function loadPaymentMethods() {
 }
 
 function openAddPaymentMethodForm() {
-  const tpl   = document.getElementById("add-payment-template");
-  const clone = tpl.content.cloneNode(true);
-  $("#payment-methods").html(clone);
+  const tpl = document.getElementById("add-payment-template");
+  $("#payment-methods").html(tpl.content.cloneNode(true));
+}
+
+function renderPaymentFields() {
+  const method = this.value;
+  const f = $("#payment-fields").empty();
+  if (method === "Credit Card") {
+    f.append(`
+      <div class="mb-3">
+        <label class="form-label">Card Number</label>
+        <input type="text" id="card_number" class="form-control" required pattern="\\d{13,19}">
+        <div class="invalid-feedback">Enter a valid card number.</div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">CSV</label>
+        <input type="text" id="csv" class="form-control" required pattern="\\d{3,4}">
+        <div class="invalid-feedback">Enter the 3‑ or 4‑digit CSV.</div>
+      </div>
+    `);
+  }
+  else if (method === "PayPal") {
+    f.append(`
+      <div class="mb-3">
+        <label class="form-label">PayPal Email</label>
+        <input type="email" id="paypal_email" class="form-control" required>
+        <div class="invalid-feedback">Enter your PayPal email.</div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">PayPal Username</label>
+        <input type="text" id="paypal_username" class="form-control" required>
+        <div class="invalid-feedback">Enter your PayPal username.</div>
+      </div>
+    `);
+  }
+  else if (method === "Bank Transfer") {
+    f.append(`
+      <div class="mb-3">
+        <label class="form-label">IBAN</label>
+        <input type="text" id="iban" class="form-control" required>
+        <div class="invalid-feedback">Enter your IBAN.</div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">BIC</label>
+        <input type="text" id="bic" class="form-control" required>
+        <div class="invalid-feedback">Enter the BIC.</div>
+      </div>
+    `);
+  }
+}
+
+function handleAddPayment(e) {
+  e.preventDefault();
+  const form = this;
+  form.classList.remove("was-validated");
+  if (!form.checkValidity()) {
+    form.classList.add("was-validated");
+    return;
+  }
+  addPaymentMethod();
 }
 
 function addPaymentMethod() {
   const method = $("#new-payment-method").val();
+  const payload = { method };
+
+  if (method === "Credit Card") {
+    payload.card_number = $("#card_number").val().trim();
+    payload.csv         = $("#csv").val().trim();
+  }
+  else if (method === "PayPal") {
+    payload.paypal_email    = $("#paypal_email").val().trim();
+    payload.paypal_username = $("#paypal_username").val().trim();
+  }
+  else if (method === "Bank Transfer") {
+    payload.iban = $("#iban").val().trim();
+    payload.bic  = $("#bic").val().trim();
+  }
+
   $.ajax({
-    url: "../../backend/api/ApiGuest.php?addPayment",
+    url: "../../backend/api/ApiAccount.php?addPayment",
     method: "POST",
     contentType: "application/json",
-    data: JSON.stringify({ method }),
-    success(response) {
-      if (response.success) {
+    data: JSON.stringify(payload),
+    success(resp) {
+      if (resp.success) {
         showMessage("success", "Payment method added.");
         loadPaymentMethods();
       } else {
-        showMessage("danger", response.error || "Addition failed.");
+        showMessage("danger", resp.error || "Could not add payment.");
       }
     },
-    error(xhr) {
-      showMessage("danger", xhr.responseJSON?.error || "An error occurred.");
+    error() {
+      showMessage("danger", "Error while adding payment.");
     }
   });
 }
@@ -224,7 +262,7 @@ function viewOrderDetails(orderId) {
       const row = `
         <tr>
           <td>${item.name_snapshot}</td>
-          <td>€${item.price_snapshot}</td>
+          <td>€${item.price_snapshot}</td>   
           <td>${item.quantity}</td>
           <td>€${item.total_price}</td>
         </tr>
@@ -237,6 +275,24 @@ function viewOrderDetails(orderId) {
 
 function downloadInvoice(orderId) {
   window.open(`../../backend/invoices/Invoice.php?orderId=${orderId}`, "_blank");
+}
+
+function handleChangePassword(e) {
+  e.preventDefault();
+  const form = this;
+  form.classList.remove("was-validated");
+  if (!form.checkValidity()) {
+    form.classList.add("was-validated");
+    return;
+  }
+  const newP = $("#new_password").val().trim();
+  const conf = $("#confirm_password").val().trim();
+  if (newP !== conf) {
+    setFieldError("#confirm_password", "Passwords do not match.");
+    return;
+  }
+  setFieldValid("#confirm_password");
+  changePassword();
 }
 
 function changePassword() {
