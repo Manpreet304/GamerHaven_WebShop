@@ -1,18 +1,18 @@
 $(document).ready(function () {
-  // 1) Tooltips initialisieren
+  // Tooltips initialisieren
   const tipList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
   tipList.forEach(el => new bootstrap.Tooltip(el));
 
-  // 2) Initial load
+  // Initial load
   loadAccountInfo();
   loadPaymentMethods();
   loadOrders();
 
-  // 3) Button‑Handler
+  // Button-Handler
   $("#edit-account-btn").on("click", openAccountEditForm);
   $("#add-payment-method-btn").on("click", openAddPaymentMethodForm);
 
-  // 4) Edit‑Form mit Validierung
+  // Edit‑Form mit Validierung
   $(document).on("submit", "#edit-account-form", function (e) {
     e.preventDefault();
     const form = this;
@@ -27,7 +27,7 @@ $(document).ready(function () {
     updateAccountInfo();
   });
 
-  // 5) Add Payment Method mit Validierung
+  // Add Payment Method mit Validierung
   $(document).on("submit", "#add-payment-method-form", function (e) {
     e.preventDefault();
     const form = this;
@@ -42,11 +42,11 @@ $(document).ready(function () {
     addPaymentMethod();
   });
 
-  // 6) Inject Change‑Password Form
+  // Inject Change‑Password Form
   const pwTpl = document.getElementById("password-change-template");
   $("#password-change-section").html(pwTpl.content.cloneNode(true));
 
-  // 7) Change Password mit Validierung
+  // Change Password mit Validierung
   $(document).on("submit", "#change-password-form", function (e) {
     e.preventDefault();
     const form = this;
@@ -85,6 +85,7 @@ function openAccountEditForm() {
   $.get("../../backend/api/ApiGuest.php?me", function(user) {
     const tpl   = document.getElementById("account-edit-template");
     const clone = tpl.content.cloneNode(true);
+    // Werte vorbefüllen
     clone.querySelector("#first_name").value = user.first_name;
     clone.querySelector("#last_name").value  = user.last_name;
     clone.querySelector("#email").value      = user.email;
@@ -92,7 +93,13 @@ function openAccountEditForm() {
     clone.querySelector("#zip_code").value   = user.zip_code;
     clone.querySelector("#city").value       = user.city;
     clone.querySelector("#country").value    = user.country;
-    $("#account-info").html(clone);
+    // In Modal-body einfügen
+    const body = document.getElementById("edit-account-modal-body");
+    body.innerHTML = "";
+    body.appendChild(clone);
+    // Modal anzeigen
+    const modal = new bootstrap.Modal(document.getElementById("editAccountModal"));
+    modal.show();
   });
 }
 
@@ -116,6 +123,8 @@ function updateAccountInfo() {
     success(response) {
       if (response.success) {
         showMessage("success", "Account updated successfully.");
+        // Modal schließen
+        bootstrap.Modal.getInstance(document.getElementById("editAccountModal")).hide();
         loadAccountInfo();
       } else {
         showMessage("danger", response.error || "Update failed.");
@@ -204,15 +213,12 @@ function loadOrders() {
 
 function viewOrderDetails(orderId) {
   $.get(`../../backend/api/ApiOrder.php?orderDetails&orderId=${orderId}`, function(res) {
-    // Header‑Infos
     $("#modal-order-id").text(res.order.id);
     $("#modal-order-date").text(res.order.created_at);
     $("#modal-subtotal").text(res.order.subtotal);
     $("#modal-discount").text(res.order.discount);
     $("#modal-shipping").text(res.order.shipping_amount);
     $("#modal-total").text(res.order.total_amount);
-
-    // Positionen
     const body = $("#modal-items-body").empty();
     res.items.forEach(item => {
       const row = `
@@ -225,24 +231,17 @@ function viewOrderDetails(orderId) {
       `;
       body.append(row);
     });
-
-    // Modal öffnen
-    const modal = new bootstrap.Modal(document.getElementById("orderDetailsModal"));
-    modal.show();
-  })
-  .fail(() => showMessage("danger", "Could not load order details."));
+    new bootstrap.Modal(document.getElementById("orderDetailsModal")).show();
+  }).fail(() => showMessage("danger", "Could not load order details."));
 }
-
 
 function downloadInvoice(orderId) {
   window.open(`../../backend/invoices/Invoice.php?orderId=${orderId}`, "_blank");
 }
 
-
 function changePassword() {
   const oldP = $("#old_password").val().trim(),
         newP = $("#new_password").val().trim();
-
   $.ajax({
     url: "../../backend/api/ApiAccount.php?password",
     method: "POST",

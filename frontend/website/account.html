@@ -75,7 +75,6 @@
   <template id="account-edit-template">
     <form id="edit-account-form" novalidate>
       <div class="row g-3">
-        <!-- First/Last Name, Email, Current Password… -->
         <div class="col-md-6">
           <label class="form-label">First Name</label>
           <input type="text" id="first_name" class="form-control" required />
@@ -96,7 +95,6 @@
           <input type="password" id="password" class="form-control" placeholder="Enter your current password" required />
           <div class="invalid-feedback">Please enter your current password.</div>
         </div>
-        <!-- Address, Zip, City, Country… -->
         <div class="col-md-12">
           <label class="form-label">Address</label>
           <input type="text" id="address" class="form-control" />
@@ -168,42 +166,81 @@
     </form>
   </template>
 
-    <!-- Order Details Modal -->
-    <div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-labelledby="orderDetailsLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="orderDetailsLabel">Order Details</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <p><strong>Order #<span id="modal-order-id"></span></strong> – <span id="modal-order-date"></span></p>
-            <p>
-              <strong>Subtotal:</strong> €<span id="modal-subtotal"></span>,
-              <strong>Discount:</strong> €<span id="modal-discount"></span>,
-              <strong>Shipping:</strong> €<span id="modal-shipping"></span>,
-              <strong>Total:</strong> €<span id="modal-total"></span>
-            </p>
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Product</th>
-                  <th>Unit Price</th>
-                  <th>Qty</th>
-                  <th>Total</th>
-                </tr>
-              </thead>
-              <tbody id="modal-items-body">
-                <!-- wird per JS befüllt -->
-              </tbody>
-            </table>
-          </div>
+  <!-- Order Details Modal -->
+<div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-labelledby="orderDetailsLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="orderDetailsLabel">Order Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Order‑ID und Datum -->
+        <p>
+          <strong>Order #<span id="modal-order-id"></span></strong> – 
+          <span id="modal-order-date"></span>
+        </p>
+        
+         <!-- Produkt‑Tabelle -->
+         <table class="table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Unit Price</th>
+              <th>Qty</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody id="modal-items-body"></tbody>
+        </table>
+
+        <!-- Neue Kosten‑Übersicht -->
+        <div class="table-responsive mb-3">
+          <table class="table table-borderless">
+            <tbody>
+              <tr>
+                <td class="text-end-vw"><strong>Subtotal:</strong></td>
+                <td class="text-end-vw">€<span id="modal-subtotal"></span></td>
+              </tr>
+              <tr>
+                <td class="text-end-vw"><strong>Discount:</strong></td>
+                <td class="text-end-vw">€<span id="modal-discount"></span></td>
+              </tr>
+              <tr>
+                <td class="text-end-vw"><strong>Shipping:</strong></td>
+                <td class="text-end-vw">€<span id="modal-shipping"></span></td>
+              </tr>
+              <tr class="table-secondary">
+                <td class="text-end-vw"><strong>Total:</strong></td>
+                <td class="text-end-vw">€<span id="modal-total"></span></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
-  </body>
-  </html>
-  
+  </div>
+</div>
+
+
+  <!-- Edit Account Modal -->
+  <div class="modal fade" id="editAccountModal" tabindex="-1" aria-labelledby="editAccountLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editAccountLabel"><i class="bi bi-pencil-square me-1"></i>Edit Account</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="edit-account-modal-body">
+          <!-- injected by JS -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Scripts -->
   <script src="../js/includer.js"></script>

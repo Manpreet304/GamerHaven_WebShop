@@ -62,20 +62,23 @@ function updateUserNavbar(user) {
     const isAdmin = user.role === "admin";
     const links = `
         ${isAdmin ? `
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-person-circle fs-5"></i> Admin Management
-          </a>
-          <ul class="dropdown-menu" aria-labelledby="adminDropdown">
-            <li><a class="dropdown-item" href="../admin/products.html"><i class="bi bi-pencil-square"></i> Edit Products</a></li>
-            <li><a class="dropdown-item" href="../admin/customers.html"><i class="bi bi-person-lines-fill"></i> Manage Customers</a></li>
-            <li><a class="dropdown-item" href="../admin/vouchers.html"><i class="bi bi-card-checklist"></i> Manage Vouchers</a></li>
-          </ul>
-        </li>` : `
-        <li class="nav-item">
-            <a class="nav-link" href="../website/account.html"><i class="bi bi-person-circle fs-5"></i> My Account</a>
-        </li>`}
-
+            <li class="nav-item">
+            <a class="nav-link" href="../website/account.html">
+                <i class="bi bi-person-circle fs-5"></i> My Account
+            </a>
+            </li>
+            <li class="nav-item">
+            <a class="nav-link" href="../admin/dashboard.html">
+                <i class="bi bi-gear-fill fs-5"></i> Admin Management
+            </a>
+            </li>
+        ` : `
+            <li class="nav-item">
+            <a class="nav-link" href="../website/account.html">
+                <i class="bi bi-person-circle fs-5"></i> My Account
+            </a>
+            </li>
+        `}
         <li class="nav-item">
             <span class="nav-link">Welcome, ${user.username}</span>
         </li>
@@ -85,7 +88,6 @@ function updateUserNavbar(user) {
     `;
     container.outerHTML = links;
 
-    // Logout Event
     document.querySelectorAll(".logout-link").forEach(link => {
         link.addEventListener("click", (e) => {
             e.preventDefault();
