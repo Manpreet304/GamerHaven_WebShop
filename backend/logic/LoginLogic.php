@@ -23,7 +23,7 @@ class LoginLogic {
         }
 
         // erst prüfen, ob der Account aktiv ist
-        if ((int)$user["is_active"] !== 1) {
+        if ($user["is_active"] !== 'true') {
             return ["identifier" => "Account is deactivated. Please contact support."];
         }
 
@@ -32,7 +32,7 @@ class LoginLogic {
             return ["password" => "Incorrect password."];
         }
 
-        // alles gut: remove password before returning
+        // alles gut: remove sensible Felder
         unset($user["password"], $user["is_active"]);
         return $user;
     }
@@ -52,7 +52,7 @@ class LoginLogic {
         $stmt->bind_param("s", $token);
         $stmt->execute();
         $user = $stmt->get_result()->fetch_assoc();
-        if (!$user || (int)$user["is_active"] !== 1) {
+        if (!$user || $user["is_active"] !== 'true') {
             return false;
         }
         unset($user["is_active"]);

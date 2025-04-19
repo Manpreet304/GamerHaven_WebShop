@@ -1,11 +1,9 @@
 <?php
 declare(strict_types=1);
-
 require_once __DIR__ . '/../logic/AdminLogic.php';
 
 class AdminController {
     private AdminLogic $logic;
-
     public function __construct() {
         $this->logic = new AdminLogic();
     }
@@ -17,8 +15,8 @@ class AdminController {
     public function getProduct(int $id, $conn) {
         return $this->logic->fetchProductById($id, $conn);
     }
-    public function saveProduct(array $data, $conn) {
-        return $this->logic->saveProduct($data, $conn);
+    public function saveProduct(array $post, array $files, $conn) {
+        return $this->logic->saveProduct($post, $files, $conn);
     }
     public function deleteProduct(int $id, $conn) {
         return $this->logic->deleteProduct($id, $conn);
@@ -28,8 +26,14 @@ class AdminController {
     public function listCustomers($conn) {
         return $this->logic->fetchAllCustomers($conn);
     }
+    public function getCustomer(int $id, $conn) {
+        return $this->logic->fetchCustomerById($id, $conn);
+    }
     public function toggleCustomer(int $id, $conn) {
         return $this->logic->toggleCustomerActive($id, $conn);
+    }
+    public function saveCustomer(array $data, $conn) {
+        return $this->logic->saveCustomer($data, $conn);
     }
 
     // VOUCHERS

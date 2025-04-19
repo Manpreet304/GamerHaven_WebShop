@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Erstellungszeit: 16. Apr 2025 um 13:01
+-- Erstellungszeit: 19. Apr 2025 um 16:12
 -- Server-Version: 10.4.32-MariaDB
 -- PHP-Version: 8.2.12
 
@@ -40,10 +40,7 @@ CREATE TABLE `cart` (
 --
 
 INSERT INTO `cart` (`id`, `user_id`, `product_id`, `quantity`, `created_at`) VALUES
-(11, 2, 14, 1, '2025-04-15 15:42:11'),
-(12, 2, 7, 1, '2025-04-15 15:45:46'),
-(13, 2, 2, 1, '2025-04-15 15:54:49'),
-(14, 2, 5, 1, '2025-04-15 15:59:46');
+(45, 1, 7, 1, '2025-04-19 09:46:40');
 
 -- --------------------------------------------------------
 
@@ -56,18 +53,26 @@ CREATE TABLE `orders` (
   `user_id` int(11) NOT NULL,
   `payment_id` int(11) NOT NULL,
   `voucher_id` int(11) DEFAULT NULL,
+  `subtotal` decimal(10,2) NOT NULL,
+  `discount` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `shipping_amount` decimal(10,2) NOT NULL,
   `total_amount` decimal(10,2) NOT NULL,
-  `shipping_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Daten für Tabelle `orders`
 --
 
-INSERT INTO `orders` (`id`, `user_id`, `payment_id`, `voucher_id`, `total_amount`, `shipping_amount`, `created_at`) VALUES
-(1, 1, 8, NULL, 2029.92, 0.00, '2025-04-15 20:18:46'),
-(2, 1, 8, NULL, 209.98, 0.00, '2025-04-16 07:26:08');
+INSERT INTO `orders` (`id`, `user_id`, `payment_id`, `voucher_id`, `subtotal`, `discount`, `shipping_amount`, `total_amount`, `created_at`) VALUES
+(12, 2, 9, NULL, 759.96, 0.00, 0.00, 759.96, '2025-04-16 16:19:04'),
+(15, 2, 9, 1, 169.98, 10.00, 9.90, 174.97, '2025-04-16 17:45:56'),
+(16, 2, 9, NULL, 79.99, 0.00, 9.90, 84.98, '2025-04-16 20:42:24'),
+(17, 1, 8, NULL, 249.98, 0.00, 9.90, 259.88, '2025-04-16 22:12:52'),
+(18, 2, 9, NULL, 129.99, 0.00, 9.90, 139.89, '2025-04-17 14:49:49'),
+(19, 1, 8, NULL, 529.96, 0.00, 0.00, 529.96, '2025-04-18 12:39:38'),
+(20, 2, 9, NULL, 129.99, 0.00, 9.90, 139.89, '2025-04-18 12:40:43'),
+(21, 2, 9, NULL, 249.98, 0.00, 9.90, 259.88, '2025-04-18 14:45:55');
 
 -- --------------------------------------------------------
 
@@ -79,24 +84,34 @@ CREATE TABLE `order_items` (
   `id` int(11) NOT NULL,
   `order_id` int(11) NOT NULL,
   `product_id` int(11) NOT NULL,
+  `name_snapshot` varchar(255) NOT NULL,
+  `price_snapshot` decimal(10,2) NOT NULL,
   `quantity` int(11) NOT NULL,
-  `price` decimal(10,2) NOT NULL
+  `total_price` decimal(10,2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Daten für Tabelle `order_items`
 --
 
-INSERT INTO `order_items` (`id`, `order_id`, `product_id`, `quantity`, `price`) VALUES
-(1, 1, 1, 1, 129.99),
-(2, 1, 4, 2, 199.99),
-(3, 1, 2, 1, 79.99),
-(4, 1, 3, 1, 89.99),
-(5, 1, 5, 1, 129.99),
-(6, 1, 19, 1, 899.99),
-(7, 1, 17, 1, 299.99),
-(8, 2, 1, 1, 129.99),
-(9, 2, 2, 1, 79.99);
+INSERT INTO `order_items` (`id`, `order_id`, `product_id`, `name_snapshot`, `price_snapshot`, `quantity`, `total_price`) VALUES
+(1, 12, 14, 'Acer Predator XB271HU', 449.99, 1, 449.00),
+(2, 12, 7, 'HyperX Cloud II', 99.99, 1, 99.00),
+(3, 12, 2, 'Logitech G502 Hero', 79.99, 1, 79.00),
+(4, 12, 5, 'Razer BlackWidow V3', 129.99, 1, 129.00),
+(5, 15, 1, 'Razer Viper Ultimate', 129.99, 1, 129.99),
+(6, 15, 12, '8BitDo SN30 Pro', 49.99, 1, 49.99),
+(7, 16, 2, 'Logitech G502 Hero', 79.99, 1, 79.99),
+(8, 17, 1, 'Razer Viper Ultimate', 129.99, 1, 129.99),
+(9, 17, 8, 'Logitech G Pro X', 119.99, 1, 119.99),
+(10, 18, 1, 'Razer Viper Ultimate', 129.99, 1, 129.99),
+(11, 19, 1, 'Razer Viper Ultimate', 129.99, 1, 129.99),
+(12, 19, 3, 'SteelSeries Rival 600', 89.99, 1, 89.99),
+(13, 19, 4, 'Corsair K95 RGB', 199.99, 1, 199.99),
+(14, 19, 6, 'SteelSeries Apex 5', 109.99, 1, 109.99),
+(15, 20, 1, 'Razer Viper Ultimate', 129.99, 1, 129.99),
+(16, 21, 1, 'Razer Viper Ultimate', 129.99, 1, 129.99),
+(17, 21, 8, 'Logitech G Pro X', 119.99, 1, 119.99);
 
 -- --------------------------------------------------------
 
@@ -125,7 +140,9 @@ INSERT INTO `payments` (`id`, `user_id`, `method`, `card_number`, `csv`, `paypal
 (8, 1, 'Credit Card', '2345675432121345', '123', NULL, NULL, NULL, NULL, '2025-04-11 20:44:57'),
 (9, 2, 'Credit Card', '2345675432121345', '1232', NULL, NULL, NULL, NULL, '2025-04-11 21:23:15'),
 (10, 3, 'Credit Card', '2345675432121345', '1232', NULL, NULL, NULL, NULL, '2025-04-12 17:58:30'),
-(11, 4, 'Credit Card', '2222222222222', '213', NULL, NULL, NULL, NULL, '2025-04-12 18:12:26');
+(11, 4, 'Credit Card', '2222222222222', '213', NULL, NULL, NULL, NULL, '2025-04-12 18:12:26'),
+(12, 2, 'PayPal', NULL, NULL, 'localhost.doorbell565@passinbox.com', NULL, NULL, NULL, '2025-04-18 20:28:46'),
+(13, 2, 'Bank Transfer', NULL, NULL, NULL, NULL, 'AT1203i932094234932', 'BKAUAAUTEWE', '2025-04-18 20:37:39');
 
 -- --------------------------------------------------------
 
@@ -173,7 +190,8 @@ INSERT INTO `products` (`id`, `name`, `description`, `price`, `stock`, `brand`, 
 (18, 'Noblechairs Hero', 'Crafted with real leather and cold foam padding, the Hero Series offers luxurious comfort and advanced lumbar adjustment. A premium choice for gamers and professionals who value support, aesthetics, and quality build.', 599.99, 20, 'Noblechairs', 'Chair', 'Premium', '{\"Upholstery\": \"Real Leather\", \"Foam\": \"Cold-Cure\", \"Recline\": \"135°\", \"Armrests\": \"4D\", \"Frame\": \"Steel\", \"Base\": \"Aluminum\"}', '[\"pictures/Chair_NoblechairsHero.jpg\", \"pictures/Chair_NoblechairsHero_2.jpg\", \"pictures/Chair_NoblechairsHero_3.jpg\"]', 4.80, '2025-04-12 21:09:00'),
 (19, 'NVIDIA RTX 4070 Ti', 'The RTX 4070 Ti delivers cutting-edge performance with 12GB GDDR6X, DLSS 3, and next-gen ray tracing. Built on Ada Lovelace architecture, it\'s ready for 4K gaming and demanding creative workflows. Future-proof your setup.', 899.99, 10, 'NVIDIA', 'Graphics Card', 'High-End', '{\"Architecture\": \"Ada Lovelace\", \"VRAM\": \"12GB GDDR6X\", \"Ray Tracing\": \"Yes\", \"DLSS\": \"3\", \"Ports\": \"HDMI 2.1, DP 1.4a\", \"TDP\": \"285W\"}', '[\"pictures/GraphicsCard_NVIDIA_RTX4070Ti.jpg\", \"pictures/GraphicsCard_NVIDIA_RTX4070Ti_2.jpg\", \"pictures/GraphicsCard_NVIDIA_RTX4070Ti_3.jpg\"]', 4.90, '2025-04-12 21:09:00'),
 (20, 'AMD Radeon RX 7900 XT', 'AMD\'s RX 7900 XT brings 20GB GDDR6, RDNA 3 architecture, and advanced ray tracing for stunning visuals. It excels in high-resolution gaming and intensive rendering. Built for enthusiasts who demand raw power.', 849.99, 15, 'AMD', 'Graphics Card', 'High-End', '{\"Architecture\": \"RDNA 3\", \"VRAM\": \"20GB GDDR6\", \"Ray Tracing\": \"Yes\", \"Ports\": \"HDMI 2.1, DP 2.1\", \"TDP\": \"300W\", \"FSR\": \"Yes\"}', '[\"pictures/GraphicsCard_AMDRadeonRX7900XT.jpg\", \"pictures/GraphicsCard_AMDRadeonRX7900XT_2.jpg\", \"pictures/GraphicsCard_AMDRadeonRX7900XT_3.jpg\"]', 4.70, '2025-04-12 21:09:00'),
-(21, 'MSI RTX 3060 Gaming X', 'The MSI RTX 3060 Gaming X offers 12GB VRAM, dual-fan cooling, and solid 1080p/1440p performance. It\'s the ideal entry-point for ray tracing and DLSS 2.0. Quiet, efficient, and VR-ready.', 399.99, 35, 'MSI', 'Graphics Card', 'Mid-Range', '{\"VRAM\": \"12GB GDDR6\", \"Cooling\": \"Dual Fan\", \"Boost Clock\": \"1807 MHz\", \"DLSS\": \"Yes\", \"Ray Tracing\": \"Yes\", \"TDP\": \"170W\"}', '[\"pictures/GraphicsCard_MSI_RTX3060GamingX.jpg\", \"pictures/GraphicsCard_MSI_RTX3060GamingX_2.jpg\", \"pictures/GraphicsCard_MSI_RTX3060GamingX_3.jpg\"]', 4.50, '2025-04-12 21:09:00');
+(21, 'MSI RTX 3060 Gaming X', 'The MSI RTX 3060 Gaming X offers 12GB VRAM, dual-fan cooling, and solid 1080p/1440p performance. It\'s the ideal entry-point for ray tracing and DLSS 2.0. Quiet, efficient, and VR-ready.', 399.99, 35, 'MSI', 'Graphics Card', 'Mid-Range', '{\"VRAM\": \"12GB GDDR6\", \"Cooling\": \"Dual Fan\", \"Boost Clock\": \"1807 MHz\", \"DLSS\": \"Yes\", \"Ray Tracing\": \"Yes\", \"TDP\": \"170W\"}', '[\"pictures/GraphicsCard_MSI_RTX3060GamingX.jpg\", \"pictures/GraphicsCard_MSI_RTX3060GamingX_2.jpg\", \"pictures/GraphicsCard_MSI_RTX3060GamingX_3.jpg\"]', 4.50, '2025-04-12 21:09:00'),
+(22, 'PlayStation 5', 'The PlayStation 5 delivers lightning‑fast loading with its custom SSD, stunning 4K visuals, and immersive haptic feedback—redefining next‑gen gaming.', 499.99, 75, 'Sony', '0', 'Home Console', '{\"Platform\":\"PS5\",\"Storage\":\"825GB SSD\",\"Resolution\":\"4K HDR @60Hz\",\"Backward Compatibility\":\"PS4\",\"Wi‑Fi\":\"Wi‑Fi 6\",\"Ethernet\":\"Yes\",\"HDMI\":\"2.1\"}', '[]', 5.00, '2025-04-19 14:03:37');
 
 -- --------------------------------------------------------
 
@@ -209,18 +227,19 @@ CREATE TABLE `users` (
   `city` varchar(100) DEFAULT NULL,
   `country` varchar(100) DEFAULT NULL,
   `salutation` varchar(10) DEFAULT NULL,
-  `remember_token` varchar(255) DEFAULT NULL
+  `remember_token` varchar(255) DEFAULT NULL,
+  `is_active` enum('false','true') NOT NULL DEFAULT 'true'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Daten für Tabelle `users`
 --
 
-INSERT INTO `users` (`id`, `firstname`, `lastname`, `email`, `username`, `password`, `created_at`, `role`, `address`, `zip_code`, `city`, `country`, `salutation`, `remember_token`) VALUES
-(1, 'Manpreet', 'Misson', 'wi23b122@technikum-wien.at', 'wi23b122', '$2y$10$vzakoxssTey6HGuUuFebzuwczlWkrwxouDb00ukuhI6dKTRntsCW2', '2025-04-11 18:44:57', 'admin', 'Höchstädtplatz 6', '1200', 'Vienna', 'Austria', 'Mr', NULL),
-(2, 'Felix', 'Dallinger', 'wi23b007@technikum-wien.at', 'wi23b007', '$2y$10$xBHLl.7jxnPvFNgK8MvxK.tdOd/VJU6Z3t1ZaPLBSViTnubmGIsJe', '2025-04-11 19:23:15', 'user', 'Höchstädtplatz 6', '1200', 'Vienna', 'Austria', 'Mr', NULL),
-(3, 'Timothy', 'Gregorian', 'wi23b027@technikum-wien.at', 'wi23b027', '$2y$10$xHC/LY4bjQ3wvT2drUg7TuJUbTMvNI82EJeRQmEuNNnNlHepYrcU6', '2025-04-12 15:58:30', 'user', 'Höchstädtplatz 6', '1200', 'Vienna', 'Austria', 'Mr', NULL),
-(4, 'Philip', 'Zeisler', 'wi23b107@technikum-wien.at', 'wi23b107', '$2y$10$MlujnEmWYt46IwkcSXIFZO9FBnoMFjsdVBKMV1vbYsMpJ6z4lrf4m', '2025-04-12 16:12:26', 'user', 'Höchstädtplatz 6', '1200', 'Vienna', 'Austria', 'Mr', NULL);
+INSERT INTO `users` (`id`, `firstname`, `lastname`, `email`, `username`, `password`, `created_at`, `role`, `address`, `zip_code`, `city`, `country`, `salutation`, `remember_token`, `is_active`) VALUES
+(1, 'Manpreet', 'Misson', 'wi23b122@technikum-wien.at', 'wi23b122', '$2y$10$vzakoxssTey6HGuUuFebzuwczlWkrwxouDb00ukuhI6dKTRntsCW2', '2025-04-11 18:44:57', 'admin', 'Höchstädtplatz 6', '1200', 'Vienna', 'Austria', 'Mr', NULL, 'true'),
+(2, 'Felix', 'Dallinger', 'wi23b007@technikum-wien.at', 'wi23b007', '$2y$10$9c60hINrri18QRwi.8j23uG5aUfHK9ffogp4uHJjgYKKkpomedSJ2', '2025-04-11 19:23:15', 'user', 'Höchstädtplatz 6', '1200', 'Vienna', 'Austria', 'Mr', NULL, 'true'),
+(3, 'Timothy', 'Gregorian', 'wi23b027@technikum-wien.at', 'wi23b027', '$2y$10$xHC/LY4bjQ3wvT2drUg7TuJUbTMvNI82EJeRQmEuNNnNlHepYrcU6', '2025-04-12 15:58:30', 'user', 'Höchstädtplatz 6', '1200', 'Vienna', 'Austria', 'Mr', NULL, 'true'),
+(4, 'Philip', 'Zeisler', 'wi23b107@technikum-wien.at', 'wi23b107', '$2y$10$MlujnEmWYt46IwkcSXIFZO9FBnoMFjsdVBKMV1vbYsMpJ6z4lrf4m', '2025-04-12 16:12:26', 'user', 'Höchstädtplatz 6', '1200', 'Vienna', 'Austria', 'Mr', NULL, 'true');
 
 -- --------------------------------------------------------
 
@@ -233,7 +252,7 @@ CREATE TABLE `vouchers` (
   `code` varchar(50) NOT NULL,
   `value` decimal(10,2) NOT NULL,
   `remaining_value` decimal(10,2) NOT NULL,
-  `is_active` tinyint(1) DEFAULT 1,
+  `is_active` enum('false','true') NOT NULL DEFAULT 'true',
   `expires_at` datetime DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -243,7 +262,7 @@ CREATE TABLE `vouchers` (
 --
 
 INSERT INTO `vouchers` (`id`, `code`, `value`, `remaining_value`, `is_active`, `expires_at`, `created_at`) VALUES
-(1, 'GHWELCOME10', 10.00, 10.00, 1, '2025-12-31 23:59:59', '2025-04-15 20:22:23');
+(1, 'GHWELCOME10', 10.00, 0.00, 'true', '2025-12-31 23:59:59', '2025-04-15 20:22:23');
 
 --
 -- Indizes der exportierten Tabellen
@@ -318,31 +337,31 @@ ALTER TABLE `vouchers`
 -- AUTO_INCREMENT für Tabelle `cart`
 --
 ALTER TABLE `cart`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
 
 --
 -- AUTO_INCREMENT für Tabelle `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT für Tabelle `order_items`
 --
 ALTER TABLE `order_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT für Tabelle `payments`
 --
 ALTER TABLE `payments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT für Tabelle `products`
 --
 ALTER TABLE `products`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT für Tabelle `product_reviews`
