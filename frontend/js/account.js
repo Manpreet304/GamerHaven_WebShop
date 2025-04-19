@@ -1,29 +1,19 @@
-$(document).ready(function () {
-  // Tooltips...
-  const tipList = [...document.querySelectorAll('[data-bs-toggle="tooltip"]')];
-  tipList.forEach(el => new bootstrap.Tooltip(el));
+// ----------------------- DOCUMENT READY -----------------------
+$(document).ready(() => {
+  // Initialize tooltips and inject password form
+  initTooltips();
+  injectPasswordForm();
 
-  // Initial load
+  // Initial AJAX calls
   loadAccountInfo();
   loadPaymentMethods();
   loadOrders();
 
-  // Button-Handler
-  $("#edit-account-btn").click(openAccountEditForm);
-  $("#add-payment-method-btn").click(openAddPaymentMethodForm);
-
-  // Forms mit Validierung
-  $(document).on("submit", "#edit-account-form", handleEditAccount);
-  $(document).on("submit", "#add-payment-method-form", handleAddPayment);
-  $(document).on("change", "#new-payment-method", renderPaymentFields);
-  $(document).on("submit", "#change-password-form", handleChangePassword);
-
-  // Inject Change‑Password Form
-  const pwTpl = document.getElementById("password-change-template");
-  $("#password-change-section").html(pwTpl.content.cloneNode(true));
+  // Bind UI events
+  bindUIEvents();
 });
 
-// === Account ===
+// ----------------------- AJAX CALLS -----------------------
 function loadAccountInfo() {
   $.get("../../backend/api/ApiGuest.php?me", user => {
     $("#account-info").html(`
@@ -34,6 +24,80 @@ function loadAccountInfo() {
   });
 }
 
+function loadPaymentMethods() {
+  $.get("../../backend/api/ApiGuest.php?me", user => {
+    const container = $("#payment-methods").empty();
+    if (!user.payments?.length) {
+      return container.html("<p>No payment methods found.</p>");
+    }
+    user.payments.forEach(p => {
+      let extra = "";
+      if (p.method === "Credit Card") {
+        extra = `<p><strong>Card:</strong> ****${p.last_digits}</p>`;
+      } else if (p.method === "PayPal") {
+        extra = `
+          <p><strong>PayPal Email:</strong> ${p.paypal_email}</p>
+          <p><strong>PayPal Username:</strong> ${p.paypal_username}</p>
+        `;
+      } else {
+        extra = `<p><strong>IBAN:</strong> ****${p.iban.slice(-4)}</p>`;
+      }
+      container.append(`
+        <div class="mb-3">
+          <p><strong>Method:</strong> ${p.method}</p>
+          ${extra}
+        </div>
+      `);
+    });
+  });
+}
+
+function loadOrders() {
+  $.get("../../backend/api/ApiOrder.php?orders", orders => {
+    const c = $("#order-list").empty();
+    if (!orders.length) {
+      return c.html("<p>You have no orders.</p>");
+    }
+    orders.forEach(o => {
+      c.append(`
+        <div class="border rounded p-3 mb-3 bg-light">
+          <h6>Order #${o.id} - <small>${o.created_at}</small></h6>
+          <p><strong>Total:</strong> €${o.total_amount}</p>
+          <button class="btn btn-info btn-sm me-2" onclick="viewOrderDetails(${o.id})">
+            <i class="bi bi-eye"></i> View Details
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="downloadInvoice(${o.id})">
+            <i class="bi bi-printer"></i> Download Invoice
+          </button>
+        </div>
+      `);
+    });
+  });
+}
+
+// ----------------------- UI INITIALIZATION -----------------------
+function initTooltips() {
+  $('[data-bs-toggle="tooltip"]').each((_, el) => new bootstrap.Tooltip(el));
+}
+
+function injectPasswordForm() {
+  const tpl = document.getElementById("password-change-template");
+  document.getElementById("password-change-section")
+          .appendChild(tpl.content.cloneNode(true));
+}
+
+// ----------------------- EVENT BINDING -----------------------
+function bindUIEvents() {
+  $("#edit-account-btn").on("click", openAccountEditForm);
+  $("#add-payment-method-btn").on("click", openAddPaymentMethodForm);
+
+  $(document).on("submit", "#edit-account-form", handleEditAccount);
+  $(document).on("submit", "#add-payment-method-form", handleAddPayment);
+  $(document).on("change", "#new-payment-method", renderPaymentFields);
+  $(document).on("submit", "#change-password-form", handleChangePassword);
+}
+
+// ----------------------- ACCOUNT LOGIC -----------------------
 function openAccountEditForm() {
   $.get("../../backend/api/ApiGuest.php?me", user => {
     const tpl   = document.getElementById("account-edit-template");
@@ -45,14 +109,16 @@ function openAccountEditForm() {
     clone.querySelector("#zip_code").value   = user.zip_code;
     clone.querySelector("#city").value       = user.city;
     clone.querySelector("#country").value    = user.country;
-    $("#edit-account-modal-body").html("").append(clone);
-    new bootstrap.Modal($("#editAccountModal")).show();
+    const body = document.getElementById("edit-account-modal-body");
+    body.innerHTML = "";
+    body.appendChild(clone);
+    new bootstrap.Modal(document.getElementById("editAccountModal")).show();
   });
 }
 
 function handleEditAccount(e) {
   e.preventDefault();
-  const form = this;
+  const form = e.currentTarget;
   form.classList.remove("was-validated");
   if (!form.checkValidity()) {
     form.classList.add("was-validated");
@@ -80,60 +146,31 @@ function updateAccountInfo() {
     success(resp) {
       if (resp.success) {
         showMessage("success", "Account updated successfully.");
-        bootstrap.Modal.getInstance($("#editAccountModal")).hide();
+        bootstrap.Modal.getInstance(document.getElementById("editAccountModal")).hide();
         loadAccountInfo();
       } else {
         showMessage("danger", resp.error || "Update failed.");
       }
-    },
-    error() {
-      showMessage("danger", "An error occurred.");
     }
   });
 }
 
-// === Payment ===
-function loadPaymentMethods() {
-  $.get("../../backend/api/ApiGuest.php?me", user => {
-    const c = $("#payment-methods").empty();
-    if (user.payments?.length) {
-      user.payments.forEach(p => {
-        let extra = "";
-        if (p.method === "Credit Card") {
-          extra = `<p><strong>Card:</strong> ****${p.last_digits}</p>`;
-        }
-        else if (p.method === "PayPal") {
-          extra = `
-            <p><strong>PayPal Email:</strong> ${p.paypal_email}</p>
-            <p><strong>PayPal Username:</strong> ${p.paypal_username}</p>
-          `;
-        }
-        else if (p.method === "Bank Transfer") {
-          extra = `<p><strong>IBAN:</strong> ****${p.iban.slice(-4)}</p>`;
-        }
-        c.append(`
-          <div class="mb-3">
-            <p><strong>Method:</strong> ${p.method}</p>
-            ${extra}
-          </div>
-        `);
-      });
-    } else {
-      c.html("<p>No payment methods found.</p>");
-    }
-  });
-}
-
+// ----------------------- PAYMENT LOGIC -----------------------
 function openAddPaymentMethodForm() {
-  const tpl = document.getElementById("add-payment-template");
-  $("#payment-methods").html(tpl.content.cloneNode(true));
+  const tpl   = document.getElementById("add-payment-template");
+  const clone = tpl.content.cloneNode(true);
+  const body  = document.getElementById("add-payment-modal-body");
+  body.innerHTML = "";
+  body.appendChild(clone);
+  new bootstrap.Modal(document.getElementById("addPaymentModal")).show();
 }
 
 function renderPaymentFields() {
   const method = this.value;
-  const f = $("#payment-fields").empty();
+  const container = $("#payment-fields").empty();
+
   if (method === "Credit Card") {
-    f.append(`
+    container.append(`
       <div class="mb-3">
         <label class="form-label">Card Number</label>
         <input type="text" id="card_number" class="form-control" required pattern="\\d{13,19}">
@@ -145,9 +182,8 @@ function renderPaymentFields() {
         <div class="invalid-feedback">Enter the 3‑ or 4‑digit CSV.</div>
       </div>
     `);
-  }
-  else if (method === "PayPal") {
-    f.append(`
+  } else if (method === "PayPal") {
+    container.append(`
       <div class="mb-3">
         <label class="form-label">PayPal Email</label>
         <input type="email" id="paypal_email" class="form-control" required>
@@ -159,9 +195,8 @@ function renderPaymentFields() {
         <div class="invalid-feedback">Enter your PayPal username.</div>
       </div>
     `);
-  }
-  else if (method === "Bank Transfer") {
-    f.append(`
+  } else {
+    container.append(`
       <div class="mb-3">
         <label class="form-label">IBAN</label>
         <input type="text" id="iban" class="form-control" required>
@@ -178,7 +213,7 @@ function renderPaymentFields() {
 
 function handleAddPayment(e) {
   e.preventDefault();
-  const form = this;
+  const form = e.currentTarget;
   form.classList.remove("was-validated");
   if (!form.checkValidity()) {
     form.classList.add("was-validated");
@@ -194,12 +229,10 @@ function addPaymentMethod() {
   if (method === "Credit Card") {
     payload.card_number = $("#card_number").val().trim();
     payload.csv         = $("#csv").val().trim();
-  }
-  else if (method === "PayPal") {
+  } else if (method === "PayPal") {
     payload.paypal_email    = $("#paypal_email").val().trim();
     payload.paypal_username = $("#paypal_username").val().trim();
-  }
-  else if (method === "Bank Transfer") {
+  } else {
     payload.iban = $("#iban").val().trim();
     payload.bic  = $("#bic").val().trim();
   }
@@ -212,45 +245,18 @@ function addPaymentMethod() {
     success(resp) {
       if (resp.success) {
         showMessage("success", "Payment method added.");
+        bootstrap.Modal.getInstance(document.getElementById("addPaymentModal")).hide();
         loadPaymentMethods();
       } else {
         showMessage("danger", resp.error || "Could not add payment.");
       }
-    },
-    error() {
-      showMessage("danger", "Error while adding payment.");
     }
   });
 }
 
-// === Orders ===
-function loadOrders() {
-  $.get("../../backend/api/ApiOrder.php?orders", function(orders) {
-    const c = $("#order-list").empty();
-    if (!orders.length) {
-      c.html("<p>You have no orders.</p>");
-      return;
-    }
-    orders.forEach(o => {
-      const html = `
-        <div class="border rounded p-3 mb-3 bg-light">
-          <h6>Order #${o.id} - <small>${o.created_at}</small></h6>
-          <p><strong>Total:</strong> €${o.total_amount}</p>
-          <button class="btn btn-info btn-sm me-2" onclick="viewOrderDetails(${o.id})">
-            <i class="bi bi-eye"></i> View Details
-          </button>
-          <button class="btn btn-primary btn-sm" onclick="downloadInvoice(${o.id})">
-            <i class="bi bi-printer"></i> Download Invoice
-          </button>
-        </div>
-      `;
-      c.append(html);
-    });
-  });
-}
-
+// ----------------------- ORDER LOGIC -----------------------
 function viewOrderDetails(orderId) {
-  $.get(`../../backend/api/ApiOrder.php?orderDetails&orderId=${orderId}`, function(res) {
+  $.get(`../../backend/api/ApiOrder.php?orderDetails&orderId=${orderId}`, res => {
     $("#modal-order-id").text(res.order.id);
     $("#modal-order-date").text(res.order.created_at);
     $("#modal-subtotal").text(res.order.subtotal);
@@ -259,63 +265,52 @@ function viewOrderDetails(orderId) {
     $("#modal-total").text(res.order.total_amount);
     const body = $("#modal-items-body").empty();
     res.items.forEach(item => {
-      const row = `
+      body.append(`
         <tr>
           <td>${item.name_snapshot}</td>
-          <td>€${item.price_snapshot}</td>   
+          <td>€${item.price_snapshot}</td>
           <td>${item.quantity}</td>
           <td>€${item.total_price}</td>
         </tr>
-      `;
-      body.append(row);
+      `);
     });
     new bootstrap.Modal(document.getElementById("orderDetailsModal")).show();
-  }).fail(() => showMessage("danger", "Could not load order details."));
+  });
 }
 
 function downloadInvoice(orderId) {
   window.open(`../../backend/invoices/Invoice.php?orderId=${orderId}`, "_blank");
 }
 
+// ----------------------- PASSWORD LOGIC -----------------------
 function handleChangePassword(e) {
   e.preventDefault();
-  const form = this;
+  const form = e.currentTarget;
   form.classList.remove("was-validated");
   if (!form.checkValidity()) {
     form.classList.add("was-validated");
     return;
   }
-  const newP = $("#new_password").val().trim();
-  const conf = $("#confirm_password").val().trim();
-  if (newP !== conf) {
-    setFieldError("#confirm_password", "Passwords do not match.");
-    return;
-  }
-  setFieldValid("#confirm_password");
   changePassword();
 }
 
 function changePassword() {
-  const oldP = $("#old_password").val().trim(),
-        newP = $("#new_password").val().trim();
+  const data = {
+    old_password: $("#old_password").val().trim(),
+    new_password: $("#new_password").val().trim()
+  };
   $.ajax({
     url: "../../backend/api/ApiAccount.php?password",
     method: "POST",
     contentType: "application/json",
-    data: JSON.stringify({ old_password: oldP, new_password: newP }),
-    success(response) {
-      if (response.success) {
+    data: JSON.stringify(data),
+    success(resp) {
+      if (resp.success) {
         showMessage("success", "Password updated successfully.");
-        $("#old_password,#new_password,#confirm_password")
-          .val("")
-          .removeClass("is-valid is-invalid")
-          .each((_, el) => el.setCustomValidity(""));
+        $("#change-password-form")[0].reset();
       } else {
-        showMessage("danger", response.error || "Password update failed.");
+        showMessage("danger", resp.error || "Password update failed.");
       }
-    },
-    error(xhr) {
-      showMessage("danger", xhr.responseJSON?.error || "An error occurred.");
     }
   });
 }

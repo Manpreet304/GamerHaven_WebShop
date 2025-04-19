@@ -1,105 +1,15 @@
-let filtersInitialized = false;
-let allProductsCache = [];
+// ----------------------- AJAX OPERATIONS -----------------------
 
-$(document).ready(function () {
-    
-    loadProducts();
-
-    $(document).on("change", "#filter-category input[type='radio'], #filter-brand input[type='checkbox'], #filter-rating, #filter-stock, #priceMin, #priceMax", function () {
-        const filters = collectFilters();
-        loadProducts(filters);
-    });
-
-    $(document).on("click", ".product-card .add-to-cart", function () {
-        const card = $(this).closest(".product-card");
-        const productId = card.data("product-id");
-        const quantity = parseInt(card.find(".quantity-input").val()) || 1;
-        addToCart(productId, quantity);
-    });
-
-    $(document).on("click", ".product-card .view-details", function () {
-        const modalId = $(this).attr("data-bs-target");
-        $(modalId).modal("show");
-
-        const btn = $(this);
-        btn.addClass("clicked");
-        setTimeout(() => btn.removeClass("clicked"), 350);
-    });
-
-    $(document).on("click", ".product-modal .add-to-cart", function () {
-        const modal = $(this).closest(".modal");
-        const productId = modal.attr("id").replace("productModal", "");
-        const quantity = parseInt(modal.find(".quantity-input").val()) || 1;
-        addToCart(productId, quantity);
-    });
-
-    $("#applyFilters").on("click", function () {
-        const filters = collectFilters();
-        loadProducts(filters);
-    });
-
-    $("#resetFilters").on("click", function () {
-        resetAllFilters();
-        loadProducts();
-    });
-
-    let liveSearchTimeout = null;
-
-    $(document).on("input", "#liveSearchInput", function () {
-        clearTimeout(liveSearchTimeout);
-        const term = $(this).val().trim();
-
-        liveSearchTimeout = setTimeout(() => {
-            const filters = collectFilters();
-            if (term.length > 0) {
-                filters.search = term;
-            }
-            loadProducts(filters);
-        }, 300);
-    });
-});
-
-function collectFilters() {
-    const filters = {};
-    const selectedCategory = $("input[name='category']:checked").val();
-    if (selectedCategory) filters.category = selectedCategory;
-
-    const selectedBrands = $("#filter-brand input[type='checkbox']:checked").map((_, el) => el.value).get();
-    if (selectedBrands.length > 0) filters.brand = selectedBrands.join(",");
-
-    const rating = $("#filter-rating").val();
-    if (rating) filters.rating = rating;
-
-    const stock = $("#filter-stock").val();
-    if (stock) filters.stock = stock;
-
-    const priceMin = $("#priceMin").val();
-    if (priceMin) filters.priceMin = priceMin;
-
-    const priceMax = $("#priceMax").val();
-    if (priceMax) filters.priceMax = priceMax;
-
-    return filters;
-}
-
-function resetAllFilters() {
-    $("#filter-brand input[type='checkbox']").prop("checked", false);
-    $("#priceMin, #priceMax").val('');
-    $("#filter-rating, #filter-stock").val('');
-    $("input[name='category'][value='']").prop("checked", true);
-}
-
+/**
+ * Fetch and render products, applying optional filters.
+ * @param {Object} filters 
+ */
 function loadProducts(filters = {}) {
     const query = new URLSearchParams(filters).toString();
     $.ajax({
         url: "../../backend/api/ApiProducts.php" + (query ? `?${query}` : ""),
         method: "GET",
-        success: function (products) {
-            const grid = $("#productGrid");
-            const modalsContainer = $("#modals-container");
-            grid.empty();
-            modalsContainer.empty();
-
+        success: products => {
             if (!filtersInitialized) {
                 allProductsCache = [...products];
                 filtersInitialized = true;
@@ -108,19 +18,22 @@ function loadProducts(filters = {}) {
             renderProducts(products);
             setupHoverRotation(products);
         },
-        error: () => {
-            showMessage("danger", "Products could not be loaded.");
-        }
+        error: () => showMessage("danger", "Products could not be loaded.")
     });
 }
 
+/**
+ * Add a product to the cart via API.
+ * @param {number} productId 
+ * @param {number} quantity 
+ */
 function addToCart(productId, quantity = 1) {
     $.ajax({
-        url: "../../backend/api/ApiCart.php?addToCart=" + productId,
+        url: `../../backend/api/ApiCart.php?addToCart=${productId}`,
         method: "POST",
         contentType: "application/json",
         data: JSON.stringify({ quantity }),
-        success: (data) => {
+        success: data => {
             if (data.success) {
                 showMessage("success", "Product added to cart.");
                 updateCartCount();
@@ -130,7 +43,7 @@ function addToCart(productId, quantity = 1) {
                 updateAddToCartButtons(productId, false);
             }
         },
-        error: (xhr) => {
+        error: xhr => {
             if (xhr.status === 401) {
                 showMessage("danger", "Please login to use the cart.");
             } else {
@@ -141,185 +54,258 @@ function addToCart(productId, quantity = 1) {
     });
 }
 
+/**
+ * Update the "Add to Cart" buttons’ appearance after an add-to-cart attempt.
+ * @param {number} productId 
+ * @param {boolean} success 
+ */
 function updateAddToCartButtons(productId, success) {
-    const btns = [
-        $(`.product-card[data-product-id='${productId}'] .add-to-cart`),
-        $(`#productModal${productId} .add-to-cart`)
+    const selectors = [
+        `.product-card[data-product-id='${productId}'] .add-to-cart`,
+        `#productModal${productId} .add-to-cart`
     ];
-
-    btns.forEach(btn => {
+    selectors.forEach(sel => {
+        const btn = $(sel);
         if (!btn.length) return;
-
-        btn.removeClass("button-added button-error");
-
-        if (success) {
-            btn.addClass("button-added").html('<i class="bi bi-check-lg me-1"></i> Added');
-        } else {
-            btn.addClass("button-error").html('<i class="bi bi-x-circle me-1"></i> Error');
-        }
-
+        btn.removeClass("button-added button-error")
+           .addClass(success ? "button-added" : "button-error")
+           .html(success
+             ? '<i class="bi bi-check-lg me-1"></i> Added'
+             : '<i class="bi bi-x-circle me-1"></i> Error');
         setTimeout(() => {
-            btn.removeClass("button-added button-error");
-            btn.html('<i class="bi bi-cart-plus me-1"></i> Add to Cart');
+            btn.removeClass("button-added button-error")
+               .html('<i class="bi bi-cart-plus me-1"></i> Add to Cart');
         }, 2000);
     });
 }
 
+
+// ----------------------- DOCUMENT READY & EVENT BINDING -----------------------
+
+let filtersInitialized = false;
+let allProductsCache = [];
+
+$(document).ready(function () {
+    // Initial load
+    loadProducts();
+
+    // Filtering events
+    $(document).on(
+      "change",
+      "#filter-category input[type='radio'], #filter-brand input[type='checkbox'], #filter-rating, #filter-stock, #priceMin, #priceMax",
+      () => loadProducts(collectFilters())
+    );
+    $("#applyFilters").click(() => loadProducts(collectFilters()));
+    $("#resetFilters").click(() => {
+        resetAllFilters();
+        loadProducts();
+    });
+
+    // Live search debounce
+    let liveSearchTimeout = null;
+    $(document).on("input", "#liveSearchInput", function () {
+        clearTimeout(liveSearchTimeout);
+        const term = $(this).val().trim();
+        liveSearchTimeout = setTimeout(() => {
+            const filters = collectFilters();
+            if (term) filters.search = term;
+            loadProducts(filters);
+        }, 300);
+    });
+
+    // Add to cart from card
+    $(document).on("click", ".product-card .add-to-cart", function () {
+        const card = $(this).closest(".product-card");
+        const productId = card.data("product-id");
+        const quantity = parseInt(card.find(".quantity-input").val(), 10) || 1;
+        addToCart(productId, quantity);
+    });
+
+    // View details (modal) from card
+    $(document).on("click", ".product-card .view-details", function () {
+        const modalId = $(this).attr("data-bs-target");
+        $(modalId).modal("show");
+        const btn = $(this);
+        btn.addClass("clicked");
+        setTimeout(() => btn.removeClass("clicked"), 350);
+    });
+
+    // Add to cart from modal
+    $(document).on("click", ".product-modal .add-to-cart", function () {
+        const modal = $(this).closest(".modal");
+        const productId = parseInt(modal.attr("id").replace("productModal", ""), 10);
+        const quantity = parseInt(modal.find(".quantity-input").val(), 10) || 1;
+        addToCart(productId, quantity);
+    });
+});
+
+
+// ----------------------- FILTER UTILITIES -----------------------
+
+/** Gather all selected filter values into an object. */
+function collectFilters() {
+    const f = {};
+    const sc = $("input[name='category']:checked").val();
+    if (sc) f.category = sc;
+
+    const sb = $("#filter-brand input:checked").map((_,el)=>el.value).get();
+    if (sb.length) f.brand = sb.join(",");
+
+    const r = $("#filter-rating").val(); if (r) f.rating = r;
+    const s = $("#filter-stock").val();  if (s) f.stock  = s;
+    const mn= $("#priceMin").val();      if (mn) f.priceMin= mn;
+    const mx= $("#priceMax").val();      if (mx) f.priceMax= mx;
+
+    return f;
+}
+
+/** Reset all filters to their default states. */
+function resetAllFilters() {
+    $("#filter-brand input, #filter-category input").prop("checked", false);
+    $("#priceMin, #priceMax, #filter-rating, #filter-stock").val("");
+}
+
+
+// ----------------------- RENDERING FUNCTIONS -----------------------
+
+/**
+ * Render the category and brand filter controls based on products and current filters.
+ * @param {Array} products 
+ * @param {Object} filters 
+ */
 function renderFilters(products, filters = {}) {
-    const selectedCategory = filters.category || "";
-    const selectedBrands = (filters.brand || "").split(",").filter(Boolean);
-    const categories = [...new Set(allProductsCache.map(p => p.category))].sort();
-
-    const categoryHTML = [`<div class="form-check">
-        <input class="form-check-input" type="radio" name="category" value="" ${!selectedCategory ? "checked" : ""}>
+    const selCat = filters.category || "";
+    const cats = [...new Set(products.map(p=>p.category))].sort();
+    let catHtml = `<div class="form-check">
+        <input class="form-check-input" type="radio" name="category" value="" ${!selCat?"checked":""}>
         <label class="form-check-label">All Products</label>
-    </div>`];
-
-    categories.forEach(cat => {
-        categoryHTML.push(`
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="category" value="${cat}" ${selectedCategory === cat ? "checked" : ""}>
-                <label class="form-check-label">${cat}</label>
-            </div>`);
+    </div>`;
+    cats.forEach(c=> {
+      catHtml += `<div class="form-check">
+          <input class="form-check-input" type="radio" name="category" value="${c}" ${selCat===c?"checked":""}>
+          <label class="form-check-label">${c}</label>
+      </div>`;
     });
+    $("#filter-category").html(catHtml);
 
-    $("#filter-category").html(categoryHTML.join(""));
-
-    const filteredProducts = selectedCategory ? allProductsCache.filter(p => p.category === selectedCategory) : allProductsCache;
-    const brands = [...new Set(filteredProducts.map(p => p.brand))].sort();
-    const brandHTML = brands.map(brand => `
-        <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="${brand}" ${selectedBrands.includes(brand) ? "checked" : ""}>
-            <label class="form-check-label">${brand}</label>
-        </div>`);
-
-    $("#filter-brand").html(brandHTML.join(""));
+    const filtered = selCat ? products.filter(p=>p.category===selCat) : products;
+    const brands = [...new Set(filtered.map(p=>p.brand))].sort();
+    const selBrands = (filters.brand||"").split(",");
+    let brandHtml = "";
+    brands.forEach(b => {
+      brandHtml += `<div class="form-check">
+          <input class="form-check-input" type="checkbox" value="${b}" ${selBrands.includes(b)?"checked":""}>
+          <label class="form-check-label">${b}</label>
+      </div>`;
+    });
+    $("#filter-brand").html(brandHtml);
 }
 
+/**
+ * Render product cards and their corresponding modals.
+ * @param {Array} products 
+ */
 function renderProducts(products) {
-    const grid = $("#productGrid");
-    const modalsContainer = $("#modals-container");
-    const productTemplate = document.getElementById("product-template");
-    const modalTemplate = document.getElementById("product-modal-template");
+    const grid = $("#productGrid").empty();
+    const mods = $("#modals-container").empty();
+    const tplCard = document.getElementById("product-template").content;
+    const tplModal= document.getElementById("product-modal-template").content;
 
-    products.forEach((product, i) => {
-        const cardClone = productTemplate.content.cloneNode(true);
-        const card = $(cardClone).find(".product-card");
-        const image = $(cardClone).find(".product-image");
-        const title = $(cardClone).find(".card-title");
-        const meta = $(cardClone).find(".card-meta");
-        const price = $(cardClone).find(".product-price");
-        const rating = $(cardClone).find(".rating");
-        const addToCartBtn = $(cardClone).find(".add-to-cart");
-        const viewDetailsBtn = $(cardClone).find(".view-details");
+    products.forEach((p,i) => {
+        // Card
+        const cardNode = tplCard.cloneNode(true);
+        const $card = $(cardNode).find(".product-card");
+        $card.data("product-id", p.id);
+        $card.find(".product-image")
+            .attr("src", p.images?.[0]||"pictures/placeholder.jpg")
+            .attr("data-index", i);
+        $card.find(".card-title").text(p.name);
+        $card.find(".card-meta").text(`${p.category} · ${p.brand}`);
+        $card.find(".product-price").text(`€${p.price}`);
+        const rv = parseFloat(p.rating) || 0;
+        $card.find(".rating").html(renderStars(rv));
+        $card.find(".view-details")
+            .attr("data-bs-toggle","modal")
+            .attr("data-bs-target",`#productModal${p.id}`);
+        grid.append(cardNode);
 
-        image.attr("src", (product.images && product.images[0]) || 'pictures/placeholder.jpg');
-        image.attr("data-index", i);
-        title.text(product.name);
-        meta.text(`${product.category} · ${product.brand}`);
-        price.text(`€${product.price}`);
-
-        const ratingVal = parseFloat(product.rating);
-        const ratingHtml = !isNaN(ratingVal)
-            ? `${renderStars(ratingVal)} <small class="text-muted ms-1">(${ratingVal.toFixed(1)})</small>`
-            : renderStars(0);
-        rating.html(ratingHtml);
-
-        card.attr("data-product-id", product.id);
-
-        const btnGroup = $('<div class="d-flex gap-2 mt-2"></div>');
-        addToCartBtn.addClass("flex-fill");
-        viewDetailsBtn.addClass("flex-fill");
-        btnGroup.append(addToCartBtn, viewDetailsBtn);
-        $(cardClone).find(".card-body").append(btnGroup);
-
-        const modalId = `productModal${product.id}`;
-        const carouselId = `carousel${product.id}`;
-        const modalClone = modalTemplate.content.cloneNode(true);
-        const modal = $(modalClone).find(".product-modal");
-
-        modal.attr("id", modalId);
-        const carousel = modal.find(".product-carousel");
-        carousel.attr("id", carouselId);
-        carousel.find(".carousel-control-prev").attr("data-bs-target", `#${carouselId}`);
-        carousel.find(".carousel-control-next").attr("data-bs-target", `#${carouselId}`);
-
-        modal.find(".modal-title").text(product.name);
-        modal.find(".product-description").html(`<strong>Description:</strong><br>${product.description || "No description"}`);
-        modal.find(".product-price-text").html(`<strong>Price:</strong> €${product.price}`);
-        modal.find(".product-stock").html(`<strong>Stock:</strong> ${product.stock > 0 ? '✅ In Stock' : '❌ Out of Stock'}`);
-        modal.find(".product-category").html(`<strong>Category:</strong> ${product.category} / ${product.sub_category}`);
-
-        const modalRatingVal = parseFloat(product.rating);
-        const modalRatingHtml = !isNaN(modalRatingVal)
-            ? `${renderStars(modalRatingVal)} <small class="text-muted ms-1">(${modalRatingVal.toFixed(1)})</small>`
-            : renderStars(0);
-        modal.find(".product-rating").html(`<strong>Rating:</strong> ${modalRatingHtml}`);
-
-        modal.find(".attributes").html(`<strong>Attributes:</strong><br>${renderAttributes(product.attributes)}`);
-
-        const carouselInner = modal.find(".carousel-inner").empty();
-        if (product.images && product.images.length) {
-            product.images.forEach((imgSrc, index) => {
-                const isActive = index === 0 ? "active" : "";
-                carouselInner.append(`
-                    <div class="carousel-item ${isActive}">
-                        <img src="${imgSrc}" class="d-block w-100" alt="Product image">
-                    </div>
-                `);
-            });
-        }
-
-        viewDetailsBtn.attr("data-bs-toggle", "modal");
-        viewDetailsBtn.attr("data-bs-target", `#${modalId}`);
-
-        grid.append(cardClone);
-        modalsContainer.append(modalClone);
+        // Modal
+        const modalNode = tplModal.cloneNode(true);
+        const $mod = $(modalNode).find(".product-modal").attr("id",`productModal${p.id}`);
+        const $car = $mod.find(".product-carousel").attr("id",`carousel${p.id}`);
+        const $inner = $car.find(".carousel-inner").empty();
+        (p.images||[]).forEach((src,idx)=>{
+            $inner.append(`
+              <div class="carousel-item${idx===0?" active":""}">
+                <img src="${src}" class="d-block w-100">
+              </div>`);
+        });
+        $mod.find(".modal-title").text(p.name);
+        $mod.find(".product-description")
+            .html(`<strong>Description:</strong><br>${p.description||"No description"}`);
+        $mod.find(".product-price-text").html(`<strong>Price:</strong> €${p.price}`);
+        $mod.find(".product-stock")
+            .html(`<strong>Stock:</strong> ${p.stock>0?"✅ In Stock":"❌ Out of Stock"}`);
+        $mod.find(".product-category")
+            .html(`<strong>Category:</strong> ${p.category} / ${p.sub_category}`);
+        $mod.find(".product-rating")
+            .html(`<strong>Rating:</strong> ${renderStars(rv)}`);
+        $mod.find(".attributes")
+            .html(`<strong>Attributes:</strong><br>${renderAttributes(p.attributes)}`);
+        mods.append(modalNode);
     });
 }
 
+/**
+ * Set up hover-based image cycling for multi-image products.
+ * @param {Array} products 
+ */
 function setupHoverRotation(products) {
     const intervals = {};
     $(".product-card").each(function () {
-        const $card = $(this);
-        const index = $card.find(".product-image").data("index");
-        const product = products[index];
-        if (!product || !product.images || product.images.length <= 1) return;
-
-        const images = product.images;
-        let currentImg = 0;
-        const $img = $card.find(".product-image");
-
-        $card.hover(
+        const $img = $(this).find(".product-image");
+        const idx = $img.data("index");
+        const imgs = products[idx]?.images || [];
+        if (imgs.length <= 1) return;
+        $(this).hover(
             () => {
-                intervals[index] = setInterval(() => {
-                    currentImg = (currentImg + 1) % images.length;
-                    $img.attr("src", images[currentImg]);
+                intervals[idx] = setInterval(() => {
+                    const cur = imgs.indexOf($img.attr("src"));
+                    const next = (cur + 1) % imgs.length;
+                    $img.attr("src", imgs[next]);
                 }, 2000);
             },
             () => {
-                clearInterval(intervals[index]);
-                $img.attr("src", images[0]);
+                clearInterval(intervals[idx]);
+                $img.attr("src", imgs[0]);
             }
         );
     });
 }
 
-function renderStars(rating) {
-    const fullStars = Math.floor(rating);
-    const halfStar = rating % 1 >= 0.5;
-    let starsHtml = "";
 
-    for (let i = 0; i < fullStars; i++) starsHtml += `<i class="bi bi-star-fill text-warning"></i>`;
-    if (halfStar) starsHtml += `<i class="bi bi-star-half text-warning"></i>`;
-    while (starsHtml.split("bi-").length - 1 < 5) starsHtml += `<i class="bi bi-star text-warning"></i>`;
-    return starsHtml;
+// ----------------------- HELPER UTILITIES -----------------------
+
+/** Render star-rating HTML. */
+function renderStars(rating) {
+    let html = "";
+    const full = Math.floor(rating);
+    const half = rating - full >= 0.5;
+    for (let i = 0; i < full; i++) html += `<i class="bi bi-star-fill text-warning"></i>`;
+    if (half) html += `<i class="bi bi-star-half text-warning"></i>`;
+    while ((html.match(/bi-star/g)||[]).length < 5) {
+        html += `<i class="bi bi-star text-warning"></i>`;
+    }
+    return html;
 }
 
+/** Parse and render JSON-encoded attribute string. */
 function renderAttributes(attrString) {
     try {
-        const attrObj = JSON.parse(attrString);
-        return Object.entries(attrObj).map(([k, v]) => `<div><strong>${k}:</strong> ${v}</div>`).join("");
+        const obj = JSON.parse(attrString);
+        return Object.entries(obj)
+            .map(([k,v]) => `<div><strong>${k}:</strong> ${v}</div>`)
+            .join("");
     } catch {
         return "<i>No attributes</i>";
     }
