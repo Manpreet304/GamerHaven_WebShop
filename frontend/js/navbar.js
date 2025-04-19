@@ -81,7 +81,7 @@ function loadNavbar() {
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="../admin/dashboard.html">
+          <a class="nav-link" href="../website/admin.html">
             <i class="bi bi-gear-fill fs-5"></i> Admin Management
           </a>
         </li>

@@ -2,26 +2,39 @@
 class LoginLogic {
     public function login(array $data, $conn): array {
         $identifier = trim($data["identifier"] ?? "");
-        $password = trim($data["password"] ?? "");
+        $password   = trim($data["password"]   ?? "");
 
         if (!$identifier || !$password) {
             return ["identifier" => "Please fill in all fields."];
         }
 
-        $stmt = $conn->prepare("SELECT id, username, password, role FROM users WHERE username = ? OR email = ?");
+        // is_active mit auslesen
+        $stmt = $conn->prepare("
+            SELECT id, username, password, role, is_active
+            FROM users
+            WHERE username = ? OR email = ?
+        ");
         $stmt->bind_param("ss", $identifier, $identifier);
         $stmt->execute();
-        $result = $stmt->get_result();
+        $user = $stmt->get_result()->fetch_assoc();
 
-        if ($user = $result->fetch_assoc()) {
-            if (password_verify($password, $user["password"])) {
-                return $user;
-            } else {
-                return ["password" => "Incorrect password."];
-            }
+        if (!$user) {
+            return ["identifier" => "User not found."];
         }
 
-        return ["identifier" => "User not found."];
+        // erst prüfen, ob der Account aktiv ist
+        if ((int)$user["is_active"] !== 1) {
+            return ["identifier" => "Account is deactivated. Please contact support."];
+        }
+
+        // dann Passwort prüfen
+        if (!password_verify($password, $user["password"])) {
+            return ["password" => "Incorrect password."];
+        }
+
+        // alles gut: remove password before returning
+        unset($user["password"], $user["is_active"]);
+        return $user;
     }
 
     public function saveRememberToken(int $userId, string $token, $conn): void {
@@ -31,10 +44,18 @@ class LoginLogic {
     }
 
     public function loginWithToken(string $token, $conn): array|false {
-        $stmt = $conn->prepare("SELECT id, username, role FROM users WHERE remember_token = ?");
+        $stmt = $conn->prepare("
+            SELECT id, username, role, is_active
+            FROM users
+            WHERE remember_token = ?
+        ");
         $stmt->bind_param("s", $token);
         $stmt->execute();
-        $result = $stmt->get_result();
-        return $result->fetch_assoc() ?: false;
+        $user = $stmt->get_result()->fetch_assoc();
+        if (!$user || (int)$user["is_active"] !== 1) {
+            return false;
+        }
+        unset($user["is_active"]);
+        return $user;
     }
 }
