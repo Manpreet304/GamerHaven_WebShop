@@ -30,7 +30,6 @@ class AdminLogic {
     }
 
     public function saveProduct(array $post, array $files, mysqli $conn): array {
-        // 1) Bilder verarbeiten (unchanged)
         $newImages = [];
         if (!empty($files['product_images']['name'])) {
             foreach ($files['product_images']['error'] as $i => $err) {
@@ -45,35 +44,27 @@ class AdminLogic {
             }
         }
 
-        // 2) Attributes JSON übernehmen
-        // Wenn das Frontend ein JSON liefert, benutzen wir es; bei Update ohne neues JSON behalten wir den alten Wert
         $incomingJson = $post['attributes'] ?? null;
-
         $isUpdate = !empty($post['id']);
         $existing = $isUpdate
             ? $this->fetchProductById((int)$post['id'], $conn)
             : [];
 
-        // Bilder-Liste zusammenstellen
         $oldImages = $existing['image_url'] ? json_decode($existing['image_url'], true) : [];
         $imagesToSave = !empty($newImages) ? $newImages : $oldImages;
         $jsonImages = json_encode($imagesToSave, JSON_UNESCAPED_SLASHES);
 
-        // Attributes final bestimmen
         if ($isUpdate) {
             if ($incomingJson !== null) {
-                // Neu: wir validieren und re-encoden
                 $attrsArr = json_decode($incomingJson, true);
                 $jsonAttributes = json_encode(
                     is_array($attrsArr) ? $attrsArr : [],
                     JSON_UNESCAPED_UNICODE
                 );
             } else {
-                // Keine Änderung: alter JSON in DB behalten
                 $jsonAttributes = $existing['attributes'] ?? '[]';
             }
         } else {
-            // Insert: wenn kein JSON, leeres Objekt
             if ($incomingJson !== null) {
                 $attrsArr = json_decode($incomingJson, true);
                 $jsonAttributes = json_encode(
@@ -85,7 +76,6 @@ class AdminLogic {
             }
         }
 
-        // 3) DB speichern
         if ($isUpdate) {
             $stmt = $conn->prepare(
                 "UPDATE products SET
@@ -97,9 +87,9 @@ class AdminLogic {
                 "ssdidsssssi",
                 $post['name'],
                 $post['description'],
-                $post['price'],             // d = double (decimal(3,2))
-                $post['stock'],             // i = integer
-                $post['rating'],            // d = double
+                $post['price'],
+                $post['stock'],
+                $post['rating'],
                 $jsonImages,
                 $post['sub_category'],
                 $post['brand'],
@@ -136,6 +126,37 @@ class AdminLogic {
     public function deleteProduct(int $id, mysqli $conn): array {
         $stmt = $conn->prepare("DELETE FROM products WHERE id=?");
         $stmt->bind_param("i", $id);
+        $ok = $stmt->execute();
+        return ['success' => $ok];
+    }
+
+    // ----- ORDERS -----
+    public function fetchOrdersByCustomer(int $userId, mysqli $conn): array {
+        $stmt = $conn->prepare(
+            "SELECT id, user_id, payment_id, voucher_id, subtotal, discount, shipping_amount, total_amount, created_at
+             FROM orders
+             WHERE user_id = ?
+             ORDER BY created_at DESC"
+        );
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
+    public function fetchOrderItems(int $orderId, mysqli $conn): array {
+        $stmt = $conn->prepare(
+            "SELECT id, order_id, product_id, name_snapshot, price_snapshot, quantity, total_price
+             FROM order_items
+             WHERE order_id = ?"
+        );
+        $stmt->bind_param("i", $orderId);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
+    public function deleteOrderItem(int $itemId, mysqli $conn): array {
+        $stmt = $conn->prepare("DELETE FROM order_items WHERE id = ?");
+        $stmt->bind_param("i", $itemId);
         $ok = $stmt->execute();
         return ['success' => $ok];
     }
@@ -243,6 +264,10 @@ class AdminLogic {
             $c .= $chars[random_int(0, strlen($chars) - 1)];
         }
         return $c;
+    }
+
+    public function getNewVoucherCode(): array {
+        return ['code' => $this->generateCode()];
     }
 
     public function saveVoucher(array $d, mysqli $conn): array {

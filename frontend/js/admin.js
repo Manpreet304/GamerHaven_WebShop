@@ -41,6 +41,7 @@ function loadCustomers() {
             <td>${u.is_active ? 'Yes' : 'No'}</td>
             <td>
               <button class="btn btn-sm btn-primary edit-customer me-1" data-id="${u.id}">Edit</button>
+              <button class="btn btn-sm btn-info view-orders me-1" data-id="${u.id}">Orders</button>
               <button class="btn btn-sm btn-warning toggle-customer" data-id="${u.id}">
                 ${u.is_active ? 'Deactivate' : 'Activate'}
               </button>
@@ -54,9 +55,13 @@ function loadVouchers() {
   $.get("../../backend/api/ApiAdmin.php?listVouchers")
     .done(vs => {
       const tbody = $("#vouchersTable tbody").empty();
+      const today = new Date().toISOString().split('T')[0];
       vs.forEach(v => {
+        const isExpired = v.expires_at < today;
+        const isUsed = v.remaining_value < v.value;
+        const rowClass = isExpired ? 'table-danger' : isUsed ? 'table-warning' : '';
         tbody.append(`
-          <tr>
+          <tr class="${rowClass}">
             <td>${v.id}</td>
             <td>${v.code}</td>
             <td>€${parseFloat(v.value).toFixed(2)}</td>
@@ -89,6 +94,7 @@ function bindUIEvents() {
   $(document).on("click", ".toggle-customer", e => toggleCustomer(+$(e.currentTarget).data("id")));
   $(document).on("click", ".edit-customer", e => openCustomerModal(+$(e.currentTarget).data("id")));
   $(document).on("click", "#saveCustomerBtn", saveCustomer);
+  $(document).on("click", ".view-orders", e => showCustomerOrders(+$(e.currentTarget).data("id")));
 
   // Vouchers
   $("#addVoucherBtn").click(() => openVoucherModal());
@@ -111,22 +117,13 @@ function openProductModal(id) {
         $("#product_category").val(p.category);
         $("#product_sub_category").val(p.sub_category);
         $("#product_description").val(p.description);
-
-        // Preis & Rating mit Komma
         $("#product_price").val(parseFloat(p.price).toFixed(2).replace('.', ','));
         if (p.rating != null) {
           $("#product_rating").val(parseFloat(p.rating).toFixed(2).replace('.', ','));
         }
-
         $("#product_stock").val(p.stock);
-
-        // Attributes → textarea
         const attrs = JSON.parse(p.attributes || '{}');
-        $("#product_attributes").val(
-          Object.entries(attrs).map(([k,v]) => `${k}: ${v}`).join("\n")
-        );
-
-        // Existing Images
+        $("#product_attributes").val(Object.entries(attrs).map(([k,v]) => `${k}: ${v}`).join("\n"));
         JSON.parse(p.image_url || '[]').forEach(src => {
           $("#existingImages").append(`<li class="list-group-item">${src}</li>`);
         });
@@ -142,15 +139,10 @@ function saveProduct() {
     formEl.classList.add("was-validated");
     return;
   }
-
   const formData = new FormData(formEl);
-
-  // Komma → Punkt
   formData.set("price", $("#product_price").val().replace(',', '.'));
   const rv = $("#product_rating").val();
   if (rv) formData.set("rating", rv.replace(',', '.'));
-
-  // Attributes → JSON
   const lines = $("#product_attributes").val().split(/\r\n|\n/);
   const obj = {};
   lines.forEach(l => {
@@ -158,12 +150,8 @@ function saveProduct() {
     if (v !== undefined) obj[k.trim()] = v.trim();
   });
   formData.set("attributes", JSON.stringify(obj));
-
   const id = +$("#product_id").val();
-  const url = id
-    ? `../../backend/api/ApiAdmin.php?updateProduct&id=${id}`
-    : `../../backend/api/ApiAdmin.php?addProduct`;
-
+  const url = id ? `../../backend/api/ApiAdmin.php?updateProduct&id=${id}` : `../../backend/api/ApiAdmin.php?addProduct`;
   $.ajax({
     url,
     method: "POST",
@@ -232,7 +220,6 @@ function saveCustomer() {
   if (id) payload.id = id;
   const pw = $("#customer_password").val();
   if (pw) payload.password = pw;
-
   $.ajax({
     url: `../../backend/api/ApiAdmin.php?${id ? `updateCustomer&id=${id}` : 'addCustomer'}`,
     method: "POST",
@@ -256,6 +243,11 @@ function openVoucherModal(id) {
         $("#voucher_expires").val(v.expires_at.split(' ')[0]);
         $("#voucher_active").val(v.is_active ? "1" : "0");
       });
+  } else {
+    $.get("../../backend/api/ApiAdmin.php?generateVoucherCode")
+      .done(data => {
+        $("#voucher_code").val(data.code).attr("readonly", true);
+      });
   }
   new bootstrap.Modal($("#voucherModal")).show();
 }
@@ -269,7 +261,6 @@ function saveVoucher() {
     is_active:  +$("#voucher_active").val()
   };
   if (id) payload.id = id;
-
   $.ajax({
     url: `../../backend/api/ApiAdmin.php?${id ? `updateVoucher&id=${id}` : "addVoucher"}`,
     method: "POST",
@@ -284,6 +275,15 @@ function saveVoucher() {
 function deleteVoucher(id) {
   $.post(`../../backend/api/ApiAdmin.php?deleteVoucher&id=${id}`)
     .always(loadVouchers);
+}
+
+// ----------------------- ORDERS -----------------------
+function showCustomerOrders(userId) {
+  $.get(`../../backend/api/ApiAdmin.php?listOrdersByCustomer&id=${userId}`)
+    .done(orders => {
+      console.table(orders);
+      alert(`User ${userId} has ${orders.length} order(s).`);
+    });
 }
 
 // ----------------------- UTIL -----------------------

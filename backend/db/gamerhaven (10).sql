@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Erstellungszeit: 19. Apr 2025 um 16:12
+-- Erstellungszeit: 21. Apr 2025 um 10:44
 -- Server-Version: 10.4.32-MariaDB
 -- PHP-Version: 8.2.12
 
@@ -40,7 +40,7 @@ CREATE TABLE `cart` (
 --
 
 INSERT INTO `cart` (`id`, `user_id`, `product_id`, `quantity`, `created_at`) VALUES
-(45, 1, 7, 1, '2025-04-19 09:46:40');
+(52, 1, 23, 1, '2025-04-21 08:35:05');
 
 -- --------------------------------------------------------
 
@@ -159,9 +159,9 @@ CREATE TABLE `products` (
   `brand` varchar(100) NOT NULL,
   `category` varchar(100) NOT NULL,
   `sub_category` varchar(100) DEFAULT NULL,
-  `attributes` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`attributes`)),
-  `image_url` varchar(255) DEFAULT NULL,
-  `rating` decimal(3,2) DEFAULT NULL CHECK (`rating` between 0 and 5),
+  `attributes` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`attributes`)),
+  `image_url` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`image_url`)),
+  `rating` decimal(3,2) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -178,7 +178,7 @@ INSERT INTO `products` (`id`, `name`, `description`, `price`, `stock`, `brand`, 
 (6, 'SteelSeries Apex 5', 'The Apex 5 combines the smoothness of membrane switches with the tactile feel of mechanical keys in a hybrid design. It features a stunning per-key RGB setup, an OLED smart display, and aircraft-grade aluminum frame for strength and aesthetics. A perfect balance of innovation and style.', 109.99, 85, 'SteelSeries', 'Keyboard', 'Hybrid', '{\"Switches\": \"Hybrid Mechanical\", \"RGB\": \"Per-Key\", \"OLED Display\": \"Yes\", \"Frame\": \"Aluminum\", \"Layout\": \"Full-Size\"}', '[\"pictures/Keyboard_SteelSeriesApex5.jpg\", \"pictures/Keyboard_SteelSeriesApex5_2.jpg\", \"pictures/Keyboard_SteelSeriesApex5_3.jpg\"]', 4.60, '2025-04-12 21:09:00'),
 (7, 'HyperX Cloud II', 'The HyperX Cloud II is a legendary gaming headset known for its comfort and sound quality. It features virtual 7.1 surround sound, memory foam ear cushions, and a detachable noise-canceling microphone. Ideal for immersive play and long sessions.', 99.99, 40, 'HyperX', 'Headset', 'Wired', '{\"Driver Size\": \"53mm\", \"Surround\": \"Virtual 7.1\", \"Mic\": \"Detachable\", \"Wired\": \"Yes\", \"Frequency Range\": \"15–25kHz\", \"Connector\": \"USB & 3.5mm\"}', '[\"pictures/Headset_HyperXCloudII.jpg\", \"pictures/Headset_HyperXCloudII_2.jpg\", \"pictures/Headset_HyperXCloudII_3.jpg\"]', 4.80, '2025-04-12 21:09:00'),
 (8, 'Logitech G Pro X', 'Developed in collaboration with esports professionals, the G Pro X delivers clear positional sound and voice communication. It features advanced DTS:X surround sound and a detachable BLUE VO!CE microphone with real-time filters. Built for competitive dominance.', 119.99, 55, 'Logitech', 'Headset', 'Wired', '{\"Surround\": \"DTS:X 2.0\", \"Mic\": \"Detachable BLUE VO!CE\", \"Connection\": \"Wired\", \"Ear Cushions\": \"Memory Foam\", \"Weight\": \"320g\"}', '[\"pictures/Headset_LogitechGProX.jpg\", \"pictures/Headset_LogitechGProX_2.jpg\", \"pictures/Headset_LogitechGProX_3.jpg\"]', 4.70, '2025-04-12 21:09:00'),
-(9, 'SteelSeries Arctis 7', 'The Arctis 7 offers lossless 2.4GHz wireless audio with ultra-low latency and a 24-hour battery life. Its retractable ClearCast mic delivers studio-quality voice clarity. With award-winning comfort and premium sound, it\'s perfect for marathon gaming.', 159.99, 35, 'SteelSeries', 'Headset', 'Wireless', '{\"Wireless\": \"2.4GHz Lossless\", \"Battery\": \"24h\", \"Mic\": \"Retractable\", \"Charging\": \"USB\", \"Frequency Range\": \"20–20kHz\", \"Range\": \"12m\"}', '[\"pictures/Headset_SteelSeriesArctis7.jpg\", \"pictures/Headset_SteelSeriesArctis7_2.jpg\", \"pictures/Headset_SteelSeriesArctis7_3.jpg\"]', 4.60, '2025-04-12 21:09:00'),
+(9, 'SteelSeries Arctis 7', 'The Arctis 7 offers lossless 2.4GHz wireless audio with ultra-low latency and a 24-hour battery life. Its retractable ClearCast mic delivers studio-quality voice clarity. With award-winning comfort and premium sound, it\'s perfect for marathon gaming.', 159.99, 0, 'SteelSeries', 'Headset', 'Wireless', '{\"Wireless\":\"2.4GHz Lossless\",\"Battery\":\"24h\",\"Mic\":\"Retractable\",\"Charging\":\"USB\",\"Frequency Range\":\"20–20kHz\",\"Range\":\"12m\"}', '[\"pictures/Headset_SteelSeriesArctis7.jpg\",\"pictures/Headset_SteelSeriesArctis7_2.jpg\",\"pictures/Headset_SteelSeriesArctis7_3.jpg\"]', 4.60, '2025-04-12 21:09:00'),
 (10, 'Xbox Wireless Controller', 'The official Xbox Wireless Controller features a refined design with a hybrid D-pad, textured grip, and wireless Bluetooth support. Play across Xbox consoles, PCs, and mobile devices with ease. Reliable, responsive, and built to perform.', 59.99, 90, 'Microsoft', 'Controller', 'Wireless', '{\"Platform\": \"Xbox/PC\", \"Wireless\": \"Bluetooth & Xbox Wireless\", \"Battery\": \"AA\", \"Ports\": \"USB-C\", \"D-Pad\": \"Hybrid\"}', '[\"pictures/Controller_XboxWirelessController.jpg\", \"pictures/Controller_XboxWirelessController_2.jpg\", \"pictures/Controller_XboxWirelessController_3.jpg\"]', 4.50, '2025-04-12 21:09:00'),
 (11, 'PlayStation DualSense', 'The DualSense controller redefines immersion with adaptive triggers and haptic feedback that simulate in-game actions. Its futuristic design and built-in microphone make it the ultimate PlayStation 5 accessory. Feel every explosion and motion in stunning detail.', 69.99, 80, 'Sony', 'Controller', 'Wireless', '{\"Platform\": \"PS5/PC\", \"Haptics\": \"Adaptive Triggers\", \"Motion Sensor\": \"Yes\", \"Battery\": \"Rechargeable\", \"Charging\": \"USB-C\"}', '[\"pictures/Controller_PlayStationDualSense.jpg\", \"pictures/Controller_PlayStationDualSense_2.jpg\", \"pictures/Controller_PlayStationDualSense_3.jpg\"]', 4.80, '2025-04-12 21:09:00'),
 (12, '8BitDo SN30 Pro', 'The 8BitDo SN30 Pro blends retro style with modern technology, offering wireless play, motion controls, rumble, and USB-C charging. It\'s fully compatible with PC, Android, and Nintendo Switch. A must-have for nostalgic gamers with modern needs.', 49.99, 40, '8BitDo', 'Controller', 'Wireless', '{\"Platform\": \"PC/Switch/Android\", \"Connectivity\": \"Bluetooth, USB-C\", \"Vibration\": \"Yes\", \"Design\": \"Retro\", \"D-Pad\": \"Precision\"}', '[\"pictures/Controller_8BitDoSN30Pro.jpg\", \"pictures/Controller_8BitDoSN30Pro_2.jpg\", \"pictures/Controller_8BitDoSN30Pro_3.jpg\"]', 4.00, '2025-04-12 21:09:00'),
@@ -191,7 +191,7 @@ INSERT INTO `products` (`id`, `name`, `description`, `price`, `stock`, `brand`, 
 (19, 'NVIDIA RTX 4070 Ti', 'The RTX 4070 Ti delivers cutting-edge performance with 12GB GDDR6X, DLSS 3, and next-gen ray tracing. Built on Ada Lovelace architecture, it\'s ready for 4K gaming and demanding creative workflows. Future-proof your setup.', 899.99, 10, 'NVIDIA', 'Graphics Card', 'High-End', '{\"Architecture\": \"Ada Lovelace\", \"VRAM\": \"12GB GDDR6X\", \"Ray Tracing\": \"Yes\", \"DLSS\": \"3\", \"Ports\": \"HDMI 2.1, DP 1.4a\", \"TDP\": \"285W\"}', '[\"pictures/GraphicsCard_NVIDIA_RTX4070Ti.jpg\", \"pictures/GraphicsCard_NVIDIA_RTX4070Ti_2.jpg\", \"pictures/GraphicsCard_NVIDIA_RTX4070Ti_3.jpg\"]', 4.90, '2025-04-12 21:09:00'),
 (20, 'AMD Radeon RX 7900 XT', 'AMD\'s RX 7900 XT brings 20GB GDDR6, RDNA 3 architecture, and advanced ray tracing for stunning visuals. It excels in high-resolution gaming and intensive rendering. Built for enthusiasts who demand raw power.', 849.99, 15, 'AMD', 'Graphics Card', 'High-End', '{\"Architecture\": \"RDNA 3\", \"VRAM\": \"20GB GDDR6\", \"Ray Tracing\": \"Yes\", \"Ports\": \"HDMI 2.1, DP 2.1\", \"TDP\": \"300W\", \"FSR\": \"Yes\"}', '[\"pictures/GraphicsCard_AMDRadeonRX7900XT.jpg\", \"pictures/GraphicsCard_AMDRadeonRX7900XT_2.jpg\", \"pictures/GraphicsCard_AMDRadeonRX7900XT_3.jpg\"]', 4.70, '2025-04-12 21:09:00'),
 (21, 'MSI RTX 3060 Gaming X', 'The MSI RTX 3060 Gaming X offers 12GB VRAM, dual-fan cooling, and solid 1080p/1440p performance. It\'s the ideal entry-point for ray tracing and DLSS 2.0. Quiet, efficient, and VR-ready.', 399.99, 35, 'MSI', 'Graphics Card', 'Mid-Range', '{\"VRAM\": \"12GB GDDR6\", \"Cooling\": \"Dual Fan\", \"Boost Clock\": \"1807 MHz\", \"DLSS\": \"Yes\", \"Ray Tracing\": \"Yes\", \"TDP\": \"170W\"}', '[\"pictures/GraphicsCard_MSI_RTX3060GamingX.jpg\", \"pictures/GraphicsCard_MSI_RTX3060GamingX_2.jpg\", \"pictures/GraphicsCard_MSI_RTX3060GamingX_3.jpg\"]', 4.50, '2025-04-12 21:09:00'),
-(22, 'PlayStation 5', 'The PlayStation 5 delivers lightning‑fast loading with its custom SSD, stunning 4K visuals, and immersive haptic feedback—redefining next‑gen gaming.', 499.99, 75, 'Sony', '0', 'Home Console', '{\"Platform\":\"PS5\",\"Storage\":\"825GB SSD\",\"Resolution\":\"4K HDR @60Hz\",\"Backward Compatibility\":\"PS4\",\"Wi‑Fi\":\"Wi‑Fi 6\",\"Ethernet\":\"Yes\",\"HDMI\":\"2.1\"}', '[]', 5.00, '2025-04-19 14:03:37');
+(23, 'PlayStation 5', 'The PlayStation 5 delivers lightning‑fast loading with its custom SSD, stunning 4K visuals, and immersive haptic feedback—redefining next‑gen gaming.', 499.99, 75, 'Sony', 'Console', 'Home Console', '{\"CPU\":\"8× AMD Zen 2 cores @ 3.5 GHz\",\"GPU\":\"Custom RDNA 2 GPU, 10.28 TFLOPS\",\"RAM\":\"16 GB GDDR6\",\"Storage\":\"825 GB Custom NVMe SSD\",\"Expandable Storage\":\"Supports NVMe SSD expansion\",\"Optical Drive\":\"4K UHD Blu‑ray\",\"Max Resolution\":\"8K\"}', '[\"pictures/img_6804080b9a6337.23031134.jpg\",\"pictures/img_6804080b9a9c01.62083921.jpg\",\"pictures/img_6804080b9acf16.89083462.jpg\"]', 4.85, '2025-04-19 14:42:53');
 
 -- --------------------------------------------------------
 
@@ -262,7 +262,7 @@ CREATE TABLE `vouchers` (
 --
 
 INSERT INTO `vouchers` (`id`, `code`, `value`, `remaining_value`, `is_active`, `expires_at`, `created_at`) VALUES
-(1, 'GHWELCOME10', 10.00, 0.00, 'true', '2025-12-31 23:59:59', '2025-04-15 20:22:23');
+(1, 'GHWELCOME10', 10.00, 10.00, 'false', '2025-12-31 00:00:00', '2025-04-15 20:22:23');
 
 --
 -- Indizes der exportierten Tabellen
@@ -337,7 +337,7 @@ ALTER TABLE `vouchers`
 -- AUTO_INCREMENT für Tabelle `cart`
 --
 ALTER TABLE `cart`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
 
 --
 -- AUTO_INCREMENT für Tabelle `orders`
@@ -361,7 +361,7 @@ ALTER TABLE `payments`
 -- AUTO_INCREMENT für Tabelle `products`
 --
 ALTER TABLE `products`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT für Tabelle `product_reviews`

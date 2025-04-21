@@ -45,7 +45,9 @@
         <h4 class="mb-2">Manage Customers</h4>
         <table class="table table-striped" id="customersTable">
           <thead class="table-primary">
-            <tr><th>ID</th><th>Username</th><th>Email</th><th>Active?</th><th>Actions</th></tr>
+            <tr>
+              <th>ID</th><th>Username</th><th>Email</th><th>Active?</th><th>Actions</th>
+            </tr>
           </thead>
           <tbody></tbody>
         </table>
@@ -60,8 +62,7 @@
         </div>
         <table class="table table-striped" id="vouchersTable">
           <thead class="table-primary">
-            <tr><th>ID</th><th>Code</th><th>Value</th><th>Remaining</th>
-                <th>Active?</th><th>Expires</th><th>Actions</th></tr>
+            <tr><th>ID</th><th>Code</th><th>Value</th><th>Remaining</th><th>Active?</th><th>Expires</th><th>Actions</th></tr>
           </thead>
           <tbody></tbody>
         </table>
@@ -99,14 +100,7 @@
               </div>
               <div class="col-md-4">
                 <label class="form-label">Rating</label>
-                <input
-                  type="text"
-                  id="product_rating"
-                  name="rating"
-                  class="form-control"
-                  pattern="^\d+([,]\d{1,2})?$"
-                  placeholder="4,80"
-                >
+                <input type="text" id="product_rating" name="rating" class="form-control" placeholder="4,80" pattern="^\d+([,]\d{1,2})?$">
               </div>
               <div class="col-12">
                 <label class="form-label">Description</label>
@@ -114,15 +108,7 @@
               </div>
               <div class="col-md-3">
                 <label class="form-label">Price</label>
-                <input
-                  type="text"
-                  id="product_price"
-                  name="price"
-                  class="form-control"
-                  pattern="^\d+([,]\d{1,2})?$"
-                  placeholder="123,45"
-                  required
-                >
+                <input type="text" id="product_price" name="price" class="form-control" required pattern="^\d+([,]\d{1,2})?$">
               </div>
               <div class="col-md-3">
                 <label class="form-label">Stock</label>
@@ -130,13 +116,7 @@
               </div>
               <div class="col-md-6">
                 <label class="form-label">Attributes</label>
-                <textarea
-                  id="product_attributes"
-                  name="attributes"
-                  class="form-control"
-                  rows="3"
-                  placeholder="Key: Value (line-break) AnotherKey: AnotherValue"
-                ></textarea>
+                <textarea id="product_attributes" name="attributes" class="form-control" rows="3" placeholder="Key: Value (line-break) AnotherKey: AnotherValue"></textarea>
               </div>
               <div class="col-12">
                 <label class="form-label">Existing Images</label>
@@ -275,6 +255,26 @@
         <div class="modal-footer">
           <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
           <button class="btn btn-primary" id="saveVoucherBtn">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CUSTOMER ORDERS MODAL -->
+  <div class="modal fade" id="customerOrdersModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Customer Orders</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="customerOrdersContent" class="table-responsive">
+            <!-- Bestellungen werden hier dynamisch geladen -->
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         </div>
       </div>
     </div>

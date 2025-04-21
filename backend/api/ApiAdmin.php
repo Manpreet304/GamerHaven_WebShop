@@ -47,6 +47,17 @@ try {
       echo json_encode($ctrl->saveCustomer($data, $conn));
       break;
 
+    // ORDERS
+    case 'GET?listOrdersByCustomer':
+      echo json_encode($ctrl->listOrdersByCustomer((int)$_GET['id'], $conn));
+      break;
+    case 'GET?listOrderItems':
+      echo json_encode($ctrl->listOrderItems((int)$_GET['order_id'], $conn));
+      break;
+    case 'POST?removeOrderItem':
+      echo json_encode($ctrl->removeOrderItem((int)$_GET['id'], $conn));
+      break;
+
     // VOUCHERS
     case 'GET?listVouchers':
       echo json_encode($ctrl->listVouchers($conn));
@@ -61,6 +72,9 @@ try {
       break;
     case 'POST?deleteVoucher':
       echo json_encode($ctrl->deleteVoucher((int)$_GET['id'], $conn));
+      break;
+    case 'GET?generateVoucherCode':
+      echo json_encode($ctrl->getNewVoucherCode($conn));
       break;
 
     default:
