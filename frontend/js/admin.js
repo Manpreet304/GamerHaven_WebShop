@@ -16,7 +16,7 @@ function initTabs() {
   });
 }
 
-// --- PRODUCTS ---
+// --- PRODUCTS ---------------------------------------------------------
 function loadProducts() {
   $.get('../../backend/api/ApiAdmin.php?listProducts', products => {
     const tbody = $('#productsTable tbody').empty();
@@ -37,7 +37,6 @@ function loadProducts() {
   });
 }
 
-// Open the Add/Edit Product modal and populate if editing
 function openProductModal(id) {
   resetForm('#productForm');
   $('#existingImages').empty();
@@ -54,14 +53,14 @@ function openProductModal(id) {
       $('#productRating').val(p.rating);
       $('#productDescription').val(p.description);
 
-      // Attributes → textarea lines
+      // Attributes
       if (p.attributes) {
         const attrs = JSON.parse(p.attributes);
         const lines = Object.entries(attrs).map(([k, v]) => `${k}: ${v}`);
         $('#productAttributes').val(lines.join('\n'));
       }
 
-      // Show existing images
+      // Existing images
       if (p.image_url) {
         JSON.parse(p.image_url).forEach(src => {
           $('#existingImages').append(`<li class="list-group-item">${src}</li>`);
@@ -70,11 +69,10 @@ function openProductModal(id) {
     });
   }
 
-  new bootstrap.Modal($('#productModal')).show();
+  new bootstrap.Modal(document.getElementById('productModal')).show();
 }
 
-// Save (Add or Update) a product
-$('#saveProductBtn').click(() => {
+function saveProduct() {
   const formEl = $('#productForm')[0];
   if (!formEl.checkValidity()) {
     formEl.classList.add('was-validated');
@@ -92,7 +90,6 @@ $('#saveProductBtn').click(() => {
   });
   formData.set('attributes', JSON.stringify(obj));
 
-  // Determine endpoint
   const id = $('#productId').val();
   const url = id
     ? `../../backend/api/ApiAdmin.php?updateProduct&id=${id}`
@@ -105,26 +102,18 @@ $('#saveProductBtn').click(() => {
     contentType: false,
     data: formData
   }).always(() => {
-    bootstrap.Modal.getInstance($('#productModal')).hide();
+    bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
     loadProducts();
   });
-});
+}
 
-// Bind product buttons
-$('#addProductBtn').click(() => openProductModal());
-$(document).on('click', '.edit-product', e => openProductModal($(e.currentTarget).data('id')));
-$(document).on('click', '.delete-product', function() {
-  const id = $(this).data('id');
-  $.post(`../../backend/api/ApiAdmin.php?deleteProduct&id=${id}`, loadProducts);
-});
-
-// --- CUSTOMERS ---
+// --- CUSTOMERS -------------------------------------------------------
 function loadCustomers() {
-  $.get('../../backend/api/ApiAdmin.php?listCustomers', customers => {
+  $.get('../../backend/api/ApiAdmin.php?listCustomers', users => {
     const tbody = $('#customersTable tbody').empty();
     const select = $('#orderCustomerSelect').empty()
       .append('<option value="">Select customer…</option>');
-    customers.forEach(u => {
+    users.forEach(u => {
       tbody.append(`
         <tr>
           <td>${u.id}</td>
@@ -143,9 +132,8 @@ function loadCustomers() {
   });
 }
 
-// --- ORDERS BY CUSTOMER ---
-$('#orderCustomerSelect').on('change', function() {
-  const userId = $(this).val();
+// --- ORDERS ----------------------------------------------------------
+function loadOrdersByCustomer(userId) {
   const tbody  = $('#ordersTable tbody').empty();
   if (!userId) return;
   $.get(`../../backend/api/ApiAdmin.php?listOrdersByCustomer&id=${userId}`, orders => {
@@ -162,30 +150,39 @@ $('#orderCustomerSelect').on('change', function() {
       `);
     });
   });
-});
+}
 
-// Show order items
-$('#ordersTable').on('click', '.view-items', function() {
-  const orderId = $(this).data('id');
+function loadOrderItems(orderId) {
+  const body = $('#orderItemsBody').empty();
   $.get(`../../backend/api/ApiAdmin.php?listOrderItems&order_id=${orderId}`, items => {
-    let msg = 'Items:\n';
+    if (!items.length) {
+      body.append('<p>No items in this order.</p>');
+      return;
+    }
     items.forEach(i => {
-      msg += `– ${i.name_snapshot} × ${i.quantity} = €${i.total_price}\n`;
+      body.append(`
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div>
+            <strong>${i.name_snapshot}</strong>
+            <div>Qty: ${i.quantity} × €${i.price_snapshot}</div>
+          </div>
+          <button class="btn btn-sm btn-danger remove-item" data-id="${i.id}">Remove</button>
+        </div>
+      `);
     });
-    alert(msg);
   });
-});
+}
 
-// --- VOUCHERS ---
+// --- VOUCHERS --------------------------------------------------------
 function loadVouchers() {
   $.get('../../backend/api/ApiAdmin.php?listVouchers', vs => {
     const tbody = $('#vouchersTable tbody').empty();
     vs.forEach(v => {
-      const rowClass = !v.is_active
+      const cls = !v.is_active
         ? 'table-secondary'
         : (v.remaining_value < v.value ? 'table-warning' : '');
       tbody.append(`
-        <tr class="${rowClass}">
+        <tr class="${cls}">
           <td>${v.id}</td>
           <td>${v.code}</td>
           <td>€${Number(v.value).toFixed(2)}</td>
@@ -202,63 +199,80 @@ function loadVouchers() {
   });
 }
 
-// --- EVENT BINDING ---
+// --- EVENT BINDING --------------------------------------------------
 function bindEvents() {
-  // Customer toggle
+  // Products
+  $('#addProductBtn').click(() => openProductModal());
+  $(document).on('click', '.edit-product', e => openProductModal($(e.currentTarget).data('id')));
+  $(document).on('click', '.delete-product', function() {
+    $.post(`../../backend/api/ApiAdmin.php?deleteProduct&id=${$(this).data('id')}`, loadProducts);
+  });
+  $('#saveProductBtn').click(saveProduct);
+
+  // Customers
   $('#customersTable').on('click', '.toggle-customer', function() {
-    const id = $(this).data('id');
-    $.post(`../../backend/api/ApiAdmin.php?toggleCustomer&id=${id}`, loadCustomers);
+    $.post(`../../backend/api/ApiAdmin.php?toggleCustomer&id=${$(this).data('id')}`, loadCustomers);
   });
 
-  // Voucher: Add
+  // Orders
+  $('#orderCustomerSelect').on('change', function() {
+    loadOrdersByCustomer($(this).val());
+  });
+  $(document).on('click', '.view-items', function() {
+    loadOrderItems($(this).data('id'));
+    new bootstrap.Modal(document.getElementById('orderItemsModal')).show();
+  });
+  $(document).on('click', '.remove-item', function() {
+    $.post(`../../backend/api/ApiAdmin.php?removeOrderItem&id=${$(this).data('id')}`, () => {
+      $('#orderItemsModal').modal('hide');
+      $('#orderCustomerSelect').trigger('change');
+    });
+  });
+
+  // Vouchers
   $('#addVoucherBtn').click(() => {
     $('#voucherForm')[0].reset();
     $('#voucherId').val('');
     $.get('../../backend/api/ApiAdmin.php?generateVoucherCode', d => {
       $('#voucherCode').val(d.code);
-      new bootstrap.Modal($('#voucherModal')).show();
+      new bootstrap.Modal(document.getElementById('voucherModal')).show();
     });
   });
-
-  // Voucher: Edit
-  $('#vouchersTable').on('click', '.edit-voucher', function() {
-    const id = $(this).data('id');
-    $.get(`../../backend/api/ApiAdmin.php?getVoucher&id=${id}`, v => {
+  $(document).on('click', '.edit-voucher', function() {
+    $.get(`../../backend/api/ApiAdmin.php?getVoucher&id=${$(this).data('id')}`, v => {
       $('#voucherId').val(v.id);
       $('#voucherCode').val(v.code);
       $('#voucherValue').val(v.value);
       $('#voucherExpires').val(v.expires_at.split(' ')[0]);
       $('#voucherActive').val(v.is_active ? '1' : '0');
-      new bootstrap.Modal($('#voucherModal')).show();
+      new bootstrap.Modal(document.getElementById('voucherModal')).show();
     });
   });
-
-  // Voucher: Save
   $('#saveVoucherBtn').click(() => {
     const id = $('#voucherId').val();
     const payload = {
       code: $('#voucherCode').val(),
       value: parseFloat($('#voucherValue').val()),
       expires_at: $('#voucherExpires').val(),
-      is_active: parseInt($('#voucherActive').val(), 10)
+      is_active: +$('#voucherActive').val()
     };
     const url = id
       ? `../../backend/api/ApiAdmin.php?updateVoucher&id=${id}`
       : `../../backend/api/ApiAdmin.php?addVoucher`;
     $.ajax({ url, method:'POST', contentType:'application/json', data: JSON.stringify(payload) })
-      .always(() => { bootstrap.Modal.getInstance($('#voucherModal')).hide(); loadVouchers(); });
+      .always(() => {
+        bootstrap.Modal.getInstance(document.getElementById('voucherModal')).hide();
+        loadVouchers();
+      });
   });
-
-  // Voucher: Deactivate
-  $('#vouchersTable').on('click', '.delete-voucher', function() {
-    const id = $(this).data('id');
-    $.post(`../../backend/api/ApiAdmin.php?deleteVoucher&id=${id}`, loadVouchers);
+  $(document).on('click', '.delete-voucher', function() {
+    $.post(`../../backend/api/ApiAdmin.php?deleteVoucher&id=${$(this).data('id')}`, loadVouchers);
   });
 }
 
-// Reset form helper
-function resetForm(sel) {
-  const f = document.querySelector(sel);
+// Helper to reset and clear validation
+function resetForm(selector) {
+  const f = document.querySelector(selector);
   f.reset();
   f.classList.remove('was-validated');
 }
