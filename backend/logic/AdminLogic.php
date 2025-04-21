@@ -1,4 +1,5 @@
 <?php
+// logic/AdminLogic.php
 declare(strict_types=1);
 
 class AdminLogic {
@@ -6,30 +7,29 @@ class AdminLogic {
 
     // ----- PRODUCTS -----
     public function fetchAllProducts(mysqli $conn): array {
-        $res = $conn->query(
-            "SELECT 
-               id, name, description, price, stock, rating,
-               image_url, attributes, brand, category, sub_category
-             FROM products
-             ORDER BY created_at DESC"
-        );
+        $res = $conn->query("
+            SELECT id, name, description, price, stock, rating,
+                   image_url, attributes, brand, category, sub_category
+            FROM products
+            ORDER BY created_at DESC
+        ");
         return $res->fetch_all(MYSQLI_ASSOC);
     }
 
     public function fetchProductById(int $id, mysqli $conn): array {
-        $stmt = $conn->prepare(
-            "SELECT 
-               id, name, description, price, stock, rating,
-               image_url, attributes, brand, category, sub_category
-             FROM products
-             WHERE id = ?"
-        );
+        $stmt = $conn->prepare("
+            SELECT id, name, description, price, stock, rating,
+                   image_url, attributes, brand, category, sub_category
+            FROM products
+            WHERE id = ?
+        ");
         $stmt->bind_param("i", $id);
         $stmt->execute();
         return $stmt->get_result()->fetch_assoc() ?: [];
     }
 
     public function saveProduct(array $post, array $files, mysqli $conn): array {
+        // Bilder hochladen & JSON erzeugen
         $newImages = [];
         if (!empty($files['product_images']['name'])) {
             foreach ($files['product_images']['error'] as $i => $err) {
@@ -54,68 +54,41 @@ class AdminLogic {
         $imagesToSave = !empty($newImages) ? $newImages : $oldImages;
         $jsonImages = json_encode($imagesToSave, JSON_UNESCAPED_SLASHES);
 
-        if ($isUpdate) {
-            if ($incomingJson !== null) {
-                $attrsArr = json_decode($incomingJson, true);
-                $jsonAttributes = json_encode(
-                    is_array($attrsArr) ? $attrsArr : [],
-                    JSON_UNESCAPED_UNICODE
-                );
-            } else {
-                $jsonAttributes = $existing['attributes'] ?? '[]';
-            }
+        if ($incomingJson !== null) {
+            $attrsArr = json_decode($incomingJson, true);
+            $jsonAttributes = json_encode(is_array($attrsArr) ? $attrsArr : [], JSON_UNESCAPED_UNICODE);
         } else {
-            if ($incomingJson !== null) {
-                $attrsArr = json_decode($incomingJson, true);
-                $jsonAttributes = json_encode(
-                    is_array($attrsArr) ? $attrsArr : [],
-                    JSON_UNESCAPED_UNICODE
-                );
-            } else {
-                $jsonAttributes = '[]';
-            }
+            $jsonAttributes = $existing['attributes'] ?? '[]';
         }
 
         if ($isUpdate) {
-            $stmt = $conn->prepare(
-                "UPDATE products SET
-                   name=?, description=?, price=?, stock=?, rating=?,
-                   image_url=?, sub_category=?, brand=?, category=?, attributes=?
-                 WHERE id=?"
-            );
+            $stmt = $conn->prepare("
+                UPDATE products SET
+                  name=?, description=?, price=?, stock=?, rating=?,
+                  image_url=?, sub_category=?, brand=?, category=?, attributes=?
+                WHERE id=?
+            ");
             $stmt->bind_param(
                 "ssdidsssssi",
-                $post['name'],
-                $post['description'],
-                $post['price'],
-                $post['stock'],
-                $post['rating'],
-                $jsonImages,
-                $post['sub_category'],
-                $post['brand'],
-                $post['category'],
-                $jsonAttributes,
-                $post['id']
+                $post['name'], $post['description'], $post['price'],
+                $post['stock'], $post['rating'], $jsonImages,
+                $post['sub_category'], $post['brand'], $post['category'],
+                $jsonAttributes, $post['id']
             );
             $ok = $stmt->execute();
             return ['success' => $ok];
         } else {
-            $stmt = $conn->prepare(
-                "INSERT INTO products
-                   (name, description, price, stock, rating, image_url, sub_category, brand, category, attributes, created_at)
-                 VALUES(?,?,?,?,?,?,?,?,?,?,NOW())"
-            );
+            $stmt = $conn->prepare("
+                INSERT INTO products
+                  (name, description, price, stock, rating,
+                   image_url, sub_category, brand, category, attributes, created_at)
+                VALUES(?,?,?,?,?,?,?,?,?,?,NOW())
+            ");
             $stmt->bind_param(
                 "ssdidsssss",
-                $post['name'],
-                $post['description'],
-                $post['price'],
-                $post['stock'],
-                $post['rating'],
-                $jsonImages,
-                $post['sub_category'],
-                $post['brand'],
-                $post['category'],
+                $post['name'], $post['description'], $post['price'],
+                $post['stock'], $post['rating'], $jsonImages,
+                $post['sub_category'], $post['brand'], $post['category'],
                 $jsonAttributes
             );
             $ok = $stmt->execute();
@@ -123,94 +96,66 @@ class AdminLogic {
         }
     }
 
-    public function deleteProduct(int $id, mysqli $conn): array {
-        $stmt = $conn->prepare("DELETE FROM products WHERE id=?");
+    public function deleteProduct(int $id, mysqli $conn): bool {
+        $stmt = $conn->prepare("DELETE FROM products WHERE id = ?");
         $stmt->bind_param("i", $id);
-        $ok = $stmt->execute();
-        return ['success' => $ok];
-    }
-
-    // ----- ORDERS -----
-    public function fetchOrdersByCustomer(int $userId, mysqli $conn): array {
-        $stmt = $conn->prepare(
-            "SELECT id, user_id, payment_id, voucher_id, subtotal, discount, shipping_amount, total_amount, created_at
-             FROM orders
-             WHERE user_id = ?
-             ORDER BY created_at DESC"
-        );
-        $stmt->bind_param("i", $userId);
-        $stmt->execute();
-        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-    }
-
-    public function fetchOrderItems(int $orderId, mysqli $conn): array {
-        $stmt = $conn->prepare(
-            "SELECT id, order_id, product_id, name_snapshot, price_snapshot, quantity, total_price
-             FROM order_items
-             WHERE order_id = ?"
-        );
-        $stmt->bind_param("i", $orderId);
-        $stmt->execute();
-        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-    }
-
-    public function deleteOrderItem(int $itemId, mysqli $conn): array {
-        $stmt = $conn->prepare("DELETE FROM order_items WHERE id = ?");
-        $stmt->bind_param("i", $itemId);
-        $ok = $stmt->execute();
-        return ['success' => $ok];
+        return $stmt->execute();
     }
 
     // ----- CUSTOMERS -----
     public function fetchAllCustomers(mysqli $conn): array {
-        $res = $conn->query(
-            "SELECT id, firstname, lastname, email, username, role, address, zip_code, city, country, salutation, is_active
-             FROM users
-             ORDER BY created_at DESC"
-        );
+        $res = $conn->query("
+            SELECT id, firstname, lastname, email, username, role, is_active
+            FROM users
+            ORDER BY created_at DESC
+        ");
         return $res->fetch_all(MYSQLI_ASSOC);
     }
 
     public function fetchCustomerById(int $id, mysqli $conn): array {
-        $stmt = $conn->prepare(
-            "SELECT id, firstname, lastname, email, username, salutation, role, is_active, address, zip_code, city, country
-             FROM users
-             WHERE id = ?"
-        );
+        $stmt = $conn->prepare("
+            SELECT id, firstname, lastname, email, username, salutation,
+                   role, is_active, address, zip_code, city, country
+            FROM users
+            WHERE id = ?
+        ");
         $stmt->bind_param("i", $id);
         $stmt->execute();
         return $stmt->get_result()->fetch_assoc() ?: [];
     }
 
-    public function toggleCustomerActive(int $id, mysqli $conn): array {
+    public function toggleCustomerActive(int $id, mysqli $conn): bool {
         $stmt = $conn->prepare("UPDATE users SET is_active = NOT is_active WHERE id = ?");
         $stmt->bind_param("i", $id);
-        $ok = $stmt->execute();
-        return ['success' => $ok];
+        return $stmt->execute();
     }
 
     public function saveCustomer(array $d, mysqli $conn): array {
         if (!empty($d['id'])) {
             if (!empty($d['password'])) {
                 $hash = password_hash($d['password'], PASSWORD_DEFAULT);
-                $stmt = $conn->prepare(
-                    "UPDATE users SET
-                       firstname=?, lastname=?, email=?, username=?, salutation=?, role=?, is_active=?, address=?, zip_code=?, city=?, country=?, password=?
-                     WHERE id=?"
-                );
-                $stmt->bind_param("ssssssiissssi",
+                $stmt = $conn->prepare("
+                    UPDATE users SET
+                      firstname=?, lastname=?, email=?, username=?, salutation=?,
+                      role=?, is_active=?, address=?, zip_code=?, city=?, country=?, password=?
+                    WHERE id=?
+                ");
+                $stmt->bind_param(
+                    "ssssssiissssi",
                     $d['firstname'], $d['lastname'], $d['email'], $d['username'],
                     $d['salutation'], $d['role'], $d['is_active'],
                     $d['address'], $d['zip_code'], $d['city'], $d['country'],
                     $hash, $d['id']
                 );
             } else {
-                $stmt = $conn->prepare(
-                    "UPDATE users SET
-                       firstname=?, lastname=?, email=?, username=?, salutation=?, role=?, is_active=?, address=?, zip_code=?, city=?, country=?
-                     WHERE id=?"
-                );
-                $stmt->bind_param("ssssssiisssi",
+                $stmt = $conn->prepare("
+                    UPDATE users SET
+                      firstname=?, lastname=?, email=?, username=?, salutation=?,
+                      role=?, is_active=?, address=?, zip_code=?, city=?, country=?
+                    WHERE id=?
+                ");
+                $stmt->bind_param(
+                    "ssssssiisssi",
                     $d['firstname'], $d['lastname'], $d['email'], $d['username'],
                     $d['salutation'], $d['role'], $d['is_active'],
                     $d['address'], $d['zip_code'], $d['city'], $d['country'],
@@ -221,12 +166,14 @@ class AdminLogic {
             return ['success' => $ok];
         } else {
             $hash = password_hash($d['password'] ?? bin2hex(random_bytes(8)), PASSWORD_DEFAULT);
-            $stmt = $conn->prepare(
-                "INSERT INTO users
-                   (firstname, lastname, email, username, password, salutation, role, is_active, address, zip_code, city, country, created_at)
-                 VALUES(?,?,?,?,?,?,?,?,?,?,?, ?, NOW())"
-            );
-            $stmt->bind_param("ssssssisissss",
+            $stmt = $conn->prepare("
+                INSERT INTO users
+                  (firstname, lastname, email, username, password,
+                   salutation, role, is_active, address, zip_code, city, country, created_at)
+                VALUES(?,?,?,?,?,?,?,?,?,?,?, ?, NOW())
+            ");
+            $stmt->bind_param(
+                "ssssssisissss",
                 $d['firstname'], $d['lastname'], $d['email'], $d['username'],
                 $hash, $d['salutation'], $d['role'], $d['is_active'],
                 $d['address'], $d['zip_code'], $d['city'], $d['country']
@@ -236,22 +183,52 @@ class AdminLogic {
         }
     }
 
+    // ----- ORDERS -----
+    public function fetchOrdersByCustomer(int $userId, mysqli $conn): array {
+        $stmt = $conn->prepare("
+            SELECT id, created_at, subtotal, discount, shipping_amount, total_amount
+            FROM orders
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+        ");
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
+    public function fetchOrderItems(int $orderId, mysqli $conn): array {
+        $stmt = $conn->prepare("
+            SELECT id, name_snapshot, price_snapshot, quantity, total_price
+            FROM order_items
+            WHERE order_id = ?
+        ");
+        $stmt->bind_param("i", $orderId);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
+    public function deleteOrderItem(int $itemId, mysqli $conn): bool {
+        $stmt = $conn->prepare("DELETE FROM order_items WHERE id = ?");
+        $stmt->bind_param("i", $itemId);
+        return $stmt->execute();
+    }
+
     // ----- VOUCHERS -----
     public function fetchAllVouchers(mysqli $conn): array {
-        $res = $conn->query(
-            "SELECT id, code, value, remaining_value, is_active, expires_at
-             FROM vouchers
-             ORDER BY created_at DESC"
-        );
+        $res = $conn->query("
+            SELECT id, code, value, remaining_value, is_active, expires_at
+            FROM vouchers
+            ORDER BY created_at DESC
+        ");
         return $res->fetch_all(MYSQLI_ASSOC);
     }
 
     public function fetchVoucherById(int $id, mysqli $conn): array {
-        $stmt = $conn->prepare(
-            "SELECT id, code, value, remaining_value, is_active, expires_at
-             FROM vouchers
-             WHERE id = ?"
-        );
+        $stmt = $conn->prepare("
+            SELECT id, code, value, remaining_value, is_active, expires_at
+            FROM vouchers
+            WHERE id = ?
+        ");
         $stmt->bind_param("i", $id);
         $stmt->execute();
         return $stmt->get_result()->fetch_assoc() ?: [];
@@ -259,46 +236,50 @@ class AdminLogic {
 
     private function generateCode(): string {
         $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        $c = '';
+        $code = '';
         for ($i = 0; $i < 5; $i++) {
-            $c .= $chars[random_int(0, strlen($chars) - 1)];
+            $code .= $chars[random_int(0, strlen($chars) - 1)];
         }
-        return $c;
+        return $code;
     }
 
-    public function getNewVoucherCode(): array {
-        return ['code' => $this->generateCode()];
+    public function getNewVoucherCode(): string {
+        return $this->generateCode();
     }
 
     public function saveVoucher(array $d, mysqli $conn): array {
         if (!empty($d['id'])) {
-            $stmt = $conn->prepare(
-              "UPDATE vouchers SET code=?,value=?,remaining_value=?,is_active=?,expires_at=? WHERE id=?"
-            );
+            $stmt = $conn->prepare("
+              UPDATE vouchers
+               SET code=?, value=?, remaining_value=?, is_active=?, expires_at=?
+               WHERE id=?
+            ");
             $remaining = $d['remaining_value'] ?? $d['value'];
             $stmt->bind_param("sddisi",
-              $d['code'], $d['value'], $remaining, $d['is_active'], $d['expires_at'], $d['id']
+              $d['code'], $d['value'], $remaining,
+              $d['is_active'], $d['expires_at'], $d['id']
             );
-            $ok = $stmt->execute();
-            return ['success' => $ok];
+            $stmt->execute();
+            return ['success' => true];
         } else {
             $code = $this->generateCode();
-            $stmt = $conn->prepare(
-              "INSERT INTO vouchers(code,value,remaining_value,is_active,expires_at,created_at)
-               VALUES(?,?,?,?,?, NOW())"
-            );
+            $stmt = $conn->prepare("
+              INSERT INTO vouchers
+               (code, value, remaining_value, is_active, expires_at, created_at)
+               VALUES(?,?,?,?,?,NOW())
+            ");
             $stmt->bind_param("sddis",
-              $code, $d['value'], $d['value'], $d['is_active'], $d['expires_at']
+              $code, $d['value'], $d['value'],
+              $d['is_active'], $d['expires_at']
             );
-            $ok = $stmt->execute();
-            return ['success' => $ok, 'id' => $conn->insert_id];
+            $stmt->execute();
+            return ['success' => true, 'id' => $conn->insert_id];
         }
     }
 
-    public function deleteVoucher(int $id, mysqli $conn): array {
-        $stmt = $conn->prepare("DELETE FROM vouchers WHERE id=?");
+    public function deleteVoucher(int $id, mysqli $conn): bool {
+        $stmt = $conn->prepare("UPDATE vouchers SET is_active = 0 WHERE id = ?");
         $stmt->bind_param("i", $id);
-        $ok = $stmt->execute();
-        return ['success' => $ok];
+        return $stmt->execute();
     }
 }

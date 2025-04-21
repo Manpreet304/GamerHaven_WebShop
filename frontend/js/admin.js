@@ -1,294 +1,264 @@
-// ----------------------- DOCUMENT READY -----------------------
-$(document).ready(() => {
-  initTooltips();
+$(document).ready(function() {
+  initTabs();
   loadProducts();
   loadCustomers();
   loadVouchers();
-  bindUIEvents();
+  bindEvents();
 });
 
-// ----------------------- AJAX CALLS -----------------------
+// Initialize Bootstrap tabs
+function initTabs() {
+  document.querySelectorAll('#adminTabs button').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      new bootstrap.Tab(btn).show();
+    });
+  });
+}
+
+// --- PRODUCTS ---
 function loadProducts() {
-  $.get("../../backend/api/ApiAdmin.php?listProducts")
-    .done(products => {
-      const tbody = $("#productsTable tbody").empty();
-      products.forEach(p => {
-        tbody.append(`
-          <tr>
-            <td>${p.id}</td>
-            <td>${p.name}</td>
-            <td>€${parseFloat(p.price).toFixed(2).replace('.', ',')}</td>
-            <td>${p.stock}</td>
-            <td>
-              <button class="btn btn-sm btn-primary edit-product" data-id="${p.id}">Edit</button>
-              <button class="btn btn-sm btn-danger delete-product" data-id="${p.id}">Delete</button>
-            </td>
-          </tr>`);
-      });
+  $.get('../../backend/api/ApiAdmin.php?listProducts', products => {
+    const tbody = $('#productsTable tbody').empty();
+    products.forEach(p => {
+      tbody.append(`
+        <tr>
+          <td>${p.id}</td>
+          <td>${p.name}</td>
+          <td>€${Number(p.price).toFixed(2)}</td>
+          <td>${p.rating ?? '-'}</td>
+          <td>
+            <button class="btn btn-sm btn-primary edit-product" data-id="${p.id}">Edit</button>
+            <button class="btn btn-sm btn-danger delete-product" data-id="${p.id}">Delete</button>
+          </td>
+        </tr>
+      `);
     });
+  });
 }
 
-function loadCustomers() {
-  $.get("../../backend/api/ApiAdmin.php?listCustomers")
-    .done(users => {
-      const tbody = $("#customersTable tbody").empty();
-      users.forEach(u => {
-        tbody.append(`
-          <tr>
-            <td>${u.id}</td>
-            <td>${u.username}</td>
-            <td>${u.email}</td>
-            <td>${u.is_active ? 'Yes' : 'No'}</td>
-            <td>
-              <button class="btn btn-sm btn-primary edit-customer me-1" data-id="${u.id}">Edit</button>
-              <button class="btn btn-sm btn-info view-orders me-1" data-id="${u.id}">Orders</button>
-              <button class="btn btn-sm btn-warning toggle-customer" data-id="${u.id}">
-                ${u.is_active ? 'Deactivate' : 'Activate'}
-              </button>
-            </td>
-          </tr>`);
-      });
-    });
-}
-
-function loadVouchers() {
-  $.get("../../backend/api/ApiAdmin.php?listVouchers")
-    .done(vs => {
-      const tbody = $("#vouchersTable tbody").empty();
-      const today = new Date().toISOString().split('T')[0];
-      vs.forEach(v => {
-        const isExpired = v.expires_at < today;
-        const isUsed = v.remaining_value < v.value;
-        const rowClass = isExpired ? 'table-danger' : isUsed ? 'table-warning' : '';
-        tbody.append(`
-          <tr class="${rowClass}">
-            <td>${v.id}</td>
-            <td>${v.code}</td>
-            <td>€${parseFloat(v.value).toFixed(2)}</td>
-            <td>€${parseFloat(v.remaining_value).toFixed(2)}</td>
-            <td>${v.is_active ? 'Yes' : 'No'}</td>
-            <td>${v.expires_at.split(' ')[0]}</td>
-            <td>
-              <button class="btn btn-sm btn-primary edit-voucher" data-id="${v.id}">Edit</button>
-              <button class="btn btn-sm btn-danger delete-voucher" data-id="${v.id}">Delete</button>
-            </td>
-          </tr>`);
-      });
-    });
-}
-
-// ----------------------- UI INIT -----------------------
-function initTooltips() {
-  $('[data-bs-toggle="tooltip"]').each((_, el) => new bootstrap.Tooltip(el));
-}
-
-// ----------------------- EVENT BINDING -----------------------
-function bindUIEvents() {
-  // Products
-  $("#addProductBtn").click(() => openProductModal());
-  $(document).on("click", ".edit-product", e => openProductModal(+$(e.currentTarget).data("id")));
-  $(document).on("click", "#saveProductBtn", saveProduct);
-  $(document).on("click", ".delete-product", e => deleteProduct(+$(e.currentTarget).data("id")));
-
-  // Customers
-  $(document).on("click", ".toggle-customer", e => toggleCustomer(+$(e.currentTarget).data("id")));
-  $(document).on("click", ".edit-customer", e => openCustomerModal(+$(e.currentTarget).data("id")));
-  $(document).on("click", "#saveCustomerBtn", saveCustomer);
-  $(document).on("click", ".view-orders", e => showCustomerOrders(+$(e.currentTarget).data("id")));
-
-  // Vouchers
-  $("#addVoucherBtn").click(() => openVoucherModal());
-  $(document).on("click", ".edit-voucher", e => openVoucherModal(+$(e.currentTarget).data("id")));
-  $(document).on("click", "#saveVoucherBtn", saveVoucher);
-  $(document).on("click", ".delete-voucher", e => deleteVoucher(+$(e.currentTarget).data("id")));
-}
-
-// ----------------------- PRODUCT LOGIC -----------------------
+// Open the Add/Edit Product modal and populate if editing
 function openProductModal(id) {
-  resetForm("#productForm");
-  $("#existingImages").empty();
+  resetForm('#productForm');
+  $('#existingImages').empty();
 
   if (id) {
-    $.get(`../../backend/api/ApiAdmin.php?getProduct&id=${id}`)
-      .done(p => {
-        $("#product_id").val(p.id);
-        $("#product_name").val(p.name);
-        $("#product_brand").val(p.brand);
-        $("#product_category").val(p.category);
-        $("#product_sub_category").val(p.sub_category);
-        $("#product_description").val(p.description);
-        $("#product_price").val(parseFloat(p.price).toFixed(2).replace('.', ','));
-        if (p.rating != null) {
-          $("#product_rating").val(parseFloat(p.rating).toFixed(2).replace('.', ','));
-        }
-        $("#product_stock").val(p.stock);
-        const attrs = JSON.parse(p.attributes || '{}');
-        $("#product_attributes").val(Object.entries(attrs).map(([k,v]) => `${k}: ${v}`).join("\n"));
-        JSON.parse(p.image_url || '[]').forEach(src => {
-          $("#existingImages").append(`<li class="list-group-item">${src}</li>`);
+    $.get(`../../backend/api/ApiAdmin.php?getProduct&id=${id}`, p => {
+      $('#productId').val(p.id);
+      $('#productName').val(p.name);
+      $('#productBrand').val(p.brand);
+      $('#productCategory').val(p.category);
+      $('#productSubCategory').val(p.sub_category);
+      $('#productPrice').val(p.price);
+      $('#productStock').val(p.stock);
+      $('#productRating').val(p.rating);
+      $('#productDescription').val(p.description);
+
+      // Attributes → textarea lines
+      if (p.attributes) {
+        const attrs = JSON.parse(p.attributes);
+        const lines = Object.entries(attrs).map(([k, v]) => `${k}: ${v}`);
+        $('#productAttributes').val(lines.join('\n'));
+      }
+
+      // Show existing images
+      if (p.image_url) {
+        JSON.parse(p.image_url).forEach(src => {
+          $('#existingImages').append(`<li class="list-group-item">${src}</li>`);
         });
-      });
+      }
+    });
   }
 
-  new bootstrap.Modal($("#productModal")).show();
+  new bootstrap.Modal($('#productModal')).show();
 }
 
-function saveProduct() {
-  const formEl = $("#productForm")[0];
+// Save (Add or Update) a product
+$('#saveProductBtn').click(() => {
+  const formEl = $('#productForm')[0];
   if (!formEl.checkValidity()) {
-    formEl.classList.add("was-validated");
+    formEl.classList.add('was-validated');
     return;
   }
+
   const formData = new FormData(formEl);
-  formData.set("price", $("#product_price").val().replace(',', '.'));
-  const rv = $("#product_rating").val();
-  if (rv) formData.set("rating", rv.replace(',', '.'));
-  const lines = $("#product_attributes").val().split(/\r\n|\n/);
+
+  // Convert attributes textarea to JSON
+  const raw = $('#productAttributes').val().split(/\r?\n/);
   const obj = {};
-  lines.forEach(l => {
-    const [k,v] = l.split(":",2);
-    if (v !== undefined) obj[k.trim()] = v.trim();
+  raw.forEach(line => {
+    const [key, val] = line.split(/:\s*/, 2);
+    if (val !== undefined) obj[key.trim()] = val.trim();
   });
-  formData.set("attributes", JSON.stringify(obj));
-  const id = +$("#product_id").val();
-  const url = id ? `../../backend/api/ApiAdmin.php?updateProduct&id=${id}` : `../../backend/api/ApiAdmin.php?addProduct`;
+  formData.set('attributes', JSON.stringify(obj));
+
+  // Determine endpoint
+  const id = $('#productId').val();
+  const url = id
+    ? `../../backend/api/ApiAdmin.php?updateProduct&id=${id}`
+    : `../../backend/api/ApiAdmin.php?addProduct`;
+
   $.ajax({
     url,
-    method: "POST",
+    method: 'POST',
     processData: false,
     contentType: false,
     data: formData
   }).always(() => {
-    bootstrap.Modal.getInstance($("#productModal")).hide();
+    bootstrap.Modal.getInstance($('#productModal')).hide();
     loadProducts();
   });
-}
+});
 
-function deleteProduct(id) {
-  $.post(`../../backend/api/ApiAdmin.php?deleteProduct&id=${id}`)
-    .always(loadProducts);
-}
+// Bind product buttons
+$('#addProductBtn').click(() => openProductModal());
+$(document).on('click', '.edit-product', e => openProductModal($(e.currentTarget).data('id')));
+$(document).on('click', '.delete-product', function() {
+  const id = $(this).data('id');
+  $.post(`../../backend/api/ApiAdmin.php?deleteProduct&id=${id}`, loadProducts);
+});
 
-// ----------------------- CUSTOMER LOGIC -----------------------
-function toggleCustomer(id) {
-  $.post(`../../backend/api/ApiAdmin.php?toggleCustomer&id=${id}`)
-    .always(loadCustomers);
-}
-
-function openCustomerModal(id) {
-  resetForm("#customerForm");
-  if (id) {
-    $.get(`../../backend/api/ApiAdmin.php?getCustomer&id=${id}`)
-      .done(u => {
-        $("#customer_id").val(u.id);
-        $("#customer_firstname").val(u.firstname);
-        $("#customer_lastname").val(u.lastname);
-        $("#customer_email").val(u.email);
-        $("#customer_username").val(u.username);
-        $("#customer_salutation").val(u.salutation);
-        $("#customer_role").val(u.role);
-        $("#customer_active").val(u.is_active ? "1" : "0");
-        $("#customer_address").val(u.address);
-        $("#customer_zip_code").val(u.zip_code);
-        $("#customer_city").val(u.city);
-        $("#customer_country").val(u.country);
-      });
-  }
-  new bootstrap.Modal($("#customerModal")).show();
-}
-
-function saveCustomer() {
-  const formEl = $("#customerForm")[0];
-  if (!formEl.checkValidity()) {
-    formEl.classList.add("was-validated");
-    return;
-  }
-  const id = +$("#customer_id").val();
-  const payload = {
-    firstname:  $("#customer_firstname").val(),
-    lastname:   $("#customer_lastname").val(),
-    email:      $("#customer_email").val(),
-    username:   $("#customer_username").val(),
-    salutation: $("#customer_salutation").val(),
-    role:       $("#customer_role").val(),
-    is_active: +$("#customer_active").val(),
-    address:    $("#customer_address").val(),
-    zip_code:   $("#customer_zip_code").val(),
-    city:       $("#customer_city").val(),
-    country:    $("#customer_country").val()
-  };
-  if (id) payload.id = id;
-  const pw = $("#customer_password").val();
-  if (pw) payload.password = pw;
-  $.ajax({
-    url: `../../backend/api/ApiAdmin.php?${id ? `updateCustomer&id=${id}` : 'addCustomer'}`,
-    method: "POST",
-    contentType: "application/json",
-    data: JSON.stringify(payload)
-  }).always(() => {
-    bootstrap.Modal.getInstance($("#customerModal")).hide();
-    loadCustomers();
-  });
-}
-
-// ----------------------- VOUCHER LOGIC -----------------------
-function openVoucherModal(id) {
-  resetForm("#voucherForm");
-  if (id) {
-    $.get(`../../backend/api/ApiAdmin.php?getVoucher&id=${id}`)
-      .done(v => {
-        $("#voucher_id").val(v.id);
-        $("#voucher_code").val(v.code);
-        $("#voucher_value").val(v.value);
-        $("#voucher_expires").val(v.expires_at.split(' ')[0]);
-        $("#voucher_active").val(v.is_active ? "1" : "0");
-      });
-  } else {
-    $.get("../../backend/api/ApiAdmin.php?generateVoucherCode")
-      .done(data => {
-        $("#voucher_code").val(data.code).attr("readonly", true);
-      });
-  }
-  new bootstrap.Modal($("#voucherModal")).show();
-}
-
-function saveVoucher() {
-  const id = +$("#voucher_id").val();
-  const payload = {
-    code:       $("#voucher_code").val(),
-    value:      +$("#voucher_value").val(),
-    expires_at: $("#voucher_expires").val(),
-    is_active:  +$("#voucher_active").val()
-  };
-  if (id) payload.id = id;
-  $.ajax({
-    url: `../../backend/api/ApiAdmin.php?${id ? `updateVoucher&id=${id}` : "addVoucher"}`,
-    method: "POST",
-    contentType: "application/json",
-    data: JSON.stringify(payload)
-  }).always(() => {
-    bootstrap.Modal.getInstance($("#voucherModal")).hide();
-    loadVouchers();
-  });
-}
-
-function deleteVoucher(id) {
-  $.post(`../../backend/api/ApiAdmin.php?deleteVoucher&id=${id}`)
-    .always(loadVouchers);
-}
-
-// ----------------------- ORDERS -----------------------
-function showCustomerOrders(userId) {
-  $.get(`../../backend/api/ApiAdmin.php?listOrdersByCustomer&id=${userId}`)
-    .done(orders => {
-      console.table(orders);
-      alert(`User ${userId} has ${orders.length} order(s).`);
+// --- CUSTOMERS ---
+function loadCustomers() {
+  $.get('../../backend/api/ApiAdmin.php?listCustomers', customers => {
+    const tbody = $('#customersTable tbody').empty();
+    const select = $('#orderCustomerSelect').empty()
+      .append('<option value="">Select customer…</option>');
+    customers.forEach(u => {
+      tbody.append(`
+        <tr>
+          <td>${u.id}</td>
+          <td>${u.firstname} ${u.lastname}</td>
+          <td>${u.email}</td>
+          <td>${u.is_active ? '✔️' : '❌'}</td>
+          <td>
+            <button class="btn btn-sm btn-warning toggle-customer" data-id="${u.id}">
+              ${u.is_active ? 'Deactivate' : 'Activate'}
+            </button>
+          </td>
+        </tr>
+      `);
+      select.append(`<option value="${u.id}">${u.firstname} ${u.lastname}</option>`);
     });
+  });
 }
 
-// ----------------------- UTIL -----------------------
+// --- ORDERS BY CUSTOMER ---
+$('#orderCustomerSelect').on('change', function() {
+  const userId = $(this).val();
+  const tbody  = $('#ordersTable tbody').empty();
+  if (!userId) return;
+  $.get(`../../backend/api/ApiAdmin.php?listOrdersByCustomer&id=${userId}`, orders => {
+    orders.forEach(o => {
+      tbody.append(`
+        <tr>
+          <td>${o.id}</td>
+          <td>${o.created_at.split(' ')[0]}</td>
+          <td>€${Number(o.total_amount).toFixed(2)}</td>
+          <td>
+            <button class="btn btn-sm btn-info view-items" data-id="${o.id}">Details</button>
+          </td>
+        </tr>
+      `);
+    });
+  });
+});
+
+// Show order items
+$('#ordersTable').on('click', '.view-items', function() {
+  const orderId = $(this).data('id');
+  $.get(`../../backend/api/ApiAdmin.php?listOrderItems&order_id=${orderId}`, items => {
+    let msg = 'Items:\n';
+    items.forEach(i => {
+      msg += `– ${i.name_snapshot} × ${i.quantity} = €${i.total_price}\n`;
+    });
+    alert(msg);
+  });
+});
+
+// --- VOUCHERS ---
+function loadVouchers() {
+  $.get('../../backend/api/ApiAdmin.php?listVouchers', vs => {
+    const tbody = $('#vouchersTable tbody').empty();
+    vs.forEach(v => {
+      const rowClass = !v.is_active
+        ? 'table-secondary'
+        : (v.remaining_value < v.value ? 'table-warning' : '');
+      tbody.append(`
+        <tr class="${rowClass}">
+          <td>${v.id}</td>
+          <td>${v.code}</td>
+          <td>€${Number(v.value).toFixed(2)}</td>
+          <td>€${Number(v.remaining_value).toFixed(2)}</td>
+          <td>${v.expires_at.split(' ')[0]}</td>
+          <td>${v.is_active ? '✔️' : '❌'}</td>
+          <td>
+            <button class="btn btn-sm btn-primary edit-voucher" data-id="${v.id}">Edit</button>
+            <button class="btn btn-sm btn-danger delete-voucher" data-id="${v.id}">Deactivate</button>
+          </td>
+        </tr>
+      `);
+    });
+  });
+}
+
+// --- EVENT BINDING ---
+function bindEvents() {
+  // Customer toggle
+  $('#customersTable').on('click', '.toggle-customer', function() {
+    const id = $(this).data('id');
+    $.post(`../../backend/api/ApiAdmin.php?toggleCustomer&id=${id}`, loadCustomers);
+  });
+
+  // Voucher: Add
+  $('#addVoucherBtn').click(() => {
+    $('#voucherForm')[0].reset();
+    $('#voucherId').val('');
+    $.get('../../backend/api/ApiAdmin.php?generateVoucherCode', d => {
+      $('#voucherCode').val(d.code);
+      new bootstrap.Modal($('#voucherModal')).show();
+    });
+  });
+
+  // Voucher: Edit
+  $('#vouchersTable').on('click', '.edit-voucher', function() {
+    const id = $(this).data('id');
+    $.get(`../../backend/api/ApiAdmin.php?getVoucher&id=${id}`, v => {
+      $('#voucherId').val(v.id);
+      $('#voucherCode').val(v.code);
+      $('#voucherValue').val(v.value);
+      $('#voucherExpires').val(v.expires_at.split(' ')[0]);
+      $('#voucherActive').val(v.is_active ? '1' : '0');
+      new bootstrap.Modal($('#voucherModal')).show();
+    });
+  });
+
+  // Voucher: Save
+  $('#saveVoucherBtn').click(() => {
+    const id = $('#voucherId').val();
+    const payload = {
+      code: $('#voucherCode').val(),
+      value: parseFloat($('#voucherValue').val()),
+      expires_at: $('#voucherExpires').val(),
+      is_active: parseInt($('#voucherActive').val(), 10)
+    };
+    const url = id
+      ? `../../backend/api/ApiAdmin.php?updateVoucher&id=${id}`
+      : `../../backend/api/ApiAdmin.php?addVoucher`;
+    $.ajax({ url, method:'POST', contentType:'application/json', data: JSON.stringify(payload) })
+      .always(() => { bootstrap.Modal.getInstance($('#voucherModal')).hide(); loadVouchers(); });
+  });
+
+  // Voucher: Deactivate
+  $('#vouchersTable').on('click', '.delete-voucher', function() {
+    const id = $(this).data('id');
+    $.post(`../../backend/api/ApiAdmin.php?deleteVoucher&id=${id}`, loadVouchers);
+  });
+}
+
+// Reset form helper
 function resetForm(sel) {
   const f = document.querySelector(sel);
   f.reset();
-  f.classList.remove("was-validated");
+  f.classList.remove('was-validated');
 }
