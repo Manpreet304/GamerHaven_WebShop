@@ -40,25 +40,30 @@
         <table class="table table-striped" id="productsTable">
           <thead class="table-primary">
             <tr>
-              <th>ID</th><th>Name</th><th>Price</th><th>Rating</th><th>Actions</th>
+              <th>ID</th><th>Name</th><th>Email</th><th>Active?</th><th>Actions</th>
             </tr>
-          </thead>
+          </thead>          
           <tbody></tbody>
         </table>
       </div>
 
-      <!-- CUSTOMERS -->
-      <div class="tab-pane fade" id="customers">
-        <h4>Manage Customers</h4>
-        <table class="table table-striped" id="customersTable">
-          <thead class="table-primary">
-            <tr>
-              <th>ID</th><th>Name</th><th>Email</th><th>Active?</th><th>Actions</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
+     <!-- CUSTOMERS -->
+    <div class="tab-pane fade" id="customers">
+      <h4>Manage Customers</h4>
+      <table class="table table-striped" id="customersTable">
+        <thead class="table-primary">
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Username</th>           
+            <th>Email</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
 
       <!-- ORDERS -->
       <div class="tab-pane fade" id="orders">
@@ -225,11 +230,103 @@
     </div>
   </div>
 
+ <!-- CUSTOMER Modal -->
+<div class="modal fade" id="customerModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Customer</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="customerForm" novalidate>
+          <input type="hidden" id="customer_id" name="id">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label>First Name</label>
+              <input id="customer_firstname" name="firstname" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label>Last Name</label>
+              <input id="customer_lastname" name="lastname" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label>Email</label>
+              <input id="customer_email" name="email" type="email" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label>Username</label>
+              <input id="customer_username" name="username" class="form-control" required>
+            </div>
+
+            <!-- NEW: optional password field -->
+            <div class="col-md-6">
+              <label>Password <small class="text-muted">(leave blank to keep current)</small></label>
+              <input type="password" id="customer_password" class="form-control" placeholder="New password">
+            </div>
+
+            <!-- 🔥 Here are the address fields 🔥 -->
+            <div class="col-md-6">
+              <label>Address</label>
+              <input id="customer_address" name="address" class="form-control">
+            </div>
+            <div class="col-md-2">
+              <label>ZIP Code</label>
+              <input id="customer_zip_code" name="zip_code" class="form-control">
+            </div>
+            <div class="col-md-2">
+              <label>City</label>
+              <input id="customer_city" name="city" class="form-control">
+            </div>
+            <div class="col-md-2">
+              <label>Country</label>
+              <input id="customer_country" name="country" class="form-control">
+            </div>
+            <!-- end address -->
+
+            <div class="col-md-4">
+              <label>Salutation</label>
+              <select id="customer_salutation" name="salutation" class="form-select">
+                <option>Mr</option><option>Ms</option><option>Mx</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label>Role</label>
+              <select id="customer_role" name="role" class="form-select">
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label>Active?</label>
+              <select id="customer_active" name="is_active" class="form-select">
+                <option value="1">Yes</option>
+                <option value="0">No</option>
+              </select>
+            </div>
+          </div>
+          <!-- you can add the password field here, if you like -->
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" id="saveCustomerBtn">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
   <!-- scripts -->
   <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="../js/utils.js"></script>
   <script src="../js/includer.js"></script>
-  <script src="../js/admin.js"></script>
+  <script src="../js/admin_customers.js"></script>
+  <script src="../js/admin_orders.js"></script>
+  <script src="../js/admin_products.js"></script>
+  <script src="../js/admin_vouchers.js"></script>
+
 </body>
 </html>

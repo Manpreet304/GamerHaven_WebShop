@@ -46,4 +46,11 @@ function updateCartCount() {
         $("#cart-count").text(data.count || 0);
     });
 }
+//für admin.js 
+function resetForm(selector) {
+    const form = document.querySelector(selector);
+    if (!form) return;
+    form.reset();
+    form.classList.remove('was-validated');
+  }
 

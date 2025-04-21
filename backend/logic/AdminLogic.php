@@ -130,58 +130,115 @@ class AdminLogic {
         return $stmt->execute();
     }
 
-    public function saveCustomer(array $d, mysqli $conn): array {
-        if (!empty($d['id'])) {
-            if (!empty($d['password'])) {
-                $hash = password_hash($d['password'], PASSWORD_DEFAULT);
-                $stmt = $conn->prepare("
-                    UPDATE users SET
-                      firstname=?, lastname=?, email=?, username=?, salutation=?,
-                      role=?, is_active=?, address=?, zip_code=?, city=?, country=?, password=?
-                    WHERE id=?
-                ");
-                $stmt->bind_param(
-                    "ssssssiissssi",
-                    $d['firstname'], $d['lastname'], $d['email'], $d['username'],
-                    $d['salutation'], $d['role'], $d['is_active'],
-                    $d['address'], $d['zip_code'], $d['city'], $d['country'],
-                    $hash, $d['id']
-                );
-            } else {
-                $stmt = $conn->prepare("
-                    UPDATE users SET
-                      firstname=?, lastname=?, email=?, username=?, salutation=?,
-                      role=?, is_active=?, address=?, zip_code=?, city=?, country=?
-                    WHERE id=?
-                ");
-                $stmt->bind_param(
-                    "ssssssiisssi",
-                    $d['firstname'], $d['lastname'], $d['email'], $d['username'],
-                    $d['salutation'], $d['role'], $d['is_active'],
-                    $d['address'], $d['zip_code'], $d['city'], $d['country'],
-                    $d['id']
-                );
-            }
-            $ok = $stmt->execute();
-            return ['success' => $ok];
-        } else {
-            $hash = password_hash($d['password'] ?? bin2hex(random_bytes(8)), PASSWORD_DEFAULT);
+   // logic/AdminLogic.php
+
+public function saveCustomer(array $d, mysqli $conn): array {
+    $isActiveStr = $d['is_active'] ? 'true' : 'false';
+
+    if (!empty($d['id'])) {
+        // → UPDATE
+        if (!empty($d['password'])) {
+            $hash = password_hash($d['password'], PASSWORD_DEFAULT);
             $stmt = $conn->prepare("
-                INSERT INTO users
-                  (firstname, lastname, email, username, password,
-                   salutation, role, is_active, address, zip_code, city, country, created_at)
-                VALUES(?,?,?,?,?,?,?,?,?,?,?, ?, NOW())
+                UPDATE users SET
+                  firstname   = ?,
+                  lastname    = ?,
+                  email       = ?,
+                  username    = ?,
+                  salutation  = ?,
+                  role        = ?,
+                  is_active   = ?,    /* ENUM 'false'/'true' */
+                  address     = ?,
+                  zip_code    = ?,
+                  city        = ?,
+                  country     = ?,
+                  password    = ?
+                WHERE id = ?
             ");
+            // 7×string, 5×string, 1×string, 1×int = 14 Parameter
             $stmt->bind_param(
-                "ssssssisissss",
-                $d['firstname'], $d['lastname'], $d['email'], $d['username'],
-                $hash, $d['salutation'], $d['role'], $d['is_active'],
-                $d['address'], $d['zip_code'], $d['city'], $d['country']
+                "sssssssssssisi",
+                $d['firstname'],
+                $d['lastname'],
+                $d['email'],
+                $d['username'],
+                $d['salutation'],
+                $d['role'],
+                $isActiveStr,
+                $d['address'],
+                $d['zip_code'],
+                $d['city'],
+                $d['country'],
+                $hash,
+                $d['id']
             );
-            $ok = $stmt->execute();
-            return ['success' => $ok, 'id' => $conn->insert_id];
+        } else {
+            $stmt = $conn->prepare("
+                UPDATE users SET
+                  firstname   = ?,
+                  lastname    = ?,
+                  email       = ?,
+                  username    = ?,
+                  salutation  = ?,
+                  role        = ?,
+                  is_active   = ?,    /* ENUM 'false'/'true' */
+                  address     = ?,
+                  zip_code    = ?,
+                  city        = ?,
+                  country     = ?
+                WHERE id = ?
+            ");
+            // 6×string, 1×string, 1×string, 1×string, 1×string, 1×string, 1×string = 12 params
+            $stmt->bind_param(
+                "sssssssssssi",
+                $d['firstname'],
+                $d['lastname'],
+                $d['email'],
+                $d['username'],
+                $d['salutation'],
+                $d['role'],
+                $isActiveStr,
+                $d['address'],
+                $d['zip_code'],
+                $d['city'],
+                $d['country'],
+                $d['id']
+            );
         }
+        $ok = $stmt->execute();
+        return ['success' => $ok];
+
+    } else {
+        // → INSERT
+        $hash = password_hash($d['password'] ?? bin2hex(random_bytes(8)), PASSWORD_DEFAULT);
+        $stmt = $conn->prepare("
+            INSERT INTO users
+              (firstname, lastname, email, username, password,
+               salutation, role, is_active, address, zip_code, city, country, created_at)
+            VALUES(?,?,?,?,?,?,?,?,?,?,?, ?, NOW())
+        ");
+        // 7×string, 1×string, 1×string, 1×string, 1×string, 1×string = 13 params
+        $stmt->bind_param(
+            "ssssssssssss",
+            $d['firstname'],
+            $d['lastname'],
+            $d['email'],
+            $d['username'],
+            $hash,
+            $d['salutation'],
+            $d['role'],
+            $isActiveStr,
+            $d['address'],
+            $d['zip_code'],
+            $d['city'],
+            $d['country']
+        );
+        $ok = $stmt->execute();
+        return ['success' => $ok, 'id' => $conn->insert_id];
     }
+
+}
+
 
     // ----- ORDERS -----
     public function fetchOrdersByCustomer(int $userId, mysqli $conn): array {
