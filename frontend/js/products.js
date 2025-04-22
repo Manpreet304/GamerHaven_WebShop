@@ -2,7 +2,6 @@
 
 /**
  * Fetch and render products, applying optional filters.
- * @param {Object} filters 
  */
 function loadProducts(filters = {}) {
     const query = new URLSearchParams(filters).toString();
@@ -24,8 +23,6 @@ function loadProducts(filters = {}) {
 
 /**
  * Add a product to the cart via API.
- * @param {number} productId 
- * @param {number} quantity 
  */
 function addToCart(productId, quantity = 1) {
     $.ajax({
@@ -54,11 +51,6 @@ function addToCart(productId, quantity = 1) {
     });
 }
 
-/**
- * Update the "Add to Cart" buttons’ appearance after an add-to-cart attempt.
- * @param {number} productId 
- * @param {boolean} success 
- */
 function updateAddToCartButtons(productId, success) {
     const selectors = [
         `.product-card[data-product-id='${productId}'] .add-to-cart`,
@@ -168,11 +160,6 @@ function resetAllFilters() {
 
 // ----------------------- RENDERING FUNCTIONS -----------------------
 
-/**
- * Render the category and brand filter controls based on products and current filters.
- * @param {Array} products 
- * @param {Object} filters 
- */
 function renderFilters(products, filters = {}) {
     const selCat = filters.category || "";
     const cats = [...new Set(products.map(p=>p.category))].sort();
@@ -202,8 +189,7 @@ function renderFilters(products, filters = {}) {
 }
 
 /**
- * Render product cards and their corresponding modals.
- * @param {Array} products 
+  Render product cards and their corresponding modals.
  */
 function renderProducts(products) {
     const grid = $("#productGrid").empty();
@@ -256,10 +242,7 @@ function renderProducts(products) {
     });
 }
 
-/**
- * Set up hover-based image cycling for multi-image products.
- * @param {Array} products 
- */
+
 function setupHoverRotation(products) {
     const intervals = {};
     $(".product-card").each(function () {
