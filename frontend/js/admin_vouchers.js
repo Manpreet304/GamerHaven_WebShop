@@ -1,10 +1,12 @@
+// admin_vouchers.js
 $(document).ready(function() {
-    loadVouchers();
-    bindVoucherEvents();
-  });
-  
-  function loadVouchers() {
-    $.get('../../backend/api/ApiAdmin.php?listVouchers', vs => {
+  loadVouchers();
+  bindVoucherEvents();
+});
+
+function loadVouchers() {
+  $.get('../../backend/api/ApiAdmin.php?listVouchers')
+    .done(vs => {
       const tbody = $('#vouchersTable tbody').empty();
       vs.forEach(v => {
         const cls = v.is_active ? '' : 'table-secondary';
@@ -24,66 +26,96 @@ $(document).ready(function() {
           </tr>
         `);
       });
+    })
+    .fail((xhr, status, err) => {
+      const msg = xhr.responseJSON?.error || 'Vouchers konnten nicht geladen werden.';
+      showMessage('danger', msg);
+      console.error('loadVouchers failed', status, err);
     });
-  }
-  
-  function openVoucherModal(id) {
-    resetForm('#voucherForm');
-    $('#voucherId').val('');
-    $('#voucherCode').prop('readonly', false).val('');
-  
-    if (id) {
-      $.get(`../../backend/api/ApiAdmin.php?getVoucher&id=${id}`, v => {
+}
+
+function openVoucherModal(id) {
+  resetForm('#voucherForm');
+  $('#voucherId').val('');
+  $('#voucherCode').prop('readonly', false).val('');
+
+  if (id) {
+    $.get(`../../backend/api/ApiAdmin.php?getVoucher&id=${id}`)
+      .done(v => {
         $('#voucherId').val(v.id);
         $('#voucherCode').val(v.code).prop('readonly', true);
         $('#voucherValue').val(v.value);
         $('#voucherExpires').val(v.expires_at.split(' ')[0]);
         $('#voucherActive').val(v.is_active ? '1' : '0');
+      })
+      .fail((xhr, status, err) => {
+        const msg = xhr.responseJSON?.error || 'Voucher-Daten konnten nicht geladen werden.';
+        showMessage('danger', msg);
+        console.error('getVoucher failed', status, err);
       });
-    } else {
-      $.get('../../backend/api/ApiAdmin.php?generateVoucherCode', d => {
+  } else {
+    $.get('../../backend/api/ApiAdmin.php?generateVoucherCode')
+      .done(d => {
         $('#voucherCode').val(d.code).prop('readonly', true);
+      })
+      .fail((xhr, status, err) => {
+        const msg = xhr.responseJSON?.error || 'Voucher-Code konnte nicht generiert werden.';
+        showMessage('danger', msg);
+        console.error('generateVoucherCode failed', status, err);
       });
-    }
-  
-    new bootstrap.Modal(document.getElementById('voucherModal')).show();
   }
-  
-  function saveVoucher() {
-    const form = $('#voucherForm')[0];
-    if (!form.checkValidity()) {
-      form.classList.add('was-validated');
-      return;
-    }
-  
-    const data = {
-      id:         +$('#voucherId').val(),
-      code:       $('#voucherCode').val(),
-      value:      +$('#voucherValue').val(),
-      expires_at: $('#voucherExpires').val(),
-      is_active:  +$('#voucherActive').val()
-    };
-  
-    const url = data.id
-      ? `../../backend/api/ApiAdmin.php?updateVoucher&id=${data.id}`
-      : `../../backend/api/ApiAdmin.php?addVoucher`;
-  
-    $.ajax({
-      url,
-      method: 'POST',
-      contentType: 'application/json',
-      data: JSON.stringify(data)
-    })
-    .always(() => {
-      bootstrap.Modal.getInstance(document.getElementById('voucherModal')).hide();
+
+  new bootstrap.Modal(document.getElementById('voucherModal')).show();
+}
+
+function saveVoucher() {
+  const form = $('#voucherForm')[0];
+  if (!form.checkValidity()) {
+    form.classList.add('was-validated');
+    return;
+  }
+
+  const data = {
+    id:         +$('#voucherId').val(),
+    code:       $('#voucherCode').val(),
+    value:      +$('#voucherValue').val(),
+    expires_at: $('#voucherExpires').val(),
+    is_active:  +$('#voucherActive').val()
+  };
+
+  const url = data.id
+    ? `../../backend/api/ApiAdmin.php?updateVoucher&id=${data.id}`
+    : `../../backend/api/ApiAdmin.php?addVoucher`;
+
+  $.ajax({
+    url,
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify(data)
+  })
+  .done(resp => {
+    if (resp.success) {
+      showMessage('success', data.id
+        ? 'Voucher erfolgreich aktualisiert.'
+        : 'Voucher erfolgreich erstellt.');
       loadVouchers();
-    });
-  }
-  
-  function bindVoucherEvents() {
-    $('#addVoucherBtn').click(() => openVoucherModal());
-    $(document).on('click', '.edit-voucher', e =>
-      openVoucherModal($(e.currentTarget).data('id'))
-    );
-    $('#saveVoucherBtn').click(saveVoucher);
-  }
+      bootstrap.Modal.getInstance(document.getElementById('voucherModal')).hide();
+    } else {
+      const msg = resp.error || 'Speichern des Vouchers fehlgeschlagen.';
+      showMessage('danger', msg);
+    }
+  })
+  .fail((xhr, status, err) => {
+    const msg = xhr.responseJSON?.error || 'Fehler beim Speichern des Vouchers.';
+    showMessage('danger', msg);
+    console.error('saveVoucher failed', status, err);
+  });
+}
+
+function bindVoucherEvents() {
+  $('#addVoucherBtn').click(() => openVoucherModal());
+  $(document).on('click', '.edit-voucher', e =>
+    openVoucherModal($(e.currentTarget).data('id'))
+  );
+  $('#saveVoucherBtn').click(saveVoucher);
+}

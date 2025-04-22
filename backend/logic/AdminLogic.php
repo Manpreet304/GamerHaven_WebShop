@@ -132,113 +132,111 @@ class AdminLogic {
 
    // logic/AdminLogic.php
 
-public function saveCustomer(array $d, mysqli $conn): array {
-    $isActiveStr = $d['is_active'] ? 'true' : 'false';
+    public function saveCustomer(array $d, mysqli $conn): array {
+        $isActiveStr = $d['is_active'] ? 'true' : 'false';
 
-    if (!empty($d['id'])) {
-        // → UPDATE
-        if (!empty($d['password'])) {
-            $hash = password_hash($d['password'], PASSWORD_DEFAULT);
-            $stmt = $conn->prepare("
-                UPDATE users SET
-                  firstname   = ?,
-                  lastname    = ?,
-                  email       = ?,
-                  username    = ?,
-                  salutation  = ?,
-                  role        = ?,
-                  is_active   = ?,    /* ENUM 'false'/'true' */
-                  address     = ?,
-                  zip_code    = ?,
-                  city        = ?,
-                  country     = ?,
-                  password    = ?
-                WHERE id = ?
-            ");
-            // 7×string, 5×string, 1×string, 1×int = 14 Parameter
-            $stmt->bind_param(
-                "sssssssssssisi",
-                $d['firstname'],
-                $d['lastname'],
-                $d['email'],
-                $d['username'],
-                $d['salutation'],
-                $d['role'],
-                $isActiveStr,
-                $d['address'],
-                $d['zip_code'],
-                $d['city'],
-                $d['country'],
-                $hash,
-                $d['id']
-            );
+        if (!empty($d['id'])) {
+            // → UPDATE
+            if (!empty($d['password'])) {
+                $hash = password_hash($d['password'], PASSWORD_DEFAULT);
+                $stmt = $conn->prepare("
+                    UPDATE users SET
+                      firstname   = ?,
+                      lastname    = ?,
+                      email       = ?,
+                      username    = ?,
+                      salutation  = ?,
+                      role        = ?,
+                      is_active   = ?,    /* ENUM 'false'/'true' */
+                      address     = ?,
+                      zip_code    = ?,
+                      city        = ?,
+                      country     = ?,
+                      password    = ?
+                    WHERE id = ?
+                ");
+                // 7×string, 5×string, 1×string, 1×int = 14 Parameter
+                $stmt->bind_param(
+                    "sssssssssssisi",
+                    $d['firstname'],
+                    $d['lastname'],
+                    $d['email'],
+                    $d['username'],
+                    $d['salutation'],
+                    $d['role'],
+                    $isActiveStr,
+                    $d['address'],
+                    $d['zip_code'],
+                    $d['city'],
+                    $d['country'],
+                    $hash,
+                    $d['id']
+                );
+            } else {
+                $stmt = $conn->prepare("
+                    UPDATE users SET
+                      firstname   = ?,
+                      lastname    = ?,
+                      email       = ?,
+                      username    = ?,
+                      salutation  = ?,
+                      role        = ?,
+                      is_active   = ?,    /* ENUM 'false'/'true' */
+                      address     = ?,
+                      zip_code    = ?,
+                      city        = ?,
+                      country     = ?
+                    WHERE id = ?
+                ");
+                // 6×string, 1×string, 1×string, 1×string, 1×string, 1×string, 1×string = 12 params
+                $stmt->bind_param(
+                    "sssssssssssi",
+                    $d['firstname'],
+                    $d['lastname'],
+                    $d['email'],
+                    $d['username'],
+                    $d['salutation'],
+                    $d['role'],
+                    $isActiveStr,
+                    $d['address'],
+                    $d['zip_code'],
+                    $d['city'],
+                    $d['country'],
+                    $d['id']
+                );
+            }
+            $ok = $stmt->execute();
+            return ['success' => $ok];
+
         } else {
+            // → INSERT
+            $hash = password_hash($d['password'] ?? bin2hex(random_bytes(8)), PASSWORD_DEFAULT);
             $stmt = $conn->prepare("
-                UPDATE users SET
-                  firstname   = ?,
-                  lastname    = ?,
-                  email       = ?,
-                  username    = ?,
-                  salutation  = ?,
-                  role        = ?,
-                  is_active   = ?,    /* ENUM 'false'/'true' */
-                  address     = ?,
-                  zip_code    = ?,
-                  city        = ?,
-                  country     = ?
-                WHERE id = ?
+                INSERT INTO users
+                  (firstname, lastname, email, username, password,
+                   salutation, role, is_active, address, zip_code, city, country, created_at)
+                VALUES(?,?,?,?,?,?,?,?,?,?,?, ?, NOW())
             ");
-            // 6×string, 1×string, 1×string, 1×string, 1×string, 1×string, 1×string = 12 params
+            // 7×string, 1×string, 1×string, 1×string, 1×string, 1×string = 13 params
             $stmt->bind_param(
-                "sssssssssssi",
+                "ssssssssssss",
                 $d['firstname'],
                 $d['lastname'],
                 $d['email'],
                 $d['username'],
+                $hash,
                 $d['salutation'],
                 $d['role'],
                 $isActiveStr,
                 $d['address'],
                 $d['zip_code'],
                 $d['city'],
-                $d['country'],
-                $d['id']
+                $d['country']
             );
+            $ok = $stmt->execute();
+            return ['success' => $ok, 'id' => $conn->insert_id];
         }
-        $ok = $stmt->execute();
-        return ['success' => $ok];
-
-    } else {
-        // → INSERT
-        $hash = password_hash($d['password'] ?? bin2hex(random_bytes(8)), PASSWORD_DEFAULT);
-        $stmt = $conn->prepare("
-            INSERT INTO users
-              (firstname, lastname, email, username, password,
-               salutation, role, is_active, address, zip_code, city, country, created_at)
-            VALUES(?,?,?,?,?,?,?,?,?,?,?, ?, NOW())
-        ");
-        // 7×string, 1×string, 1×string, 1×string, 1×string, 1×string = 13 params
-        $stmt->bind_param(
-            "ssssssssssss",
-            $d['firstname'],
-            $d['lastname'],
-            $d['email'],
-            $d['username'],
-            $hash,
-            $d['salutation'],
-            $d['role'],
-            $isActiveStr,
-            $d['address'],
-            $d['zip_code'],
-            $d['city'],
-            $d['country']
-        );
-        $ok = $stmt->execute();
-        return ['success' => $ok, 'id' => $conn->insert_id];
     }
-
-}
-
 
     // ----- ORDERS -----
     public function fetchOrdersByCustomer(int $userId, mysqli $conn): array {
@@ -265,9 +263,49 @@ public function saveCustomer(array $d, mysqli $conn): array {
     }
 
     public function deleteOrderItem(int $itemId, mysqli $conn): bool {
-        $stmt = $conn->prepare("DELETE FROM order_items WHERE id = ?");
-        $stmt->bind_param("i", $itemId);
-        return $stmt->execute();
+        // 1) Order‑ID des zu löschenden Items ermitteln
+        $stm = $conn->prepare("SELECT order_id FROM order_items WHERE id = ?");
+        $stm->bind_param("i", $itemId);
+        $stm->execute();
+        $res = $stm->get_result()->fetch_assoc();
+        if (empty($res['order_id'])) {
+            return false;
+        }
+        $orderId = (int)$res['order_id'];
+
+        // 2) Item löschen
+        $del = $conn->prepare("DELETE FROM order_items WHERE id = ?");
+        $del->bind_param("i", $itemId);
+        if (!$del->execute()) {
+            return false;
+        }
+
+        // 3) Neue Zwischensumme (Subtotal) berechnen
+        $rs = $conn->prepare("
+            SELECT COALESCE(SUM(total_price), 0) AS subtotal
+            FROM order_items
+            WHERE order_id = ?
+        ");
+        $rs->bind_param("i", $orderId);
+        $rs->execute();
+        $subtotal = (float)$rs->get_result()->fetch_assoc()['subtotal'];
+
+        // 4) Versandkosten (gratis ab 300 €)
+        $shipping = $subtotal >= 300.0 ? 0.0 : 9.90;
+
+        // 5) Gesamtbetrag
+        $total = $subtotal + $shipping;
+
+        // 6) Update in der orders‑Tabelle
+        $us = $conn->prepare("
+            UPDATE orders
+               SET subtotal        = ?,
+                   shipping_amount = ?,   
+                   total_amount    = ?
+             WHERE id = ?
+        ");
+        $us->bind_param("dddi", $subtotal, $shipping, $total, $orderId);
+        return $us->execute();
     }
 
     // ----- VOUCHERS -----
