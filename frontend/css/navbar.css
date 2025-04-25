@@ -1,11 +1,3 @@
-/* ========== GLOBAL STYLES ========== */
-html, body {
-    height: 100%; /* Stellt sicher, dass der Body die volle Höhe nutzt */
-    margin: 0;
-    display: block;
-    flex-direction: column;
-}
-
 /* ========== NAVBAR STYLES ========== */
 .custom-navbar {
     background: linear-gradient(90deg, #001f3f, #0074D9); /* Dunkelblau zu Hellblau */

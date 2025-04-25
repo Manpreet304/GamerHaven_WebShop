@@ -1,4 +1,5 @@
 // admin_orders.js
+
 let ordersCache = {};
 
 $(document).ready(function() {
@@ -15,7 +16,7 @@ function loadOrderCustomers() {
       });
     })
     .fail((xhr, status, err) => {
-      const msg = xhr.responseJSON?.error || 'Kunden konnten nicht geladen werden.';
+      const msg = xhr.responseJSON?.error || 'Customer data could not be loaded.';
       showMessage('danger', msg);
       console.error('loadOrderCustomers failed', status, err);
     });
@@ -36,16 +37,16 @@ function bindOrderEvents() {
     $.post(`../../backend/api/ApiAdmin.php?removeOrderItem&id=${itemId}`)
       .done(resp => {
         if (resp.success) {
-          showMessage('success', 'Artikel wurde entfernt.');
+          showMessage('success', 'Item removed successfully.');
           $('#orderItemsModal').modal('hide');
           $('#orderCustomerSelect').trigger('change');
         } else {
-          const msg = resp.error || 'Artikel konnte nicht entfernt werden.';
+          const msg = resp.error || 'Item could not be removed.';
           showMessage('danger', msg);
         }
       })
       .fail((xhr, status, err) => {
-        const msg = xhr.responseJSON?.error || 'Fehler beim Entfernen des Artikels.';
+        const msg = xhr.responseJSON?.error || 'Error removing item.';
         showMessage('danger', msg);
         console.error('removeOrderItem failed', status, err);
       });
@@ -79,7 +80,7 @@ function loadOrdersByCustomer(id) {
       });
     })
     .fail((xhr, status, err) => {
-      const msg = xhr.responseJSON?.error || 'Bestellungen konnten nicht geladen werden.';
+      const msg = xhr.responseJSON?.error || 'Orders could not be loaded.';
       showMessage('danger', msg);
       console.error('loadOrdersByCustomer failed', status, err);
     });
@@ -90,7 +91,7 @@ function loadOrderItems(orderId) {
   const body  = $('#orderItemsBody').empty();
 
   if (!order) {
-    body.append('<p>Keine Bestelldaten gefunden.</p>');
+    body.append('<p>No order found.</p>');
     return;
   }
 
@@ -120,7 +121,7 @@ function loadOrderItems(orderId) {
       });
     })
     .fail((xhr, status, err) => {
-      const msg = xhr.responseJSON?.error || 'Bestellpositionen konnten nicht geladen werden.';
+      const msg = xhr.responseJSON?.error || 'Order items could not be loaded.';
       showMessage('danger', msg);
       console.error('loadOrderItems failed', status, err);
     });

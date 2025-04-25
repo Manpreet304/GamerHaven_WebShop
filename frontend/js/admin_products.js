@@ -1,4 +1,5 @@
 // admin_products.js
+
 $(document).ready(function() {
   initTabs();
   loadProducts();
@@ -36,7 +37,7 @@ function loadProducts() {
       });
     })
     .fail((xhr, status, err) => {
-      const msg = xhr.responseJSON?.error || 'Produkte konnten nicht geladen werden.';
+      const msg = xhr.responseJSON?.error || 'Products could not be loaded.';
       showMessage('danger', msg);
       console.error('loadProducts failed', status, err);
     });
@@ -70,7 +71,7 @@ function openProductModal(id) {
         }
       })
       .fail((xhr, status, err) => {
-        const msg = xhr.responseJSON?.error || 'Produktdaten konnten nicht geladen werden.';
+        const msg = xhr.responseJSON?.error || 'Product data could not be loaded.';
         showMessage('danger', msg);
         console.error('getProduct failed', status, err);
       });
@@ -97,19 +98,25 @@ function saveProduct() {
     ? `../../backend/api/ApiAdmin.php?updateProduct&id=${id}`
     : `../../backend/api/ApiAdmin.php?addProduct`;
 
-  $.ajax({ url, method: 'POST', processData: false, contentType: false, data: fd })
+  $.ajax({
+    url,
+    method: 'POST',
+    processData: false,
+    contentType: false,
+    data: fd
+  })
     .done(resp => {
       if (resp.success) {
-        showMessage('success', id ? 'Produkt erfolgreich aktualisiert.' : 'Produkt erfolgreich hinzugefügt.');
+        showMessage('success', id ? 'Product updated successfully.' : 'Product added successfully.');
         loadProducts();
         bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
       } else {
-        const msg = resp.error || 'Speichern des Produkts fehlgeschlagen.';
+        const msg = resp.error || 'Error saving product.';
         showMessage('danger', msg);
       }
     })
     .fail((xhr, status, err) => {
-      const msg = xhr.responseJSON?.error || 'Fehler beim Speichern des Produkts.';
+      const msg = xhr.responseJSON?.error || 'Error saving product.';
       showMessage('danger', msg);
       console.error('saveProduct failed', status, err);
     });
@@ -125,15 +132,15 @@ function bindProductEvents() {
     $.post(`../../backend/api/ApiAdmin.php?deleteProduct&id=${id}`)
       .done(resp => {
         if (resp.success) {
-          showMessage('success', 'Produkt gelöscht.');
+          showMessage('success', 'Product deleted successfully.');
           loadProducts();
         } else {
-          const msg = resp.error || 'Löschen des Produkts fehlgeschlagen.';
+          const msg = resp.error || 'Error deleting product.';
           showMessage('danger', msg);
         }
       })
       .fail((xhr, status, err) => {
-        const msg = xhr.responseJSON?.error || 'Fehler beim Löschen des Produkts.';
+        const msg = xhr.responseJSON?.error || 'Error deleting product.';
         showMessage('danger', msg);
         console.error('deleteProduct failed', status, err);
       });

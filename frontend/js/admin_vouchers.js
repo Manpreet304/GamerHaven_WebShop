@@ -1,4 +1,5 @@
 // admin_vouchers.js
+
 $(document).ready(function() {
   loadVouchers();
   bindVoucherEvents();
@@ -28,7 +29,7 @@ function loadVouchers() {
       });
     })
     .fail((xhr, status, err) => {
-      const msg = xhr.responseJSON?.error || 'Vouchers konnten nicht geladen werden.';
+      const msg = xhr.responseJSON?.error || 'Vouchers could not be loaded.';
       showMessage('danger', msg);
       console.error('loadVouchers failed', status, err);
     });
@@ -49,7 +50,7 @@ function openVoucherModal(id) {
         $('#voucherActive').val(v.is_active ? '1' : '0');
       })
       .fail((xhr, status, err) => {
-        const msg = xhr.responseJSON?.error || 'Voucher-Daten konnten nicht geladen werden.';
+        const msg = xhr.responseJSON?.error || 'Voucher data could not be loaded.';
         showMessage('danger', msg);
         console.error('getVoucher failed', status, err);
       });
@@ -59,7 +60,7 @@ function openVoucherModal(id) {
         $('#voucherCode').val(d.code).prop('readonly', true);
       })
       .fail((xhr, status, err) => {
-        const msg = xhr.responseJSON?.error || 'Voucher-Code konnte nicht generiert werden.';
+        const msg = xhr.responseJSON?.error || 'Voucher code could not be generated.';
         showMessage('danger', msg);
         console.error('generateVoucherCode failed', status, err);
       });
@@ -95,18 +96,20 @@ function saveVoucher() {
   })
   .done(resp => {
     if (resp.success) {
-      showMessage('success', data.id
-        ? 'Voucher erfolgreich aktualisiert.'
-        : 'Voucher erfolgreich erstellt.');
+      showMessage('success',
+        data.id
+          ? 'Voucher updated successfully.'
+          : 'Voucher created successfully.'
+      );
       loadVouchers();
       bootstrap.Modal.getInstance(document.getElementById('voucherModal')).hide();
     } else {
-      const msg = resp.error || 'Speichern des Vouchers fehlgeschlagen.';
+      const msg = resp.error || 'Error saving voucher.';
       showMessage('danger', msg);
     }
   })
   .fail((xhr, status, err) => {
-    const msg = xhr.responseJSON?.error || 'Fehler beim Speichern des Vouchers.';
+    const msg = xhr.responseJSON?.error || 'Error saving voucher.';
     showMessage('danger', msg);
     console.error('saveVoucher failed', status, err);
   });

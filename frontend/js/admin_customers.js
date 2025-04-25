@@ -1,4 +1,5 @@
 // admin_customers.js
+
 $(function(){
   loadCustomers();
   bindCustomerEvents();
@@ -25,7 +26,7 @@ function loadCustomers() {
       });
     })
     .fail((xhr, status, err) => {
-      const msg = xhr.responseJSON?.error || 'Kunden konnten nicht geladen werden.';
+      const msg = xhr.responseJSON?.error || 'Customer data could not be loaded.';
       showMessage('danger', msg);
       console.error('loadCustomers failed', status, err);
     });
@@ -53,7 +54,7 @@ function openCustomerModal(id) {
         $('#customer_country').val(u.country === '0' ? '' : u.country);
       })
       .fail((xhr, status, err) => {
-        const msg = xhr.responseJSON?.error || 'Kundendaten konnten nicht geladen werden.';
+        const msg = xhr.responseJSON?.error || 'Customer data could not be loaded.';
         showMessage('danger', msg);
         console.error('getCustomer failed', status, err);
       });
@@ -100,14 +101,14 @@ function saveCustomer() {
       $row.find('td:nth-child(2)').text(`${payload.firstname} ${payload.lastname}`);
       $row.find('td:nth-child(3)').text(payload.email);
       $row.find('td.cell-active').text(payload.is_active ? '✔️' : '❌');
-      showMessage('success', 'Kunde erfolgreich gespeichert.');
+      showMessage('success', 'Customer settings saved successfully.');
     } else {
-      const msg = resp.error || 'Speichern des Kunden fehlgeschlagen.';
+      const msg = resp.error || 'Error saving customer settings.';
       showMessage('danger', msg);
     }
   })
   .fail((xhr, status, err) => {
-    const msg = xhr.responseJSON?.error || 'Fehler beim Speichern des Kunden.';
+    const msg = xhr.responseJSON?.error || 'Error saving customer settings.';
     showMessage('danger', msg);
     console.error('saveCustomer failed', status, err);
   })
