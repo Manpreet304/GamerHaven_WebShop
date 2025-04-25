@@ -51,9 +51,9 @@ class ProductLogic {
             $types .= "d";
         }
 
-        if (!empty($filters["stock"])) {
+        if (isset($filters["stock"]) && $filters["stock"] !== "") {
             $sql .= $filters["stock"] === "1" ? " AND stock > 0" : " AND stock = 0";
-        }
+        }        
 
         if (!empty($filters["search"])) {
             $sql .= " AND (name LIKE ? OR brand LIKE ? OR category LIKE ?)";

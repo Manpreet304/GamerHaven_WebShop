@@ -1,46 +1,47 @@
+// login.js
+
 $(document).ready(function () {
     $("#loginForm").on("submit", function (e) {
-        e.preventDefault();
-
-        $("#loginForm input").each(function () {
-            $(this).removeClass("is-valid is-invalid")[0].setCustomValidity("");
-        });
-
-        const data = {
-            identifier: $("#identifier").val(),
-            password: $("#password").val(),
-            remember: $("#rememberMe").is(":checked")
-        };
-
-        const form = document.getElementById("loginForm");
-        if (!form.checkValidity()) {
-            form.classList.add("was-validated");
-            return;
-        }
-
-        $.ajax({
-            url: "../../backend/api/ApiGuest.php?login",
-            method: "POST",
-            dataType: "json",
-            contentType: "application/json",
-            data: JSON.stringify(data),
-            success: function () {
-                showMessage("success", "Login successful! Redirecting...");
-                setTimeout(() => {
-                    window.location.href = "../website/homepage.html";
-                }, 2000);
-            },
-            error: function (xhr) {
-                const msg = xhr.responseJSON?.errors || { general: "Login failed." };
-
-                if (msg.general) showMessage("danger", msg.general);
-                applyFieldErrors(msg);
-
-                $("#loginForm").addClass("was-validated");
-            }
-        });
+      e.preventDefault();
+  
+      const form = this;
+      form.classList.remove("was-validated");
+  
+      $("#loginForm input").each(function () {
+        $(this).removeClass("is-valid is-invalid")[0].setCustomValidity("");
+      });
+  
+      const data = {
+        identifier: $("#identifier").val(),
+        password: $("#password").val(),
+        remember: $("#rememberMe").is(":checked")
+      };
+  
+      if (!form.checkValidity()) {
+        form.classList.add("was-validated");
+        return;
+      }
+  
+      $.ajax({
+        url: "../../backend/api/ApiGuest.php?login",
+        method: "POST",
+        dataType: "json",
+        contentType: "application/json",
+        data: JSON.stringify(data),
+        success: res => handleResponse(res, {
+          successMessage: "Login successful! Redirecting...",
+          onSuccess: () => setTimeout(() => {
+            window.location.href = "../website/homepage.html";
+          }, 2000)
+        }),
+        error: xhr => handleResponse(xhr.responseJSON || {}, {
+          errorMessage: "Login failed.",
+          formSelector: "#loginForm",
+          showValidation: true
+        })
+      });
     });
-
-    const tooltipList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipList.forEach(el => new bootstrap.Tooltip(el));
-});
+  
+    $('[data-bs-toggle="tooltip"]').each((_, el) => new bootstrap.Tooltip(el));
+  });
+  
