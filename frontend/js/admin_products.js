@@ -25,6 +25,7 @@ function loadProducts() {
             <td>${p.id}</td>
             <td>${p.name}</td>
             <td>€${Number(p.price).toFixed(2)}</td>
+            <td>${p.stock}</td> <!-- Hier wird Stock korrekt eingefügt -->
             <td>${p.rating ?? "-"}</td>
             <td>
               <button class="btn btn-sm btn-primary edit-product" data-id="${p.id}">Edit</button>

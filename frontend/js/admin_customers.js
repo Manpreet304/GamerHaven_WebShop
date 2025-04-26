@@ -1,5 +1,3 @@
-// admin_customers.js
-
 $(function () {
   loadCustomers();
   bindCustomerEvents();
@@ -15,10 +13,12 @@ function loadCustomers() {
           <tr data-id="${u.id}">
             <td>${u.id}</td>
             <td>${u.firstname} ${u.lastname}</td>
+            <td>${u.username}</td>
             <td>${u.email}</td>
             <td class="cell-active">${active ? "✔️" : "❌"}</td>
             <td>
               <button class="btn btn-sm btn-primary edit-customer" data-id="${u.id}">Edit</button>
+              <button class="btn btn-sm btn-danger delete-customer" data-id="${u.id}">Delete</button>
             </td>
           </tr>
         `);
@@ -91,10 +91,7 @@ function saveCustomer() {
     .done(resp => handleResponse(resp, {
       successMessage: "Customer settings saved successfully.",
       onSuccess: () => {
-        const $row = $(`#customersTable tbody tr[data-id="${payload.id}"]`);
-        $row.find("td:nth-child(2)").text(`${payload.firstname} ${payload.lastname}`);
-        $row.find("td:nth-child(3)").text(payload.email);
-        $row.find("td.cell-active").text(payload.is_active ? "✔️" : "❌");
+        loadCustomers();
         bootstrap.Modal.getInstance(document.getElementById("customerModal")).hide();
       }
     }))
@@ -103,9 +100,25 @@ function saveCustomer() {
     }));
 }
 
+function deleteCustomer(id) {
+  if (!confirm("Are you sure you want to delete this customer?")) return;
+
+  $.post(`../../backend/api/ApiAdmin.php?deleteCustomer&id=${id}`)
+    .done(resp => handleResponse(resp, {
+      successMessage: "Customer deleted successfully.",
+      onSuccess: loadCustomers
+    }))
+    .fail(xhr => handleResponse(xhr.responseJSON || {}, {
+      errorMessage: "Error deleting customer."
+    }));
+}
+
 function bindCustomerEvents() {
   $(document).on("click", ".edit-customer", e =>
     openCustomerModal($(e.currentTarget).data("id"))
+  );
+  $(document).on("click", ".delete-customer", e =>
+    deleteCustomer($(e.currentTarget).data("id"))
   );
   $("#saveCustomerBtn").click(saveCustomer);
 }

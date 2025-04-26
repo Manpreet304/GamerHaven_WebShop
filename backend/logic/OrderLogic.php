@@ -1,13 +1,13 @@
 <?php
 class OrderLogic {
-    
+
     public function createOrder(int $userId, int $paymentId, ?string $voucherCode, $conn): int {
         $conn->begin_transaction();
 
         try {
             // === Warenkorb auslesen ===
             $stmt = $conn->prepare("
-                SELECT c.product_id, c.quantity, p.name, p.price
+                SELECT c.product_id, c.quantity, p.name, p.price, p.stock
                 FROM cart c
                 JOIN products p ON c.product_id = p.id
                 WHERE c.user_id = ?
@@ -19,6 +19,9 @@ class OrderLogic {
             $items    = [];
             $subtotal = 0.0;
             while ($row = $result->fetch_assoc()) {
+                if ($row["stock"] < $row["quantity"]) {
+                    throw new Exception("Product '{$row['name']}' is out of stock or insufficient quantity available.");
+                }
                 $items[]   = $row;
                 $subtotal += $row["price"] * $row["quantity"];
             }
@@ -70,19 +73,27 @@ class OrderLogic {
             );
             $istmt->execute();
 
-            // die neue orderId
             $orderId = $istmt->insert_id;
 
-            // === Bestellpositionen ===
+            // === Bestellpositionen speichern UND Lagerbestand reduzieren ===
             $pstmt = $conn->prepare("
                 INSERT INTO order_items
                   (order_id, product_id, name_snapshot, price_snapshot, quantity, total_price)
                 VALUES (?, ?, ?, ?, ?, ?)
             ");
+
+            $ustmt = $conn->prepare("
+                UPDATE products
+                SET stock = stock - ?
+                WHERE id = ? AND stock >= ?
+            ");
+
             foreach ($items as $it) {
                 $price      = $it["price"];
                 $qty        = $it["quantity"];
                 $totalPrice = $price * $qty;
+
+                // 1) Bestellposition speichern
                 $pstmt->bind_param(
                     "iisdid",
                     $orderId,
@@ -93,17 +104,21 @@ class OrderLogic {
                     $totalPrice
                 );
                 $pstmt->execute();
+
+                // 2) Lagerbestand reduzieren
+                $ustmt->bind_param("iii", $qty, $it["product_id"], $qty);
+                $ustmt->execute();
             }
 
             // === Gutschein aktualisieren ===
             if ($voucherId !== null) {
-                $ustmt = $conn->prepare("
+                $ustmt2 = $conn->prepare("
                     UPDATE vouchers
                     SET remaining_value = ?, is_active = ?
                     WHERE id = ?
                 ");
-                $ustmt->bind_param("dii", $remaining, $active, $voucherId);
-                $ustmt->execute();
+                $ustmt2->bind_param("dii", $remaining, $active, $voucherId);
+                $ustmt2->execute();
             }
 
             // === Warenkorb leeren ===
@@ -113,7 +128,6 @@ class OrderLogic {
 
             $conn->commit();
 
-            // Hier geben wir die neue orderId zurück
             return $orderId;
 
         } catch (Exception $e) {
@@ -122,3 +136,4 @@ class OrderLogic {
         }
     }
 }
+?>

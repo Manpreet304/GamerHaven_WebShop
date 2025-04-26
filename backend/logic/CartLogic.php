@@ -1,6 +1,27 @@
 <?php
 class CartLogic {
-    public function addToCart(int $userId, int $productId, int $quantity, $conn): bool {
+    public function addToCart(int $userId, int $productId, int $quantity, $conn): array {
+        // Produkt und Stock prüfen
+        $stmt = $conn->prepare("SELECT stock FROM products WHERE id = ?");
+        if (!$stmt) {
+            return ["success" => false, "error" => "Internal error."];
+        }
+        $stmt->bind_param("i", $productId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $product = $result->fetch_assoc();
+
+        if (!$product) {
+            return ["success" => false, "error" => "Product not found."];
+        }
+        if ($product['stock'] <= 0) {
+            return ["success" => false, "error" => "Product is out of stock."];
+        }
+        if ($product['stock'] < $quantity) {
+            return ["success" => false, "error" => "Not enough stock available."];
+        }
+
+        // Bereits im Warenkorb?
         $check = $conn->prepare("SELECT id FROM cart WHERE user_id = ? AND product_id = ?");
         $check->bind_param("ii", $userId, $productId);
         $check->execute();
@@ -13,7 +34,12 @@ class CartLogic {
             $stmt = $conn->prepare("INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?)");
             $stmt->bind_param("iii", $userId, $productId, $quantity);
         }
-        return $stmt->execute();
+
+        if (!$stmt->execute()) {
+            return ["success" => false, "error" => "Could not add to cart."];
+        }
+
+        return ["success" => true];
     }
 
     public function getCartCount(int $userId, $conn): int {

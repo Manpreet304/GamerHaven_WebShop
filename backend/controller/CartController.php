@@ -22,8 +22,11 @@ class CartController {
 
     public function addToCart(int $userId, int $productId, int $quantity): array {
         global $conn;
-        $ok = $this->logic->addToCart($userId, $productId, $quantity, $conn);
-        return ["status" => $ok ? 200 : 500, "body" => ["success" => $ok]];
+        $result = $this->logic->addToCart($userId, $productId, $quantity, $conn);
+        return [
+            "status" => $result["success"] ? 200 : 400,
+            "body"   => $result
+        ];
     }
 
     public function updateQuantity(int $cartId, int $quantity): array {

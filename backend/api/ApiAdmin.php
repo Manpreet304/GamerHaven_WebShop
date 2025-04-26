@@ -1,18 +1,14 @@
 <?php
-// backend/api/ApiAdmin.php
 
 header("Content-Type: application/json");
 session_start();
 
-// DB‑Verbindung
 require_once("../db/dbaccess.php");
-// Controller
 require_once("../controller/AdminController.php");
 
-// Nur Admins dürfen weiter
 if (empty($_SESSION['user']['id']) || $_SESSION['user']['role'] !== 'admin') {
     http_response_code(401);
-    echo json_encode(['error' => 'Unauthorized']);
+    echo json_encode(['error' => 'Unauthorized!']);
     exit;
 }
 
@@ -52,6 +48,10 @@ try {
             $data = json_decode(file_get_contents('php://input'), true) ?? $_POST;
             echo json_encode($ctrl->saveCustomer($data, $conn));
             break;
+        case 'POST?deleteCustomer':
+            echo json_encode($ctrl->deleteCustomer((int)$_GET['id'], $conn));
+            break;
+            
 
         // ----- ORDERS -----
         case 'GET?listOrdersByCustomer':

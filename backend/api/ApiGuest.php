@@ -80,4 +80,4 @@ switch ($_SERVER["REQUEST_METHOD"]) {
 }
 
 http_response_code(405);
-echo json_encode(["error" => "Method not allowed"]);
+echo json_encode(value: ["error" => "Method not allowed"]);

@@ -44,6 +44,9 @@ class AdminController {
     public function saveCustomer(array $data, mysqli $conn): array {
         return $this->logic->saveCustomer($data, $conn);
     }
+    public function deleteCustomer(int $id, mysqli $conn): array {
+        return ['success' => $this->logic->deleteCustomer($id, $conn)];
+    }
 
     // ----- ORDERS -----
     public function listOrdersByCustomer(int $userId, mysqli $conn): array {
