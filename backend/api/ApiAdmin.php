@@ -61,8 +61,13 @@ try {
             echo json_encode($ctrl->listOrderItems((int)$_GET['order_id'], $conn));
             break;
         case 'POST?removeOrderItem':
-            echo json_encode($ctrl->removeOrderItem((int)$_GET['id'], $conn));
+            echo json_encode($ctrl->removeOrderItem(
+                (int)$_GET['id'],
+                (int)($_GET['qty'] ?? 1),
+                $conn
+            ));
             break;
+            
 
         // ----- VOUCHERS -----
         case 'GET?listVouchers':

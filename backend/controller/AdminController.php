@@ -57,9 +57,10 @@ class AdminController {
         return $this->logic->fetchOrderItems($orderId, $conn);
     }
 
-    public function removeOrderItem(int $itemId, mysqli $conn): array {
-        return ['success' => $this->logic->deleteOrderItem($itemId, $conn)];
+    public function removeOrderItem(int $itemId, int $qty, mysqli $conn): array {
+        return ['success' => $this->logic->removeOrderItem($itemId, $qty, $conn)];
     }
+    
 
     // ----- VOUCHERS -----
     public function listVouchers(mysqli $conn): array {

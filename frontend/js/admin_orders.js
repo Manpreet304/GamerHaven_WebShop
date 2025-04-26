@@ -76,11 +76,15 @@ function loadOrderItems(orderId) {
           <div class="d-flex justify-content-between align-items-center mb-2">
             <div>
               <strong>${i.name_snapshot}</strong><br>
-              Qty: ${i.quantity} × €${i.price_snapshot}
+              Qty: ${i.quantity} × €${Number(i.price_snapshot).toFixed(2)}
             </div>
-            <button class="btn btn-sm btn-danger remove-item" data-id="${i.id}">
-              Remove
-            </button>
+            <div class="d-flex align-items-center">
+              <input type="number" min="1" max="${i.quantity}" value="1"
+                     class="form-control form-control-sm me-2 remove-quantity" data-max="${i.quantity}" data-id="${i.id}" style="width: 70px;">
+              <button class="btn btn-sm btn-danger remove-item" data-id="${i.id}">
+                Remove
+              </button>
+            </div>
           </div>
         `);
       });
@@ -91,18 +95,22 @@ function loadOrderItems(orderId) {
 }
 
 function removeOrderItem(itemId) {
-  $.post(`../../backend/api/ApiAdmin.php?removeOrderItem&id=${itemId}`)
+  const qtyInput = $(`.remove-quantity[data-id="${itemId}"]`);
+  const qtyToRemove = parseInt(qtyInput.val(), 10) || 1;
+
+  $.post(`../../backend/api/ApiAdmin.php?removeOrderItem&id=${itemId}&qty=${qtyToRemove}`)
     .done(resp => handleResponse(resp, {
-      successMessage: "Item removed successfully.",
+      successMessage: "Item updated successfully.",
       onSuccess: () => {
         $("#orderItemsModal").modal("hide");
         $("#orderCustomerSelect").trigger("change");
       }
     }))
     .fail(xhr => handleResponse(xhr.responseJSON || {}, {
-      errorMessage: "Error removing item."
+      errorMessage: "Error updating item."
     }));
 }
+
 
 function bindOrderEvents() {
   $("#orderCustomerSelect").on("change", function () {

@@ -218,21 +218,35 @@ class AdminLogic {
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
 
-    public function deleteOrderItem(int $itemId, mysqli $conn): bool {
-        // 1. Order-ID finden
-        $stm = $conn->prepare("SELECT order_id FROM order_items WHERE id = ?");
-        $stm->bind_param("i", $itemId);
-        $stm->execute();
-        $res = $stm->get_result()->fetch_assoc();
-        if (empty($res['order_id'])) return false;
-        $orderId = (int)$res['order_id'];
-
-        // 2. Item löschen
-        $del = $conn->prepare("DELETE FROM order_items WHERE id = ?");
-        $del->bind_param("i", $itemId);
-        if (!$del->execute()) return false;
-
-        // 3. Neue Summen berechnen
+    public function removeOrderItem(int $itemId, int $qty, mysqli $conn): bool {
+        // 1) Aktuelles Item holen
+        $stmt = $conn->prepare("SELECT order_id, quantity, price_snapshot FROM order_items WHERE id = ?");
+        $stmt->bind_param("i", $itemId);
+        $stmt->execute();
+        $item = $stmt->get_result()->fetch_assoc();
+    
+        if (!$item) return false;
+    
+        $orderId = (int)$item['order_id'];
+        $currentQty = (int)$item['quantity'];
+        $pricePerUnit = (float)$item['price_snapshot'];
+    
+        if ($qty >= $currentQty) {
+            // Komplett löschen, wenn zu viel oder alles gelöscht wird
+            $del = $conn->prepare("DELETE FROM order_items WHERE id = ?");
+            $del->bind_param("i", $itemId);
+            $del->execute();
+        } else {
+            // Nur Teil entfernen → Update
+            $newQty = $currentQty - $qty;
+            $newTotal = $newQty * $pricePerUnit;
+    
+            $upd = $conn->prepare("UPDATE order_items SET quantity = ?, total_price = ? WHERE id = ?");
+            $upd->bind_param("idi", $newQty, $newTotal, $itemId);
+            $upd->execute();
+        }
+    
+        // Neue Summen aktualisieren
         $rs = $conn->prepare("
             SELECT COALESCE(SUM(total_price),0) AS subtotal
             FROM order_items
@@ -241,19 +255,18 @@ class AdminLogic {
         $rs->bind_param("i", $orderId);
         $rs->execute();
         $subtotal = (float)$rs->get_result()->fetch_assoc()['subtotal'];
-
+    
         $shipping = $subtotal >= 300.0 ? 0.0 : 9.90;
         $total = $subtotal + $shipping;
-
-        // 4. Update order
+    
         $us = $conn->prepare("
             UPDATE orders
-            SET subtotal=?, shipping_amount=?, total_amount=?
+               SET subtotal=?, shipping_amount=?, total_amount=?
             WHERE id=?
         ");
         $us->bind_param("dddi", $subtotal, $shipping, $total, $orderId);
         return $us->execute();
-    }
+    }    
 
     // ----- VOUCHERS -----
     public function fetchAllVouchers(mysqli $conn): array {
