@@ -64,7 +64,9 @@
     transition: opacity 0.3s ease;
   }
   
-  /* Optional: Hover-Effekte, wenn gewünscht */
-  #cart-dropzone:hover #cart-count {
-    opacity: 1;  /* Die Zahl bleibt sichtbar bei Hover */
+/* navbar.css */
+#cart-drop-area.drag-over {
+    background-color: rgba(0,0,0,0.05);
+    border-radius: 4px;
   }
+  

@@ -56,6 +56,38 @@ function initEventListeners() {
     const quantity = parseInt(modal.find(".quantity-input").val(), 10) || 1;
     addToCart(productId, quantity);
   });
+  
+  $(document).on("dragover", function(ev) {
+    const y = ev.originalEvent.clientY;
+    const threshold = 60;   // Pixel-Abstand zum oberen/unteren Rand
+    const speed = 30;       // Scroll-Geschwindigkeit
+
+    if (y < threshold) {
+      window.scrollBy(0, -speed);        // nach oben scrollen
+    } else if (y > window.innerHeight - threshold) {
+      window.scrollBy(0, speed);         // nach unten scrollen
+    }
+  });
+
+  // --- Drag & Drop auf Warenkorb ---
+  $(document).on("dragover", "#cart-drop-area", function (ev) {
+    ev.preventDefault();
+    $(this).addClass("drag-over");
+  });
+  // Entfernen des Highlights beim Verlassen oder Drop
+  $(document).on("dragleave drop", "#cart-drop-area", function (ev) {
+    ev.preventDefault();
+    $(this).removeClass("drag-over");
+  });
+  // Drop-Ereignis: Produkt ins Warenkorb
+  $(document).on("drop", "#cart-drop-area", function (ev) {
+    ev.preventDefault();
+    const data = ev.originalEvent.dataTransfer.getData("text/plain");
+    const productId = parseInt(data, 10);
+    if (!isNaN(productId)) {
+      addToCart(productId, 1);
+    }
+  });
 }
 
 /** ------------------- PRODUKTE LADEN ------------------- **/
@@ -162,15 +194,30 @@ function renderProducts(products) {
   const tplModal = document.getElementById("product-modal-template").content;
 
   products.forEach((p, i) => {
-    // --- Karte ---
+    // --- Karte (draggable) ---
     const $card = $(tplCard.cloneNode(true)).find(".product-card");
-    $card.attr("data-product-id", p.id);
-    $card.find(".product-image").attr("src", p.images?.[0] || "pictures/placeholder.jpg").attr("data-index", i);
+    $card
+      .attr("data-product-id", p.id)
+      .attr("draggable", "true")
+      .on("dragstart", ev => {
+        ev.originalEvent.dataTransfer.setData("text/plain", p.id);
+        $card.addClass("dragging");
+      })
+      .on("dragend", () => {
+        $card.removeClass("dragging");
+      });
+
+    $card.find(".product-image")
+         .attr("src", p.images?.[0] || "pictures/placeholder.jpg")
+         .attr("data-index", i);
     $card.find(".card-title").text(p.name);
     $card.find(".card-meta").text(`${p.category} · ${p.brand}`);
     $card.find(".product-price").text(`€${p.price}`);
     $card.find(".rating").html(renderStars(p.rating || 0));
-    $card.find(".view-details").attr("data-bs-toggle", "modal").attr("data-bs-target", `#productModal${p.id}`);
+    $card.find(".view-details")
+         .attr("data-bs-toggle", "modal")
+         .attr("data-bs-target", `#productModal${p.id}`);
+
     grid.append($card.closest(".col-md-4"));
 
     // --- Modal ---
@@ -218,13 +265,18 @@ function setupHoverRotation(products) {
   });
 }
 
-/** ------------------- HILFSFUNKTIONEN ------------------- **/
 function renderStars(rating) {
-  const full = Math.floor(rating);
-  const half = rating - full >= 0.5;
-  return Array(full).fill('<i class="bi bi-star-fill text-warning"></i>').join("") +
-         (half ? '<i class="bi bi-star-half text-warning"></i>' : '') +
-         Array(5 - full - (half ? 1 : 0)).fill('<i class="bi bi-star text-warning"></i>').join("");
+  const r = parseFloat(rating) || 0;
+  const full = Math.floor(r);
+  const half = r - full >= 0.5;
+  const emptyCount = 5 - full - (half ? 1 : 0);
+
+  const stars =
+    Array(full).fill('<i class="bi bi-star-fill text-warning"></i>').join("") +
+    (half ? '<i class="bi bi-star-half text-warning"></i>' : "") +
+    Array(emptyCount).fill('<i class="bi bi-star text-warning"></i>').join("");
+
+  return `${stars} <span class="ms-1 text-muted">(${r.toFixed(1)})</span>`;
 }
 
 function renderAttributes(attrString) {
