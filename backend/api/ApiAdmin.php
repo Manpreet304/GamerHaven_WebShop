@@ -3,8 +3,8 @@
 header("Content-Type: application/json");
 session_start();
 
-require_once("../db/dbaccess.php");
-require_once("../controller/AdminController.php");
+require_once __DIR__ . '/../db/dbaccess.php';
+require_once __DIR__ . '/../controller/AdminController.php';
 
 if (empty($_SESSION['user']['id']) || $_SESSION['user']['role'] !== 'admin') {
     http_response_code(401);

@@ -1,14 +1,18 @@
-// cart.js
+// /customer/cart.js
 
 $(document).ready(function () {
   loadCart();
   updateCartCount();
-  $('[data-bs-toggle="tooltip"]').each((_, el) => new bootstrap.Tooltip(el));
 
-  // Proceed to Checkout
+  // Tooltips aktivieren
+  $('[data-bs-toggle="tooltip"]').each(function (_, el) {
+    new bootstrap.Tooltip(el);
+  });
+
+  // "Proceed to Checkout" klicken
   $(document).on("click", "#proceedToCheckout", function () {
     if ($(this).prop("disabled")) {
-      showMessage("danger", "Your cart is empty. Add at least one product to proceed.");
+      showMessage("danger", "Your cart is empty. Please add products before proceeding.");
       return;
     }
     $("#checkoutModal").modal("show");
@@ -16,7 +20,7 @@ $(document).ready(function () {
     loadPaymentMethods();
   });
 
-  // Submit Checkout
+  // Checkout-Formular absenden
   $(document).on("submit", "#checkout-form", function (e) {
     e.preventDefault();
     const form = this;
@@ -34,37 +38,44 @@ $(document).ready(function () {
       url: "../../backend/api/ApiOrder.php",
       method: "POST",
       contentType: "application/json",
-      data: JSON.stringify({ payment_id: paymentId, voucher }),
-      success: res => handleResponse(res, {
-        successMessage: "Your order was successfully placed! Invoice opens in new tab.",
-        onSuccess: () => {
-          window.open(`../../backend/invoices/Invoice.php?orderId=${res.orderId}`, "_blank");
-          setTimeout(() => window.location.href = "homepage.html", 3000);
-        }
-      }),
-      error: xhr => handleResponse(xhr.responseJSON || {}, {
-        errorMessage: "Order could not be completed."
-      })
+      data: JSON.stringify({ payment_id: paymentId, voucher: voucher }),
+      success: function (res) {
+        handleResponse(res, {
+          successMessage: "Order placed successfully! Invoice opens in a new tab.",
+          onSuccess: function () {
+            window.open(`../../backend/invoices/Invoice.php?orderId=${res.orderId}`, "_blank");
+            setTimeout(function () {
+              window.location.href = "homepage.html";
+            }, 3000);
+          }
+        });
+      },
+      error: function (xhr) {
+        handleResponse(xhr.responseJSON || {}, {
+          errorMessage: "Order could not be completed."
+        });
+      }
     });
   });
 
-  // Update quantity
+  // Menge im Warenkorb ändern
   $(document).on("change", ".quantity-input", function () {
     const tr = $(this).closest("tr");
     const cartId = tr.data("id");
     const quantity = parseInt($(this).val(), 10);
+
     if (quantity < 1) return;
 
     $.ajax({
       url: "../../backend/api/ApiCart.php",
       method: "POST",
       contentType: "application/json",
-      data: JSON.stringify({ action: "update", id: cartId, quantity }),
+      data: JSON.stringify({ action: "update", id: cartId, quantity: quantity }),
       success: loadCart
     });
   });
 
-  // Delete item
+  // Artikel aus Warenkorb löschen
   $(document).on("click", ".delete-item", function () {
     const cartId = $(this).closest("tr").data("id");
 
@@ -78,8 +89,11 @@ $(document).ready(function () {
   });
 });
 
-// ---------------------- FUNCTIONS ----------------------
+// ---------------------- FUNKTIONEN ----------------------
 
+/**
+ * Lädt die aktuellen Warenkorb-Daten
+ */
 function loadCart() {
   $.get("../../backend/api/ApiCart.php", function (data) {
     const items = data.items || [];
@@ -87,6 +101,7 @@ function loadCart() {
     const tpl = document.getElementById("cart-item-template");
 
     tbody.empty();
+
     if (!items.length) {
       tbody.append('<tr><td colspan="5">Your cart is currently empty.</td></tr>');
       $("#shipping-price").text("€0.00");
@@ -97,7 +112,7 @@ function loadCart() {
 
     $("#proceedToCheckout").prop("disabled", false);
 
-    items.forEach(item => {
+    items.forEach(function (item) {
       const clone = tpl.content.cloneNode(true);
       const row = $(clone).find("tr");
       row.attr("data-id", item.id);
@@ -113,6 +128,9 @@ function loadCart() {
   });
 }
 
+/**
+ * Lädt die Warenkorb-Zusammenfassung für Checkout
+ */
 function loadCheckoutSummary() {
   $.get("../../backend/api/ApiCart.php", function (data) {
     const list = $("#checkout-cart-items").empty();
@@ -125,7 +143,7 @@ function loadCheckoutSummary() {
       return;
     }
 
-    items.forEach(item => {
+    items.forEach(function (item) {
       const subtotal = item.price * item.quantity;
       const clone = tpl.content.cloneNode(true);
       $(clone).find(".item-name").text(item.name);
@@ -138,16 +156,20 @@ function loadCheckoutSummary() {
   });
 }
 
+/**
+ * Lädt die Zahlungsarten des Nutzers
+ */
 function loadPaymentMethods() {
   $.get("../../backend/api/ApiGuest.php?me", function (user) {
     const select = $("#paymentMethod").empty().append('<option value="">Choose payment method</option>');
 
     if (user.payments?.length) {
-      user.payments.forEach(p => {
+      user.payments.forEach(function (p) {
         let label = p.method;
         if (p.method === "Credit Card") label += ` (****${p.last_digits})`;
         if (p.method === "PayPal") label += ` (${p.paypal_email})`;
         if (p.method === "Bank Transfer") label += ` (IBAN ****${p.iban.slice(-4)})`;
+
         select.append(`<option value="${p.id}">${label}</option>`);
       });
     } else {
@@ -156,6 +178,9 @@ function loadPaymentMethods() {
   });
 }
 
+/**
+ * Aktualisiert die Preisübersicht im Checkout
+ */
 function updatePriceDisplay(sub, ship, total) {
   $("#checkout-subtotal").text(`€${sub.toFixed(2)}`);
   $("#checkout-shipping").text(ship === 0 ? "Free" : `€${ship.toFixed(2)}`);

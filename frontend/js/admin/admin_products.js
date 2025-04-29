@@ -1,4 +1,4 @@
-// admin_products.js
+// /admin/products.js
 
 $(document).ready(function () {
   initTabs();
@@ -6,26 +6,31 @@ $(document).ready(function () {
   bindProductEvents();
 });
 
+/** ------------------- REITER (TABS) INITIALISIEREN ------------------- **/
+
 function initTabs() {
-  document.querySelectorAll("#adminTabs button").forEach(btn => {
-    btn.addEventListener("click", e => {
+  document.querySelectorAll("#adminTabs button").forEach(function (btn) {
+    btn.addEventListener("click", function (e) {
       e.preventDefault();
       new bootstrap.Tab(btn).show();
     });
   });
 }
 
+/** ------------------- PRODUKTE LADEN ------------------- **/
+
 function loadProducts() {
   $.get("../../backend/api/ApiAdmin.php?listProducts")
-    .done(products => {
+    .done(function (products) {
       const tbody = $("#productsTable tbody").empty();
-      products.forEach(p => {
+
+      products.forEach(function (p) {
         tbody.append(`
           <tr>
             <td>${p.id}</td>
             <td>${p.name}</td>
             <td>€${Number(p.price).toFixed(2)}</td>
-            <td>${p.stock}</td> <!-- Hier wird Stock korrekt eingefügt -->
+            <td>${p.stock}</td>
             <td>${p.rating ?? "-"}</td>
             <td>
               <button class="btn btn-sm btn-primary edit-product" data-id="${p.id}">Edit</button>
@@ -35,10 +40,12 @@ function loadProducts() {
         `);
       });
     })
-    .fail(xhr => handleResponse(xhr.responseJSON || {}, {
-      errorMessage: "Products could not be loaded."
-    }));
+    .fail(function (xhr) {
+      handleResponse(xhr.responseJSON || {}, { errorMessage: "Failed to load products." });
+    });
 }
+
+/** ------------------- PRODUKT BEARBEITEN ------------------- **/
 
 function openProductModal(id) {
   resetForm("#productForm");
@@ -46,7 +53,7 @@ function openProductModal(id) {
 
   if (id) {
     $.get(`../../backend/api/ApiAdmin.php?getProduct&id=${id}`)
-      .done(p => {
+      .done(function (p) {
         $("#productId").val(p.id);
         $("#productName").val(p.name);
         $("#productBrand").val(p.brand);
@@ -56,25 +63,31 @@ function openProductModal(id) {
         $("#productStock").val(p.stock);
         $("#productRating").val(p.rating);
         $("#productDescription").val(p.description);
+
         if (p.attributes) {
           const attrs = JSON.parse(p.attributes);
           $("#productAttributes").val(
-            Object.entries(attrs).map(([k, v]) => `${k}: ${v}`).join("\n")
+            Object.entries(attrs).map(function ([k, v]) {
+              return `${k}: ${v}`;
+            }).join("\n")
           );
         }
+
         if (p.image_url) {
-          JSON.parse(p.image_url).forEach(src => {
+          JSON.parse(p.image_url).forEach(function (src) {
             $("#existingImages").append(`<li class="list-group-item">${src}</li>`);
           });
         }
       })
-      .fail(xhr => handleResponse(xhr.responseJSON || {}, {
-        errorMessage: "Product data could not be loaded."
-      }));
+      .fail(function (xhr) {
+        handleResponse(xhr.responseJSON || {}, { errorMessage: "Failed to load product data." });
+      });
   }
 
   new bootstrap.Modal(document.getElementById("productModal")).show();
 }
+
+/** ------------------- PRODUKT SPEICHERN ------------------- **/
 
 function saveProduct() {
   const form = $("#productForm")[0];
@@ -84,11 +97,16 @@ function saveProduct() {
   }
 
   const fd = new FormData(form);
+
+  // Attribute-Textfeld in JSON umwandeln
   const attributesObj = {};
-  $("#productAttributes").val().split(/\r?\n/).forEach(line => {
-    const [k, v] = line.split(/:\s*/, 2);
-    if (v !== undefined) attributesObj[k.trim()] = v.trim();
+  $("#productAttributes").val().split(/\r?\n/).forEach(function (line) {
+    const [key, value] = line.split(/:\s*/, 2);
+    if (value !== undefined) {
+      attributesObj[key.trim()] = value.trim();
+    }
   });
+
   fd.set("attributes", JSON.stringify(attributesObj));
 
   const id = $("#productId").val();
@@ -97,45 +115,59 @@ function saveProduct() {
     : `../../backend/api/ApiAdmin.php?addProduct`;
 
   $.ajax({
-    url,
+    url: url,
     method: "POST",
     processData: false,
     contentType: false,
     data: fd
   })
-    .done(resp => handleResponse(resp, {
-      successMessage: id ? "Product updated successfully." : "Product added successfully.",
-      onSuccess: () => {
-        loadProducts();
-        bootstrap.Modal.getInstance(document.getElementById("productModal")).hide();
-      }
-    }))
-    .fail(xhr => handleResponse(xhr.responseJSON || {}, {
-      errorMessage: "Error saving product."
-    }));
+    .done(function (response) {
+      handleResponse(response, {
+        successMessage: id ? "Product updated successfully." : "Product added successfully.",
+        onSuccess: function () {
+          loadProducts();
+          bootstrap.Modal.getInstance(document.getElementById("productModal")).hide();
+        }
+      });
+    })
+    .fail(function (xhr) {
+      handleResponse(xhr.responseJSON || {}, { errorMessage: "Failed to save product." });
+    });
 }
+
+/** ------------------- PRODUKT LÖSCHEN ------------------- **/
 
 function deleteProduct(id) {
   $.post(`../../backend/api/ApiAdmin.php?deleteProduct&id=${id}`)
-    .done(resp => handleResponse(resp, {
-      successMessage: "Product deleted successfully.",
-      onSuccess: loadProducts
-    }))
-    .fail(xhr => handleResponse(xhr.responseJSON || {}, {
-      errorMessage: "Error deleting product."
-    }));
+    .done(function (response) {
+      handleResponse(response, {
+        successMessage: "Product deleted successfully.",
+        onSuccess: loadProducts
+      });
+    })
+    .fail(function (xhr) {
+      handleResponse(xhr.responseJSON || {}, { errorMessage: "Failed to delete product." });
+    });
 }
 
-function bindProductEvents() {
-  $("#addProductBtn").click(() => openProductModal());
+/** ------------------- EVENTS BINDEN ------------------- **/
 
-  $(document).on("click", ".edit-product", e => {
+function bindProductEvents() {
+  // Neues Produkt hinzufügen
+  $("#addProductBtn").click(function () {
+    openProductModal();
+  });
+
+  // Existierendes Produkt bearbeiten
+  $(document).on("click", ".edit-product", function (e) {
     openProductModal($(e.currentTarget).data("id"));
   });
 
-  $(document).on("click", ".delete-product", function () {
-    deleteProduct($(this).data("id"));
+  // Produkt löschen
+  $(document).on("click", ".delete-product", function (e) {
+    deleteProduct($(e.currentTarget).data("id"));
   });
 
+  // Produkt speichern
   $("#saveProductBtn").click(saveProduct);
 }

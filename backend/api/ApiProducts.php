@@ -2,8 +2,8 @@
 header("Content-Type: application/json");
 if (session_status() === PHP_SESSION_NONE) session_start();
 
-require_once("../db/dbaccess.php");
-require_once("../controller/ProductController.php");
+require_once __DIR__ . '/../db/dbaccess.php';
+require_once __DIR__ . '/../controller/ProductController.php';
 
 $controller = new ProductController();
 
