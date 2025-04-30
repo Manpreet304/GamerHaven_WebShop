@@ -6,7 +6,7 @@ fetch("../../inclusions/navbar.html")
 
         // Sobald Navbar geladen ist → lade dynamische Login-/Menülogik
         const script = document.createElement("script");
-        script.src = "../../frontend/js/navbar.js"; 
+        script.src = "../../frontend/js/services/navbar.js"; 
         document.body.appendChild(script);
     })
     .catch(error => console.error("Fehler beim Laden der Navbar:", error));

@@ -81,6 +81,7 @@ function setFieldValid(selector) {
   }
 }
 
+//update von Cart Count in Utils damit überall eingebunden und angezeigt
 function updateCartCount() {
   $.get("../../backend/api/ApiCart.php?cartCount")
     .done(function(data) {
