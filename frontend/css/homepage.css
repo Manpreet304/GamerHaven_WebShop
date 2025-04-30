@@ -153,22 +153,6 @@ html, body {
 
 
 
-/* ========== MODAL KARUSSELL ========== */
-.carousel-control-prev-icon,
-.carousel-control-next-icon {
-  filter: invert(1);
-}
-
-.carousel-inner {
-  border-radius: 12px;
-  background-color: #f0f2f5;
-  padding: 8px;
-}
-
-.carousel-item img {
-  border-radius: 12px;
-}
-
 /* Modal Attribute Box */
 .attributes {
   background-color: #eaf4ff;
@@ -345,3 +329,6 @@ input.quantity-input:focus {
   100% { transform: scale(1); }
 }
 
+.text-end-vw{
+  color: black !important;
+}
