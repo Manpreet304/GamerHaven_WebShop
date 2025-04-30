@@ -25,11 +25,12 @@ function handleResponse(response, options) {
   var onSuccess      = options.onSuccess      || function() {};
   var onError        = options.onError        || function() {};
   var successMessage = options.successMessage || null;
-  var errorMessage   = options.errorMessage   || "Ein Fehler ist aufgetreten.";
+  var errorMessage   = options.errorMessage   || "An error occurred!";
   var formSelector   = options.formSelector   || null;
   var showValidation = options.showValidation || false;
 
   if (response.success) {
+
     if (successMessage) {
       showMessage("success", successMessage);
     }
@@ -38,8 +39,8 @@ function handleResponse(response, options) {
     }
     onSuccess(response);
   } else {
-
-    var msg = response.message || errorMessage;
+    // Fehlerpfad: zuerst response.error, dann response.message, dann default
+    var msg = response.error || response.message || errorMessage;
     showMessage("danger", msg);
 
     if (response.errors && showValidation) {
@@ -51,6 +52,7 @@ function handleResponse(response, options) {
     onError(response);
   }
 }
+
 
 
 function applyFieldErrors(errors) {

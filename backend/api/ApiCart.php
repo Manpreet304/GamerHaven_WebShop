@@ -7,7 +7,7 @@ require_once __DIR__ . '/../controller/CartController.php';
 
 if (empty($_SESSION['user']['id'])) {
     http_response_code(401);
-    echo json_encode(['error' => 'Unauthorized']);
+    echo json_encode(['error' => 'Please log in to add items to your cart!']);
     exit;
 }
 

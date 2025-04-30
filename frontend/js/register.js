@@ -1,5 +1,3 @@
-// register.js
-
 $(document).ready(function () {
   initCountryDropdown();
   initPaymentMethodToggle();
@@ -9,16 +7,20 @@ $(document).ready(function () {
     e.preventDefault();
 
     const formEl = this;
+    // 1) Alte Validierungs-Zustände komplett entfernen
     formEl.classList.remove("was-validated");
+    clearValidation(formEl);
 
     const data = getFormData();
     if (!validatePaymentFields(data)) return;
 
+    // 2) Browser-HTML5-Validation
     if (!formEl.checkValidity()) {
       formEl.classList.add("was-validated");
       return;
     }
 
+    // 3) erst jetzt abschicken
     registerUser(data);
   });
 });
@@ -71,9 +73,9 @@ function initPaymentMethodToggle() {
     const sel = $(this).val();
     $("#paymentDetailsWrapper").toggle(!!sel);
     $("#creditFields, #paypalFields, #bankFields").hide();
-    if (sel === "Credit Card")      $("#creditFields").show();
+    if (sel === "Credit Card")       $("#creditFields").show();
     else if (sel === "PayPal")       $("#paypalFields").show();
-    else if (sel === "Bank Transfer")$("#bankFields").show();
+    else if (sel === "Bank Transfer") $("#bankFields").show();
   });
 }
 
@@ -117,4 +119,21 @@ function validatePaymentFields(data) {
       break;
   }
   return true;
+}
+
+/**
+ * Cleans up all validation markers and customValidity flags
+ * so the form can be re-validated on every submit.
+ */
+function clearValidation(formEl) {
+  // Remove Bootstrap valid/invalid classes
+  $(formEl).find('.is-invalid, .is-valid')
+    .removeClass('is-invalid is-valid');
+
+  // Hide any invalid-feedback elements
+  $(formEl).find('.invalid-feedback').hide();
+
+  // Reset any CustomValidity flags
+  $(formEl).find('input, select, textarea')
+    .each(function() { this.setCustomValidity(''); });
 }
