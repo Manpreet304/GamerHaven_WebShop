@@ -3,14 +3,17 @@
 $(document).ready(function () {
   loadCart();
   updateCartCount();
-  $('[data-bs-toggle="tooltip"]').each((_, el) => new bootstrap.Tooltip(el));
+
+  // Tooltips initialisieren
+  $('[data-bs-toggle="tooltip"]').each((_, el) =>
+    new bootstrap.Tooltip(el)
+  );
 
   // Proceed to Checkout
-  $(document).on("click", "#proceedToCheckout", function () {
-    if ($(this).prop("disabled")) {
-      showMessage("danger", "Your cart is empty. Add at least one product to proceed.");
-      return;
-    }
+  $(document).on("click", "#proceedToCheckout", function (e) {
+    // Wenn disabled, nichts tun (fehlermeldung wird angzeigt unten)
+    if ($(this).prop("disabled")) return;
+
     $("#checkoutModal").modal("show");
     loadCheckoutSummary();
     loadPaymentMethods();
@@ -28,7 +31,7 @@ $(document).ready(function () {
     }
 
     const paymentId = parseInt($("#paymentMethod").val(), 10);
-    const voucher = $("#voucher").val().trim() || null;
+    const voucher   = $("#voucher").val().trim() || null;
 
     $.ajax({
       url: "../../backend/api/ApiOrder.php",
@@ -50,8 +53,8 @@ $(document).ready(function () {
 
   // Update quantity
   $(document).on("change", ".quantity-input", function () {
-    const tr = $(this).closest("tr");
-    const cartId = tr.data("id");
+    const tr       = $(this).closest("tr");
+    const cartId   = tr.data("id");
     const quantity = parseInt($(this).val(), 10);
     if (quantity < 1) return;
 
@@ -84,22 +87,30 @@ function loadCart() {
   $.get("../../backend/api/ApiCart.php", function (data) {
     const items = data.items || [];
     const tbody = $("#cart-items");
-    const tpl = document.getElementById("cart-item-template");
+    const tpl   = document.getElementById("cart-item-template");
 
     tbody.empty();
+
     if (!items.length) {
-      tbody.append('<tr><td colspan="5">Your cart is currently empty.</td></tr>');
+      // Platzhalter-Zeile bei leerem Warenkorb
+      tbody.append(
+        '<tr><td colspan="5">Your cart is currently empty. Add at least one product to proceed.</td></tr>'
+      );
       $("#shipping-price").text("€0.00");
       $("#total-price").text("€0.00");
+
+      // Checkout-Button wirklich deaktivieren
       $("#proceedToCheckout").prop("disabled", true);
       return;
     }
 
+    // Wenn Items da sind, wieder aktivieren
     $("#proceedToCheckout").prop("disabled", false);
 
+    // Items rendern
     items.forEach(item => {
       const clone = tpl.content.cloneNode(true);
-      const row = $(clone).find("tr");
+      const row   = $(clone).find("tr");
       row.attr("data-id", item.id);
       row.find(".cart-name").text(item.name);
       row.find(".cart-price").text(`€${item.price.toFixed(2)}`);
@@ -108,28 +119,27 @@ function loadCart() {
       tbody.append(row);
     });
 
-    $("#shipping-price").text(data.shipping === 0 ? "Free" : `€${data.shipping.toFixed(2)}`);
+    $("#shipping-price").text(
+      data.shipping === 0 ? "Free" : `€${data.shipping.toFixed(2)}`
+    );
     $("#total-price").text(`€${data.total.toFixed(2)}`);
   });
 }
 
 function loadCheckoutSummary() {
   $.get("../../backend/api/ApiCart.php", function (data) {
-    const list = $("#checkout-cart-items").empty();
-    const tpl = document.getElementById("checkout-item-template");
+    const list  = $("#checkout-cart-items").empty();
+    const tpl   = document.getElementById("checkout-item-template");
     const items = data.items || [];
 
-    if (!items.length) {
-      list.append('<li class="list-group-item">Your cart is empty.</li>');
-      updatePriceDisplay(0, 0, 0);
-      return;
-    }
-
+    // Nur echte Items, keine leere Meldung
     items.forEach(item => {
       const subtotal = item.price * item.quantity;
-      const clone = tpl.content.cloneNode(true);
+      const clone    = tpl.content.cloneNode(true);
       $(clone).find(".item-name").text(item.name);
-      $(clone).find(".item-details").text(`Quantity: ${item.quantity} × €${item.price.toFixed(2)}`);
+      $(clone).find(".item-details").text(
+        `Quantity: ${item.quantity} × €${item.price.toFixed(2)}`
+      );
       $(clone).find(".item-subtotal").text(`€${subtotal.toFixed(2)}`);
       list.append(clone);
     });
@@ -140,13 +150,14 @@ function loadCheckoutSummary() {
 
 function loadPaymentMethods() {
   $.get("../../backend/api/ApiGuest.php?me", function (user) {
-    const select = $("#paymentMethod").empty().append('<option value="">Choose payment method</option>');
+    const select = $("#paymentMethod").empty()
+      .append('<option value="">Choose payment method</option>');
 
     if (user.payments?.length) {
       user.payments.forEach(p => {
         let label = p.method;
-        if (p.method === "Credit Card") label += ` (****${p.last_digits})`;
-        if (p.method === "PayPal") label += ` (${p.paypal_email})`;
+        if (p.method === "Credit Card")  label += ` (****${p.last_digits})`;
+        if (p.method === "PayPal")       label += ` (${p.paypal_email})`;
         if (p.method === "Bank Transfer") label += ` (IBAN ****${p.iban.slice(-4)})`;
         select.append(`<option value="${p.id}">${label}</option>`);
       });
@@ -158,6 +169,8 @@ function loadPaymentMethods() {
 
 function updatePriceDisplay(sub, ship, total) {
   $("#checkout-subtotal").text(`€${sub.toFixed(2)}`);
-  $("#checkout-shipping").text(ship === 0 ? "Free" : `€${ship.toFixed(2)}`);
+  $("#checkout-shipping").text(
+    ship === 0 ? "Free" : `€${ship.toFixed(2)}`
+  );
   $("#checkout-total").text(`€${total.toFixed(2)}`);
 }

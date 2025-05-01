@@ -110,7 +110,17 @@ function loadNavbar() {
         fetch("../../backend/api/ApiGuest.php?logout", { method: "POST" })
           .then(res => res.json())
           .then(data => {
-            if (data.success) location.reload();
+            if (data.success) {
+              showMessage("success", "Logout successful! Redirecting...", "#messageBox");
+              setTimeout(() => {
+                window.location.href = "/GamerHaven_WebShop/frontend/website/homepage.html";;
+              }, 2000);
+            } else {
+              showMessage("error", "Logout failed. Please try again.", "#messageBox");
+            }
+          })
+          .catch(() => {
+            showMessage("error", "An unexpected error occurred. Please try again later.", "#messageBox");
           });
       });
     });
