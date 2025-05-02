@@ -46,12 +46,12 @@
           container.append(`
             <div class="mb-3">
               <label class="form-label">Card Number</label>
-              <input type="text" id="card_number" class="form-control" required pattern="\\d{13,19}">
+              <input type="text" id="card_number" class="form-control" placeholder="4111 1111 1111 1111" required pattern="\\d{13,19}">
               <div class="invalid-feedback">Enter a valid card number.</div>
             </div>
             <div class="mb-3">
               <label class="form-label">CSV</label>
-              <input type="text" id="csv" class="form-control" required pattern="\\d{3,4}">
+              <input type="text" id="csv" class="form-control" placeholder="123" required pattern="\\d{3,4}">
               <div class="invalid-feedback">Enter the 3– or 4–digit CSV.</div>
             </div>
           `);
@@ -59,12 +59,12 @@
           container.append(`
             <div class="mb-3">
               <label class="form-label">PayPal Email</label>
-              <input type="email" id="paypal_email" class="form-control" required>
+              <input type="email" id="paypal_email" class="form-control" placeholder="yourmail@paypal.com" required>
               <div class="invalid-feedback">Enter your PayPal email.</div>
             </div>
             <div class="mb-3">
               <label class="form-label">PayPal Username</label>
-              <input type="text" id="paypal_username" class="form-control" required>
+              <input type="text" id="paypal_username" class="form-control" placeholder="yourusername" required>
               <div class="invalid-feedback">Enter your PayPal username.</div>
             </div>
           `);
@@ -72,12 +72,12 @@
           container.append(`
             <div class="mb-3">
               <label class="form-label">IBAN</label>
-              <input type="text" id="iban" class="form-control" required>
+              <input type="text" id="iban" class="form-control" placeholder="AT61 1904 3002 3457 3201" required>
               <div class="invalid-feedback">Enter your IBAN.</div>
             </div>
             <div class="mb-3">
               <label class="form-label">BIC</label>
-              <input type="text" id="bic" class="form-control" required>
+              <input type="text" id="bic" class="form-control" placeholder="BAWAATWW" required>
               <div class="invalid-feedback">Enter the BIC.</div>
             </div>
           `);
