@@ -7,42 +7,31 @@ $(document).ready(function () {
     e.preventDefault();
 
     const formEl = this;
-    // 1) Alte Validierungs-Zustände komplett entfernen
     formEl.classList.remove("was-validated");
     clearValidation(formEl);
 
     const data = getFormData();
     if (!validatePaymentFields(data)) return;
 
-    // 2) Browser-HTML5-Validation
     if (!formEl.checkValidity()) {
       formEl.classList.add("was-validated");
       return;
     }
 
-    // 3) erst jetzt abschicken
     registerUser(data);
   });
 });
 
 function registerUser(data) {
-  $.ajax({
+  apiRequest({
     url: "../../backend/api/ApiGuest.php?register",
     method: "POST",
-    dataType: "json",
-    contentType: "application/json",
-    data: JSON.stringify(data),
-    success: res => handleResponse(res, {
-      successMessage: "Registration successful! Redirecting...",
-      formSelector: "#registerForm",
-      showValidation: true,
-      onSuccess: () => setTimeout(() => window.location.href = "../website/login.html", 3000)
-    }),
-    error: xhr => handleResponse(xhr.responseJSON || {}, {
-      errorMessage: "Registration failed.",
-      formSelector: "#registerForm",
-      showValidation: true
-    })
+    data: data,
+    formSelector: "#registerForm",
+    showValidation: true,
+    successMessage: "Registration successful! Redirecting...",
+    errorMessage: "Registration failed.",
+    onSuccess: () => setTimeout(() => window.location.href = "../website/login.html", 3000)
   });
 }
 
@@ -109,31 +98,22 @@ function getFormData() {
 function validatePaymentFields(data) {
   switch (data.payment_method) {
     case "Credit Card":
-      if (!data.card_number || !data.csv) return false;
-      break;
+      return data.card_number && data.csv;
     case "PayPal":
-      if (!data.paypal_email || !data.paypal_username) return false;
-      break;
+      return data.paypal_email && data.paypal_username;
     case "Bank Transfer":
-      if (!data.iban || !data.bic) return false;
-      break;
+      return data.iban && data.bic;
+    default:
+      return true;
   }
-  return true;
 }
 
-/**
- * Cleans up all validation markers and customValidity flags
- * so the form can be re-validated on every submit.
- */
 function clearValidation(formEl) {
-  // Remove Bootstrap valid/invalid classes
   $(formEl).find('.is-invalid, .is-valid')
     .removeClass('is-invalid is-valid');
 
-  // Hide any invalid-feedback elements
   $(formEl).find('.invalid-feedback').hide();
 
-  // Reset any CustomValidity flags
   $(formEl).find('input, select, textarea')
-    .each(function() { this.setCustomValidity(''); });
+    .each(function () { this.setCustomValidity(''); });
 }

@@ -1,13 +1,22 @@
 // admin.vouchers.js
 (function(window, $) {
+  const $tbody = $("#vouchersTable tbody");
+  const voucherModalEl = document.getElementById("voucherModal");
+  const voucherModal   = new bootstrap.Modal(voucherModalEl);
+
   function loadVouchers() {
-    $.get("../../backend/api/ApiAdmin.php?listVouchers")
-      .done(vouchers => {
-        const tbody = $("#vouchersTable tbody").empty();
+    apiRequest({
+      url: "../../backend/api/ApiAdmin.php?listVouchers",
+      method: "GET",
+      successMessage: null,
+      errorMessage: "Vouchers could not be loaded.",
+      onSuccess: res => {
+        const vouchers = res.data; // Array of vouchers
+        $tbody.empty();
         vouchers.forEach(v => {
           const cls = v.is_active ? "" : "table-secondary";
-          tbody.append(`
-            <tr class="${cls}">
+          $tbody.append(`
+            <tr class="${cls}" data-id="${v.id}">
               <td>${v.id}</td>
               <td>${v.code}</td>
               <td>€${Number(v.value).toFixed(2)}</td>
@@ -15,15 +24,25 @@
               <td>${v.expires_at.split(" ")[0]}</td>
               <td>${v.is_active ? "✔️" : "❌"}</td>
               <td>
-                <button class="btn btn-sm btn-primary edit-voucher" data-id="${v.id}">Edit</button>
+                <button class="btn btn-sm btn-primary edit-voucher">Edit</button>
               </td>
             </tr>
           `);
         });
-      })
-      .fail(xhr => handleResponse(xhr.responseJSON || {}, {
-        errorMessage: "Vouchers could not be loaded."
-      }));
+      }
+    });
+  }
+
+  function generateVoucherCode(callback) {
+    apiRequest({
+      url: "../../backend/api/ApiAdmin.php?generateVoucherCode",
+      method: "GET",
+      successMessage: null,
+      errorMessage: "Voucher code could not be generated.",
+      onSuccess: res => {
+        callback(res.data.code);
+      }
+    });
   }
 
   function openVoucherModal(id) {
@@ -31,30 +50,28 @@
     $("#voucherId").val("");
     $("#voucherCode").prop("readonly", false).val("");
 
-    const loadCode = () =>
-      $.get("../../backend/api/ApiAdmin.php?generateVoucherCode")
-        .done(d => $("#voucherCode").val(d.code).prop("readonly", true))
-        .fail(xhr => handleResponse(xhr.responseJSON || {}, {
-          errorMessage: "Voucher code could not be generated."
-        }));
-
     if (id) {
-      $.get(`../../backend/api/ApiAdmin.php?getVoucher&id=${id}`)
-        .done(v => {
+      apiRequest({
+        url: `../../backend/api/ApiAdmin.php?getVoucher&id=${id}`,
+        method: "GET",
+        successMessage: null,
+        errorMessage: "Voucher data could not be loaded.",
+        onSuccess: res => {
+          const v = res.data;
           $("#voucherId").val(v.id);
           $("#voucherCode").val(v.code).prop("readonly", true);
           $("#voucherValue").val(v.value);
           $("#voucherExpires").val(v.expires_at.split(" ")[0]);
           $("#voucherActive").val(v.is_active ? "1" : "0");
-        })
-        .fail(xhr => handleResponse(xhr.responseJSON || {}, {
-          errorMessage: "Voucher data could not be loaded."
-        }));
+          voucherModal.show();
+        }
+      });
     } else {
-      loadCode();
+      generateVoucherCode(code => {
+        $("#voucherCode").val(code).prop("readonly", true);
+        voucherModal.show();
+      });
     }
-
-    new bootstrap.Modal(document.getElementById("voucherModal")).show();
   }
 
   function saveVoucher() {
@@ -71,35 +88,30 @@
       expires_at: $("#voucherExpires").val(),
       is_active: +$("#voucherActive").val()
     };
-
     const url = data.id
       ? `../../backend/api/ApiAdmin.php?updateVoucher&id=${data.id}`
       : `../../backend/api/ApiAdmin.php?addVoucher`;
 
-    $.ajax({
+    apiRequest({
       url,
       method: "POST",
-      contentType: "application/json",
-      data: JSON.stringify(data)
-    })
-      .done(resp => handleResponse(resp, {
-        successMessage: data.id ? "Voucher updated successfully." : "Voucher created successfully.",
-        onSuccess: () => {
-          loadVouchers();
-          bootstrap.Modal.getInstance(document.getElementById("voucherModal")).hide();
-        }
-      }))
-      .fail(xhr => handleResponse(xhr.responseJSON ||={}, {
-        errorMessage: "Error saving voucher."
-      }));
+      data,
+      successMessage: data.id ? "Voucher updated successfully." : "Voucher created successfully.",
+      errorMessage: "Error saving voucher.",
+      onSuccess: () => {
+        loadVouchers();
+        voucherModal.hide();
+      }
+    });
   }
 
   function bindVoucherEvents() {
-    $("#addVoucherBtn").click(() => openVoucherModal());
-    $(document).on("click", ".edit-voucher", e =>
-      openVoucherModal($(e.currentTarget).data("id"))
-    );
-    $("#saveVoucherBtn").click(saveVoucher);
+    $("#addVoucherBtn").on("click", () => openVoucherModal());
+    $tbody.on("click", ".edit-voucher", function() {
+      const id = $(this).closest("tr").data("id");
+      openVoucherModal(id);
+    });
+    $("#saveVoucherBtn").on("click", saveVoucher);
   }
 
   $(function() {
