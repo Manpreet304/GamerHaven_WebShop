@@ -150,7 +150,7 @@ class AdminLogic {
                     WHERE id=?
                 ");
                 $stmt->bind_param(
-                    "ssssssssssssi",
+                    "sssssssssssssi",
                     $d['firstname'], $d['lastname'], $d['email'], $d['username'],
                     $d['salutation'], $d['role'], $isActiveStr,
                     $d['address'], $d['zip_code'], $d['city'], $d['country'],
@@ -165,7 +165,7 @@ class AdminLogic {
                     WHERE id=?
                 ");
                 $stmt->bind_param(
-                    "ssssssssssi",
+                    "sssssssssssi",
                     $d['firstname'], $d['lastname'], $d['email'], $d['username'],
                     $d['salutation'], $d['role'], $isActiveStr,
                     $d['address'], $d['zip_code'], $d['city'], $d['country'],

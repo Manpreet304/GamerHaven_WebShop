@@ -1,43 +1,52 @@
 // products.api.js
-(function(window, $) {
-    const ProductsAPI = {
-      allProductsCache: [],
-      filtersInitialized: false,
-  
-      loadProducts(filters = {}, callbacks = {}) {
-        const query = new URLSearchParams(filters).toString();
-        $.ajax({
-          url: `../../backend/api/ApiProducts.php${query ? '?' + query : ''}`,
-          method: 'GET',
-          success: products => {
-            if (!this.filtersInitialized) {
-              this.allProductsCache = products.slice();
-              this.filtersInitialized = true;
-            }
-            if (callbacks.onSuccess) callbacks.onSuccess(products, this.allProductsCache);
-          },
-          error: xhr => {
-            if (callbacks.onError) callbacks.onError(xhr);
+(function (window, $) {
+  const ProductsAPI = {
+    allProductsCache: [],
+    filtersInitialized: false,
+
+    loadProducts(filters = {}, callbacks = {}) {
+      const query = new URLSearchParams(filters).toString();
+      const url = `../../backend/api/ApiProducts.php${query ? '?' + query : ''}`;
+
+      apiRequest({
+        url,
+        method: 'GET',
+        onSuccess: (res) => {
+          const products = res.body || [];
+
+          if (!this.filtersInitialized) {
+            this.allProductsCache = products.slice();
+            this.filtersInitialized = true;
           }
-        });
-      },
-  
-      addToCart(productId, quantity = 1, callbacks = {}) {
-        $.ajax({
-          url: `../../backend/api/ApiCart.php?addToCart=${productId}`,
-          method: 'POST',
-          contentType: 'application/json',
-          data: JSON.stringify({ quantity }),
-          success: res => {
-            if (callbacks.onSuccess) callbacks.onSuccess(res);
-          },
-          error: xhr => {
-            if (callbacks.onError) callbacks.onError(xhr);
+
+          if (callbacks.onSuccess) {
+            callbacks.onSuccess(products, this.allProductsCache);
           }
-        });
-      }
-    };
-  
-    window.ProductsAPI = ProductsAPI;
-  })(window, jQuery);
-  
+        },
+        onError: (err) => {
+          if (callbacks.onError) callbacks.onError(err);
+        },
+        errorMessage: "Failed to load products."
+      });
+    },
+
+    addToCart(productId, quantity = 1, callbacks = {}) {
+      apiRequest({
+        url: `../../backend/api/ApiCart.php?addToCart=${productId}`,
+        method: 'POST',
+        data: { quantity },
+        successMessage: "Product added to cart!",
+        errorMessage: "Could not add product to cart.",
+        onSuccess: (res) => {
+          updateCartCount();
+          if (callbacks.onSuccess) callbacks.onSuccess(res);
+        },
+        onError: (err) => {
+          if (callbacks.onError) callbacks.onError(err);
+        }
+      });
+    }
+  };
+
+  window.ProductsAPI = ProductsAPI;
+})(window, jQuery);
