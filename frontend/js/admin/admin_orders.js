@@ -1,4 +1,4 @@
-// admin.orders.js
+// js/admin/admin_orders.js
 (function(window, $) {
   let ordersCache = {};
 
@@ -6,8 +6,6 @@
     apiRequest({
       url: "../../backend/api/ApiAdmin.php?listCustomers",
       method: "GET",
-      successMessage: null,
-      errorMessage: "Customer data could not be loaded.",
       onSuccess: res => {
         const users = res.data; // Array of customers
         const $sel  = $("#orderCustomerSelect").empty()
@@ -15,6 +13,10 @@
         users.forEach(u => {
           $sel.append(`<option value="${u.id}">${u.firstname} ${u.lastname}</option>`);
         });
+      },
+      onError: err => {
+        // Zeigt die Backend-Nachricht oder Fallback
+        handleResponse(err, {});
       }
     });
   }
@@ -26,8 +28,6 @@
     apiRequest({
       url: `../../backend/api/ApiAdmin.php?listOrdersByCustomer&id=${id}`,
       method: "GET",
-      successMessage: null,
-      errorMessage: "Orders could not be loaded.",
       onSuccess: res => {
         ordersCache = {};
         const orders = res.data; // Array of orders
@@ -46,6 +46,9 @@
             </tr>
           `);
         });
+      },
+      onError: err => {
+        handleResponse(err, {});
       }
     });
   }
@@ -72,8 +75,6 @@
     apiRequest({
       url: `../../backend/api/ApiAdmin.php?listOrderItems&order_id=${orderId}`,
       method: "GET",
-      successMessage: null,
-      errorMessage: "Order items could not be loaded.",
       onSuccess: res => {
         const items = res.data;
         items.forEach(i => {
@@ -101,6 +102,9 @@
             </div>
           `);
         });
+      },
+      onError: err => {
+        handleResponse(err, {});
       }
     });
   }
@@ -116,10 +120,12 @@
       url: `../../backend/api/ApiAdmin.php?removeOrderItem&id=${itemId}&qty=${qtyToRemove}`,
       method: "POST",
       successMessage: "Item updated successfully.",
-      errorMessage:   "Error updating item.",
       onSuccess: () => {
         $("#orderItemsModal").modal("hide");
         $("#orderCustomerSelect").trigger("change");
+      },
+      onError: err => {
+        handleResponse(err, {});
       }
     });
   }

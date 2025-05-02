@@ -1,13 +1,19 @@
+// js/account/account_events.js
 (function(window, $) {
   function bindUIEvents() {
-    $("#edit-account-btn").on("click", () => window.AccountForms.openAccountEditForm());
-    $("#add-payment-method-btn").on("click", () => window.AccountForms.openAddPaymentMethodForm());
+    $("#edit-account-btn").on("click", () =>
+      window.AccountForms.openAccountEditForm()
+    );
+    $("#add-payment-method-btn").on("click", () =>
+      window.AccountForms.openAddPaymentMethodForm()
+    );
 
     // Edit Account
     $(document).on("submit", "#edit-account-form", function(e) {
       e.preventDefault();
-      if (!this.checkValidity()) {
-        this.classList.add("was-validated");
+      const form = this;
+      if (!form.checkValidity()) {
+        form.classList.add("was-validated");
         return;
       }
       const payload = {
@@ -21,26 +27,31 @@
         password:   $("#password").val().trim()
       };
       window.AccountAPI.updateAccountInfo(payload, {
-        onSuccess: () => {
+        onSuccess: res => {
+          // Backend liefert res.message, aber wir nutzen statischen Erfolgs-Toast
           handleResponse({ success: true }, {
             successMessage: "Account updated successfully.",
             onSuccess: () => {
               const modalEl = document.getElementById("editAccountModal");
-              const modal   = bootstrap.Modal.getOrCreateInstance(modalEl);
-              modal.hide();
-              window.AccountAPI.getAccountData({ onSuccess: window.AccountRender.renderAccountInfo });
+              bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+              window.AccountAPI.getAccountData({
+                onSuccess: window.AccountRender.renderAccountInfo
+              });
             }
           });
         },
-        onError: xhr => handleResponse(xhr, { errorMessage: "Update failed." })
+        onError: err => handleResponse(err, {
+          errorMessage: err.message
+        })
       });
     });
 
     // Add Payment Method
     $(document).on("submit", "#add-payment-method-form", function(e) {
       e.preventDefault();
-      if (!this.checkValidity()) {
-        this.classList.add("was-validated");
+      const form = this;
+      if (!form.checkValidity()) {
+        form.classList.add("was-validated");
         return;
       }
       const method = $("#new-payment-method").val();
@@ -56,26 +67,30 @@
         payload.bic  = $("#bic").val().trim();
       }
       window.AccountAPI.addPaymentMethod(payload, {
-        onSuccess: () => {
+        onSuccess: res => {
           handleResponse({ success: true }, {
             successMessage: "Payment method added.",
             onSuccess: () => {
               const modalEl = document.getElementById("addPaymentModal");
-              const modal   = bootstrap.Modal.getOrCreateInstance(modalEl);
-              modal.hide();
-              window.AccountAPI.loadPaymentMethods({ onSuccess: window.AccountRender.renderPaymentMethods });
+              bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+              window.AccountAPI.loadPaymentMethods({
+                onSuccess: window.AccountRender.renderPaymentMethods
+              });
             }
           });
         },
-        onError: xhr => handleResponse(xhr, { errorMessage: "Could not add payment method." })
+        onError: err => handleResponse(err, {
+          errorMessage: err.message
+        })
       });
     });
 
     // Change Password
     $(document).on("submit", "#change-password-form", function(e) {
       e.preventDefault();
-      if (!this.checkValidity()) {
-        this.classList.add("was-validated");
+      const form = this;
+      if (!form.checkValidity()) {
+        form.classList.add("was-validated");
         return;
       }
       const data = {
@@ -83,11 +98,13 @@
         new_password: $("#new_password").val().trim()
       };
       window.AccountAPI.changePassword(data, {
-        onSuccess: () => handleResponse({ success: true }, {
+        onSuccess: res => handleResponse({ success: true }, {
           successMessage: "Password updated successfully.",
-          onSuccess: () => $("#change-password-form")[0].reset()
+          onSuccess: () => form.reset()
         }),
-        onError: xhr => handleResponse(xhr, { errorMessage: "Password update failed." })
+        onError: err => handleResponse(err, {
+          errorMessage: err.message
+        })
       });
     });
 
@@ -101,17 +118,23 @@
 
     window.AccountAPI.getAccountData({
       onSuccess: window.AccountRender.renderAccountInfo,
-      onError: xhr => handleResponse(xhr, { errorMessage: "Failed to load account info." })
+      onError: err => handleResponse(err, {
+        errorMessage: err.message
+      })
     });
 
     window.AccountAPI.loadPaymentMethods({
       onSuccess: window.AccountRender.renderPaymentMethods,
-      onError: xhr => handleResponse(xhr, { errorMessage: "Failed to load payment methods." })
+      onError: err => handleResponse(err, {
+        errorMessage: err.message
+      })
     });
 
     window.AccountAPI.loadOrders({
       onSuccess: window.AccountRender.renderOrders,
-      onError: xhr => handleResponse(xhr, { errorMessage: "Failed to load orders." })
+      onError: err => handleResponse(err, {
+        errorMessage: err.message
+      })
     });
 
     bindUIEvents();

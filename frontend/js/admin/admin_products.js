@@ -1,4 +1,4 @@
-// admin.products.js
+// js/admin/admin_products.js
 (function(window, $) {
   // Tab-Navigation initialisieren
   function initTabs() {
@@ -15,8 +15,6 @@
     apiRequest({
       url: "../../backend/api/ApiAdmin.php?listProducts",
       method: "GET",
-      successMessage: null,
-      errorMessage: "Products could not be loaded.",
       onSuccess: res => {
         const products = res.data; // Array von Produkten
         const $tbody   = $("#productsTable tbody").empty();
@@ -36,6 +34,10 @@
             </tr>
           `);
         });
+      },
+      onError: err => {
+        // zeigt die Backend-Nachricht oder Fallback
+        handleResponse(err, {});
       }
     });
   }
@@ -45,12 +47,13 @@
     resetForm("#productForm");
     $("#existingImages").empty();
 
+    const modalEl = document.getElementById("productModal");
+    const modal = new bootstrap.Modal(modalEl);
+
     if (id) {
       apiRequest({
         url: `../../backend/api/ApiAdmin.php?getProduct&id=${id}`,
         method: "GET",
-        successMessage: null,
-        errorMessage: "Product data could not be loaded.",
         onSuccess: res => {
           const p = res.data;
           $("#productId").val(p.id);
@@ -73,11 +76,13 @@
               $("#existingImages").append(`<li class="list-group-item">${src}</li>`);
             });
           }
-        }
+          modal.show();
+        },
+        onError: err => handleResponse(err, {})
       });
+    } else {
+      modal.show();
     }
-
-    new bootstrap.Modal(document.getElementById("productModal")).show();
   }
 
   // Produkt speichern (add/update)
@@ -101,13 +106,13 @@
       ? `../../backend/api/ApiAdmin.php?updateProduct&id=${id}`
       : `../../backend/api/ApiAdmin.php?addProduct`;
 
-    // Da wir FormData senden, führen wir den Ajax-Call manuell aus, aber mit handleResponse
     $.ajax({
       url,
       method: "POST",
       processData: false,
       contentType: false,
-      data: fd
+      data: fd,
+      xhrFields: { withCredentials: true }
     })
     .done(resp => handleResponse(resp, {
       successMessage: id ? "Product updated successfully." : "Product added successfully.",
@@ -117,7 +122,7 @@
       }
     }))
     .fail(xhr => handleResponse(xhr.responseJSON || {}, {
-      errorMessage: "Error saving product."
+      // kein statischer errorMessage hier, resp.message wird verwendet
     }));
   }
 
@@ -127,8 +132,8 @@
       url: `../../backend/api/ApiAdmin.php?deleteProduct&id=${id}`,
       method: "POST",
       successMessage: "Product deleted successfully.",
-      errorMessage: "Error deleting product.",
-      onSuccess: loadProducts
+      onSuccess: loadProducts,
+      onError: err => handleResponse(err, {})
     });
   }
 
