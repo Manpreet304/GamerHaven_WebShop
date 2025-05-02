@@ -2,12 +2,14 @@
 
 function showMessage(type, text, target) {
   target = target || "#messageBox";
-  var alertClass = (type === "success") ? "alert-success" : "alert-danger";
-  var html = ''
-    + '<div class="alert ' + alertClass + ' alert-dismissible fade show" role="alert">'
-    + text
-    + '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>'
-    + '</div>';
+  var alertClass = type === "success" ? "alert-success" : "alert-danger";
+  var html =
+    '<div class="alert ' +
+    alertClass +
+    ' alert-dismissible fade show" role="alert">' +
+    text +
+    '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
+    "</div>";
   var container = $(target);
   container.find(".alert").alert("close");
   container.empty().append(html);
@@ -24,7 +26,7 @@ function apiRequest(options) {
     headers = {},
     contentType = "application/json",
     successMessage = null,
-    errorMessage = "An error occurred!",
+    errorMessage = null,            // kein statischer Fehlertext mehr
     onSuccess = () => {},
     onError = () => {},
     formSelector = null,
@@ -52,11 +54,16 @@ function apiRequest(options) {
         if (formSelector) resetForm(formSelector);
         onSuccess(wrapped);
       } else {
-        handleResponse(response, { errorMessage, formSelector, showValidation, onError });
+        handleResponse(response, {
+          errorMessage,     // null oder überschrieben beim Aufruf
+          formSelector,
+          showValidation,
+          onError
+        });
       }
     })
     .fail(xhr => {
-      const msg = xhr.responseJSON?.message || errorMessage;
+      const msg = xhr.responseJSON?.message || "An error occurred!";
       showMessage("danger", msg);
       onError(xhr.responseJSON || {});
     });
@@ -67,7 +74,8 @@ function apiRequest(options) {
 function handleResponse(response, options = {}) {
   const {
     successMessage = null,
-    errorMessage = "An error occurred!",
+    // Wenn kein errorMessage übergeben wurde, nimm response.message
+    errorMessage = response.message || "An error occurred!",
     formSelector = null,
     showValidation = false,
     onSuccess = () => {},
@@ -140,11 +148,9 @@ function updateCartCount() {
   })
     .done(res => {
       let count = 0;
-
       if (res.success && res.data && res.data.body) {
         count = parseInt(res.data.body.count, 10) || 0;
       }
-
       $("#cart-count").text(count);
     })
     .fail(() => {

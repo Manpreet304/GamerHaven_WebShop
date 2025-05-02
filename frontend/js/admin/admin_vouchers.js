@@ -1,4 +1,4 @@
-// admin.vouchers.js
+// js/admin/admin_vouchers.js
 (function(window, $) {
   const $tbody = $("#vouchersTable tbody");
   const voucherModalEl = document.getElementById("voucherModal");
@@ -8,8 +8,7 @@
     apiRequest({
       url: "../../backend/api/ApiAdmin.php?listVouchers",
       method: "GET",
-      successMessage: null,
-      errorMessage: "Vouchers could not be loaded.",
+      // Keine static errorMessage hier, handleResponse nutzt resp.message
       onSuccess: res => {
         const vouchers = res.data; // Array of vouchers
         $tbody.empty();
@@ -29,6 +28,10 @@
             </tr>
           `);
         });
+      },
+      onError: err => {
+        // Zeige Backend-Message
+        handleResponse(err, {});
       }
     });
   }
@@ -37,11 +40,10 @@
     apiRequest({
       url: "../../backend/api/ApiAdmin.php?generateVoucherCode",
       method: "GET",
-      successMessage: null,
-      errorMessage: "Voucher code could not be generated.",
       onSuccess: res => {
         callback(res.data.code);
-      }
+      },
+      onError: err => handleResponse(err, {})
     });
   }
 
@@ -54,8 +56,6 @@
       apiRequest({
         url: `../../backend/api/ApiAdmin.php?getVoucher&id=${id}`,
         method: "GET",
-        successMessage: null,
-        errorMessage: "Voucher data could not be loaded.",
         onSuccess: res => {
           const v = res.data;
           $("#voucherId").val(v.id);
@@ -64,7 +64,8 @@
           $("#voucherExpires").val(v.expires_at.split(" ")[0]);
           $("#voucherActive").val(v.is_active ? "1" : "0");
           voucherModal.show();
-        }
+        },
+        onError: err => handleResponse(err, {})
       });
     } else {
       generateVoucherCode(code => {
@@ -96,12 +97,15 @@
       url,
       method: "POST",
       data,
-      successMessage: data.id ? "Voucher updated successfully." : "Voucher created successfully.",
-      errorMessage: "Error saving voucher.",
+      // Statischer Erfolgstext gewünscht
+      successMessage: data.id
+        ? "Voucher updated successfully."
+        : "Voucher created successfully.",
       onSuccess: () => {
         loadVouchers();
         voucherModal.hide();
-      }
+      },
+      onError: err => handleResponse(err, {})
     });
   }
 

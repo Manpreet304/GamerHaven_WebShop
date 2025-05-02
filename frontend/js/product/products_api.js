@@ -1,4 +1,4 @@
-// products.api.js
+// js/products/products_api.js
 (function (window, $) {
   const ProductsAPI = {
     allProductsCache: [],
@@ -11,6 +11,7 @@
       apiRequest({
         url,
         method: 'GET',
+        // Im Normalfall zeigt loadProducts keine Toasts, sondern übergibt alles an callbacks
         onSuccess: (res) => {
           const products = res.body || [];
 
@@ -19,14 +20,12 @@
             this.filtersInitialized = true;
           }
 
-          if (callbacks.onSuccess) {
-            callbacks.onSuccess(products, this.allProductsCache);
-          }
+          callbacks.onSuccess?.(products, this.allProductsCache);
         },
         onError: (err) => {
-          if (callbacks.onError) callbacks.onError(err);
-        },
-        errorMessage: "Failed to load products."
+          // Fehler direkt an callbacks weiterreichen
+          callbacks.onError?.(err);
+        }
       });
     },
 
@@ -35,14 +34,28 @@
         url: `../../backend/api/ApiCart.php?addToCart=${productId}`,
         method: 'POST',
         data: { quantity },
+        showValidation: false,    // wir handhaben Field-Errors selbst, falls nötig
+
+        // Statischer Erfolgstext für Konsistenz
         successMessage: "Product added to cart!",
-        errorMessage: "Could not add product to cart.",
+
         onSuccess: (res) => {
+          // Der statische Erfolgstext wird oben bereits angezeigt
+          // Nach dem Toast: Zähle nach, animiere Button, rufe callback
           updateCartCount();
-          if (callbacks.onSuccess) callbacks.onSuccess(res);
+          window.ProductsCart.animateCartButtons(productId, true);
+          callbacks.onSuccess?.(res);
         },
+
         onError: (err) => {
-          if (callbacks.onError) callbacks.onError(err);
+          // Immer die genaue Backend-Message anzeigen
+          handleResponse(err, {
+            errorMessage: err.message,
+            onError: () => {
+              window.ProductsCart.animateCartButtons(productId, false);
+              callbacks.onError?.(err);
+            }
+          });
         }
       });
     }

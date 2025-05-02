@@ -21,12 +21,22 @@ class RegisterLogic {
             $errors["email"] = "Invalid email format.";
         }
 
+        // Prüfe, ob Username schon existiert
         $stmt = $conn->prepare("SELECT id FROM users WHERE username = ?");
         $stmt->bind_param("s", $user->username);
         $stmt->execute();
         $stmt->store_result();
         if ($stmt->num_rows > 0) {
             $errors["username"] = "Username already taken.";
+        }
+
+        // Prüfe, ob E-Mail schon existiert
+        $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
+        $stmt->bind_param("s", $user->email);
+        $stmt->execute();
+        $stmt->store_result();
+        if ($stmt->num_rows > 0) {
+            $errors["email"] = "Email address already registered.";
         }
 
         return empty($errors) ? true : $errors;

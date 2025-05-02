@@ -1,45 +1,57 @@
-$(document).ready(function () {
-  $("#loginForm").on("submit", function (e) {
-    e.preventDefault();
+// js/user/login.js
+(function(window, $) {
+  $(function() {
+    // Tooltips initialisieren
+    $('[data-bs-toggle="tooltip"]').each((_, el) => new bootstrap.Tooltip(el));
 
-    const formEl = this;
-    formEl.classList.remove("was-validated");
-    clearValidation(formEl);
+    $("#loginForm").on("submit", function(e) {
+      e.preventDefault();
+      const formEl = this;
 
-    const data = {
-      identifier: $("#identifier").val(),
-      password: $("#password").val(),
-      remember: $("#rememberMe").is(":checked")
-    };
-
-    if (!formEl.checkValidity()) {
+      // Bootstrap-Validation-Klasse setzen
       formEl.classList.add("was-validated");
-      return;
-    }
+      if (!formEl.checkValidity()) return;
 
-    apiRequest({
-      url: "../../backend/api/ApiGuest.php?login",
-      method: "POST",
-      data: data,
-      formSelector: "#loginForm",
-      showValidation: true,
-      successMessage: "Login successful! Redirecting...",
-      errorMessage: "Login failed.",
-      onSuccess: () => setTimeout(() => {
-        window.location.href = "../website/homepage.html";
-      }, 2000)
+      const data = {
+        identifier: $("#identifier").val().trim(),
+        password:   $("#password").val(),
+        remember:   $("#rememberMe").is(":checked")
+      };
+
+      apiRequest({
+        url: "../../backend/api/ApiGuest.php?login",
+        method: "POST",
+        data,
+        formSelector: "#loginForm",
+        showValidation: false,       // wir übernehmen das Feld-Highlighting selbst
+        successMessage: "Login successful! Redirecting...",
+        // kein statischer errorMessage
+        onSuccess: () => setTimeout(() => {
+          window.location.href = "../website/homepage.html";
+        }, 2000),
+        onError: resp => {
+          // Zeige exakt das Backend-message
+          handleResponse(resp, { errorMessage: resp.message });
+          // Feld-spezifische Fehler markieren
+          const fieldErrors = resp.data?.errors || {};
+          showFieldErrors(fieldErrors);
+        }
+      });
     });
   });
 
-  $('[data-bs-toggle="tooltip"]').each((_, el) => new bootstrap.Tooltip(el));
-});
+  function showFieldErrors(errors) {
+    // Alte Validierungs-Klassen entfernen
+    $("#loginForm .is-invalid, #loginForm .is-valid")
+      .removeClass("is-invalid is-valid");
 
-function clearValidation(formEl) {
-  $(formEl).find('.is-invalid, .is-valid')
-    .removeClass('is-invalid is-valid');
+    Object.entries(errors).forEach(([field, msg]) => {
+      const $input = $(`#${field}`);
+      const $fb    = $input.next(".invalid-feedback");
+      if (!$input.length || !$fb.length) return;
 
-  $(formEl).find('.invalid-feedback').hide();
-
-  $(formEl).find('input, select, textarea')
-    .each(function () { this.setCustomValidity(''); });
-}
+      $input.addClass("is-invalid");
+      $fb.text(msg).show();
+    });
+  }
+})(window, jQuery);

@@ -1,17 +1,15 @@
-// admin.customers.js
+// js/admin/admin_customers.js
 (function(window, $) {
   // Einmalig: Tabelle und Modal hooken
-  const $tableBody    = $("#customersTable tbody");
-  const $customerModal = new bootstrap.Modal($("#customerModal"));
+  const $tableBody     = $("#customersTable tbody");
+  const customerModal  = new bootstrap.Modal($("#customerModal"));
 
   function loadCustomers() {
     apiRequest({
       url: "../../backend/api/ApiAdmin.php?listCustomers",
       method: "GET",
-      successMessage: null,
-      errorMessage: "Customer data could not be loaded.",
       onSuccess: res => {
-        const users = res.data; // <–– data ist hier schon das Array
+        const users = res.data; // Array von Kunden
         $tableBody.empty();
         users.forEach(u => {
           const active = u.is_active === "true" || u.is_active === true;
@@ -29,7 +27,8 @@
             </tr>
           `);
         });
-      }
+      },
+      onError: err => handleResponse(err, {})  // Backend-message wird angezeigt
     });
   }
 
@@ -41,8 +40,6 @@
       apiRequest({
         url: `../../backend/api/ApiAdmin.php?getCustomer&id=${id}`,
         method: "GET",
-        successMessage: null,
-        errorMessage: "Customer data could not be loaded.",
         onSuccess: res => {
           const u = res.data;
           $("#customer_id").val(u.id);
@@ -57,11 +54,13 @@
           $("#customer_zip_code").val(u.zip_code || "");
           $("#customer_city").val(u.city || "");
           $("#customer_country").val(u.country || "");
-        }
+          customerModal.show();
+        },
+        onError: err => handleResponse(err, {})
       });
+    } else {
+      customerModal.show();
     }
-
-    $customerModal.show();
   }
 
   function saveCustomer() {
@@ -72,18 +71,18 @@
     }
 
     const payload = {
-      id: +$("#customer_id").val(),
-      firstname: $("#customer_firstname").val(),
-      lastname:  $("#customer_lastname").val(),
-      email:     $("#customer_email").val(),
-      username:  $("#customer_username").val(),
-      salutation: $("#customer_salutation").val(),
-      role:      $("#customer_role").val(),
-      is_active: +$("#customer_active").val(),
-      address:   $("#customer_address").val() || null,
-      zip_code:  $("#customer_zip_code").val() || null,
-      city:      $("#customer_city").val() || null,
-      country:   $("#customer_country").val() || null
+      id:          +$("#customer_id").val(),
+      firstname:   $("#customer_firstname").val(),
+      lastname:    $("#customer_lastname").val(),
+      email:       $("#customer_email").val(),
+      username:    $("#customer_username").val(),
+      salutation:  $("#customer_salutation").val(),
+      role:        $("#customer_role").val(),
+      is_active:   +$("#customer_active").val(),
+      address:     $("#customer_address").val() || null,
+      zip_code:    $("#customer_zip_code").val() || null,
+      city:        $("#customer_city").val() || null,
+      country:     $("#customer_country").val() || null
     };
     const pw = $("#customer_password").val().trim();
     if (pw) payload.password = pw;
@@ -93,11 +92,11 @@
       method: "POST",
       data: payload,
       successMessage: "Customer settings saved successfully.",
-      errorMessage:   "Error saving customer settings.",
       onSuccess: () => {
         loadCustomers();
-        $customerModal.hide();
-      }
+        customerModal.hide();
+      },
+      onError: err => handleResponse(err, {})
     });
   }
 
@@ -108,8 +107,8 @@
       url: `../../backend/api/ApiAdmin.php?deleteCustomer&id=${id}`,
       method: "POST",
       successMessage: "Customer deleted successfully.",
-      errorMessage:   "Error deleting customer.",
-      onSuccess: loadCustomers
+      onSuccess: loadCustomers,
+      onError: err => handleResponse(err, {})
     });
   }
 
@@ -125,6 +124,7 @@
       });
 
     $("#saveCustomerBtn").on("click", saveCustomer);
+    $("#addCustomerBtn").on("click", () => openCustomerModal());  
   }
 
   // Initialisierung
