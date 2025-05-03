@@ -1,9 +1,18 @@
-// js/products/products_api.js
-(function (window, $) {
+/**
+ * js/products/products_api.js
+ * Verantwortlich für Laden der Produktdaten und Hinzufügen zum Warenkorb
+ */
+(function(window, $) {
+  'use strict';
+
+  // --- ProductsAPI Objekt ---
   const ProductsAPI = {
     allProductsCache: [],
     filtersInitialized: false,
 
+    /**
+     * Lädt Produkte mit optionalen Filtern.
+     */
     loadProducts(filters = {}, callbacks = {}) {
       const query = new URLSearchParams(filters).toString();
       const url = `../../backend/api/ApiProducts.php${query ? '?' + query : ''}`;
@@ -11,44 +20,36 @@
       apiRequest({
         url,
         method: 'GET',
-        // Im Normalfall zeigt loadProducts keine Toasts, sondern übergibt alles an callbacks
-        onSuccess: (res) => {
+        onSuccess: res => {
           const products = res.body || [];
-
           if (!this.filtersInitialized) {
             this.allProductsCache = products.slice();
             this.filtersInitialized = true;
           }
-
           callbacks.onSuccess?.(products, this.allProductsCache);
         },
-        onError: (err) => {
-          // Fehler direkt an callbacks weiterreichen
+        onError: err => {
           callbacks.onError?.(err);
         }
       });
     },
 
+    /**
+     * Fügt ein Produkt dem Warenkorb hinzu.
+     */
     addToCart(productId, quantity = 1, callbacks = {}) {
       apiRequest({
         url: `../../backend/api/ApiCart.php?addToCart=${productId}`,
         method: 'POST',
         data: { quantity },
-        showValidation: false,    // wir handhaben Field-Errors selbst, falls nötig
-
-        // Statischer Erfolgstext für Konsistenz
-        successMessage: "Product added to cart!",
-
-        onSuccess: (res) => {
-          // Der statische Erfolgstext wird oben bereits angezeigt
-          // Nach dem Toast: Zähle nach, animiere Button, rufe callback
+        showValidation: false,
+        successMessage: 'Product added to cart!',
+        onSuccess: res => {
           updateCartCount();
           window.ProductsCart.animateCartButtons(productId, true);
           callbacks.onSuccess?.(res);
         },
-
-        onError: (err) => {
-          // Immer die genaue Backend-Message anzeigen
+        onError: err => {
           handleResponse(err, {
             errorMessage: err.message,
             onError: () => {

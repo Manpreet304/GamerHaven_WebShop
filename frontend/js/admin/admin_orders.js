@@ -1,68 +1,92 @@
-// js/admin/admin_orders.js
+/**
+ * js/admin/orders/admin_orders.js
+ * Verantwortlich für Laden, Anzeigen und Verwalten von Bestellungen im Admin-Bereich
+ */
 (function(window, $) {
-  let ordersCache = {};
+  'use strict';
 
-  function loadOrderCustomers() {
-    apiRequest({
-      url: "../../backend/api/ApiAdmin.php?listCustomers",
-      method: "GET",
-      onSuccess: res => {
-        const users = res.data; // Array of customers
-        const $sel  = $("#orderCustomerSelect").empty()
-                          .append('<option value="">Select…</option>');
-        users.forEach(u => {
-          $sel.append(`<option value="${u.id}">${u.firstname} ${u.lastname}</option>`);
-        });
-      },
-      onError: err => {
-        // Zeigt die Backend-Nachricht oder Fallback
-        handleResponse(err, {});
-      }
+  // --- Selektoren & Modal-Instanz für Bestelldetails ---
+  const customerSelect         = document.getElementById('orderCustomerSelect');
+  const ordersTableBody        = document.querySelector('#ordersTable tbody');
+  const orderItemsContainer    = document.getElementById('orderItemsBody');
+  const orderItemsModalElement = document.getElementById('orderItemsModal');
+  const orderItemsModal        = new bootstrap.Modal(orderItemsModalElement);
+  let   ordersCache            = {};
+
+  // --- Promise-basierte API-Funktionen ---
+  function fetchCustomersForOrders() {
+    return new Promise((resolve, reject) => {
+      apiRequest({
+        url: '../../backend/api/ApiAdmin.php?listCustomers',
+        method: 'GET',
+        onSuccess: resolve,
+        onError: err => { handleResponse(err, {}); reject(err); }
+      });
+    });
+  }
+  function fetchOrdersByCustomer(customerId) {
+    return new Promise((resolve, reject) => {
+      apiRequest({
+        url: `../../backend/api/ApiAdmin.php?listOrdersByCustomer&id=${customerId}`,
+        method: 'GET',
+        onSuccess: resolve,
+        onError: err => { handleResponse(err, {}); reject(err); }
+      });
+    });
+  }
+  function fetchOrderItems(orderId) {
+    return new Promise((resolve, reject) => {
+      apiRequest({
+        url: `../../backend/api/ApiAdmin.php?listOrderItems&order_id=${orderId}`,
+        method: 'GET',
+        onSuccess: resolve,
+        onError: err => { handleResponse(err, {}); reject(err); }
+      });
+    });
+  }
+  function removeOrderItem(orderItemId, qty) {
+    return new Promise((resolve, reject) => {
+      apiRequest({
+        url: `../../backend/api/ApiAdmin.php?removeOrderItem&id=${orderItemId}&qty=${qty}`,
+        method: 'POST',
+        successMessage: 'Order item updated successfully.',
+        onSuccess: resolve,
+        onError: err => { handleResponse(err, {}); reject(err); }
+      });
     });
   }
 
-  function loadOrdersByCustomer(id) {
-    const $tbody = $("#ordersTable tbody").empty();
-    if (!id) return;
-
-    apiRequest({
-      url: `../../backend/api/ApiAdmin.php?listOrdersByCustomer&id=${id}`,
-      method: "GET",
-      onSuccess: res => {
-        ordersCache = {};
-        const orders = res.data; // Array of orders
-        orders.forEach(o => {
-          ordersCache[o.id] = o;
-          $tbody.append(`
-            <tr>
-              <td>${o.id}</td>
-              <td>${o.created_at.split(" ")[0]}</td>
-              <td>€${Number(o.total_amount).toFixed(2)}</td>
-              <td>
-                <button class="btn btn-sm btn-info view-items" data-id="${o.id}">
-                  Details
-                </button>
-              </td>
-            </tr>
-          `);
-        });
-      },
-      onError: err => {
-        handleResponse(err, {});
-      }
+  // --- View-/Render-Funktionen: Dropdown, Tabelle, Details ---
+  function renderCustomerDropdown(customers) {
+    customerSelect.innerHTML = '<option value="">Select…</option>' +
+      customers.map(c => `<option value="${c.id}">${c.firstname} ${c.lastname}</option>`).join('');
+  }
+  function renderOrdersTable(orders) {
+    ordersCache = {};
+    ordersTableBody.innerHTML = '';
+    orders.forEach(o => {
+      ordersCache[o.id] = o;
+      const row = document.createElement('tr');
+      row.dataset.id = o.id;
+      row.innerHTML = `
+        <td>${o.id}</td>
+        <td>${o.created_at.split(' ')[0]}</td>
+        <td>€${Number(o.total_amount).toFixed(2)}</td>
+        <td>
+          <button class="btn btn-sm btn-info view-items" data-id="${o.id}">Details</button>
+        </td>
+      `;
+      ordersTableBody.appendChild(row);
     });
   }
-
-  function loadOrderItems(orderId) {
+  function renderOrderItems(orderId, items) {
     const order = ordersCache[orderId];
-    const $body = $("#orderItemsBody").empty();
+    orderItemsContainer.innerHTML = '';
     if (!order) {
-      $body.append("<p>No order found.</p>");
+      orderItemsContainer.innerHTML = '<p>No order found.</p>';
       return;
     }
-
-    // Summary
-    $body.append(`
+    orderItemsContainer.insertAdjacentHTML('beforeend', `
       <div><strong>Order #${order.id}</strong></div>
       <div>Subtotal: €${order.subtotal}</div>
       <div>Discount: €${order.discount}</div>
@@ -70,83 +94,83 @@
       <div><strong>Total: €${order.total_amount}</strong></div>
       <hr/>
     `);
-
-    // Items
-    apiRequest({
-      url: `../../backend/api/ApiAdmin.php?listOrderItems&order_id=${orderId}`,
-      method: "GET",
-      onSuccess: res => {
-        const items = res.data;
-        items.forEach(i => {
-          $body.append(`
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <div>
-                <strong>${i.name_snapshot}</strong><br>
-                Qty: ${i.quantity} × €${Number(i.price_snapshot).toFixed(2)}
-              </div>
-              <div class="d-flex align-items-center">
-                <input
-                  type="number"
-                  min="1"
-                  max="${i.quantity}"
-                  value="1"
-                  class="form-control form-control-sm me-2 remove-quantity"
-                  data-max="${i.quantity}"
-                  data-id="${i.id}"
-                  style="width: 70px;"
-                >
-                <button class="btn btn-sm btn-danger remove-item" data-id="${i.id}">
-                  Remove
-                </button>
-              </div>
-            </div>
-          `);
-        });
-      },
-      onError: err => {
-        handleResponse(err, {});
-      }
+    items.forEach(item => {
+      const maxQty = Number(item.quantity);
+      orderItemsContainer.insertAdjacentHTML('beforeend', `
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div>
+            <strong>${item.name_snapshot}</strong><br>
+            Qty: ${item.quantity} × €${Number(item.price_snapshot).toFixed(2)}
+          </div>
+          <div class="d-flex align-items-center">
+            <input
+              type="number" min="1" max="${maxQty}" value="1"
+              class="form-control form-control-sm me-2 remove-quantity"
+              data-max="${maxQty}" data-id="${item.id}"
+              style="width: 70px;"
+            >
+            <button class="btn btn-sm btn-danger remove-item" data-id="${item.id}">
+              Remove
+            </button>
+          </div>
+        </div>
+      `);
     });
+    orderItemsModal.show();
   }
 
-  function removeOrderItem(itemId) {
-    const $input     = $(`.remove-quantity[data-id="${itemId}"]`);
-    let qtyToRemove  = parseInt($input.val(), 10) || 1;
-    const maxAllowed = parseInt($input.data("max"), 10);
-    if (qtyToRemove < 1) qtyToRemove = 1;
-    if (qtyToRemove > maxAllowed) qtyToRemove = maxAllowed;
+  // --- Event-Handler für Auswahl, Details, Entfernen ---
+  function handleCustomerChange() {
+    const id = customerSelect.value;
+    if (!id) {
+      ordersTableBody.innerHTML = '';
+      return;
+    }
+    fetchOrdersByCustomer(id)
+      .then(res => renderOrdersTable(res.data))
+      .catch(() => {});
+  }
+  function handleViewItemsClick(e) {
+    const id = +e.currentTarget.dataset.id;
+    fetchOrderItems(id)
+      .then(res => renderOrderItems(id, res.data))
+      .catch(() => {});
+  }
+  function handleRemoveItemClick(e) {
+    const id    = +e.currentTarget.dataset.id;
+    const input = document.querySelector(`.remove-quantity[data-id="${id}"]`);
+    let   qty   = parseInt(input.value, 10) || 1;
+    const max   = parseInt(input.dataset.max, 10);
+    if (qty < 1) qty = 1;
+    if (qty > max) qty = max;
 
-    apiRequest({
-      url: `../../backend/api/ApiAdmin.php?removeOrderItem&id=${itemId}&qty=${qtyToRemove}`,
-      method: "POST",
-      successMessage: "Item updated successfully.",
-      onSuccess: () => {
-        $("#orderItemsModal").modal("hide");
-        $("#orderCustomerSelect").trigger("change");
-      },
-      onError: err => {
-        handleResponse(err, {});
-      }
-    });
+    removeOrderItem(id, qty)
+      .then(() => {
+        orderItemsModal.hide();
+        // Orders neu laden, so dass gelöschte Einträge verschwinden
+        const customerId = customerSelect.value;
+        if (customerId) {
+          fetchOrdersByCustomer(customerId)
+            .then(res => renderOrdersTable(res.data))
+            .catch(() => {});
+        }
+      })
+      .catch(() => {});
   }
 
+  // --- Events binden: Dropdown & Delegation für Buttons ---
   function bindOrderEvents() {
-    $("#orderCustomerSelect").on("change", function() {
-      loadOrdersByCustomer($(this).val());
-    });
-
-    $(document).on("click", ".view-items", function() {
-      loadOrderItems($(this).data("id"));
-      new bootstrap.Modal(document.getElementById("orderItemsModal")).show();
-    });
-
-    $(document).on("click", ".remove-item", function() {
-      removeOrderItem($(this).data("id"));
-    });
+    customerSelect.addEventListener('change', handleCustomerChange);
+    $(ordersTableBody).on('click', '.view-items', handleViewItemsClick);
+    $(orderItemsContainer).on('click', '.remove-item', handleRemoveItemClick);
   }
 
-  $(function() {
-    loadOrderCustomers();
+  // --- Initialisierung: Laden & Events binden ---
+  document.addEventListener('DOMContentLoaded', () => {
+    fetchCustomersForOrders()
+      .then(res => renderCustomerDropdown(res.data))
+      .catch(() => {});
     bindOrderEvents();
   });
+
 })(window, jQuery);

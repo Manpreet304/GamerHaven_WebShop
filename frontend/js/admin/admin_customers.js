@@ -1,135 +1,174 @@
-// js/admin/admin_customers.js
+/**
+ * js/admin/customers/admin_customers.js
+ * Verantwortlich für Laden, Anzeigen und Verwalten von Kunden im Admin-Bereich
+ */
 (function(window, $) {
-  // Einmalig: Tabelle und Modal hooken
-  const $tableBody     = $("#customersTable tbody");
-  const customerModal  = new bootstrap.Modal($("#customerModal"));
+  'use strict';
 
-  function loadCustomers() {
-    apiRequest({
-      url: "../../backend/api/ApiAdmin.php?listCustomers",
-      method: "GET",
-      onSuccess: res => {
-        const users = res.data; // Array von Kunden
-        $tableBody.empty();
-        users.forEach(u => {
-          const active = u.is_active === "true" || u.is_active === true;
-          $tableBody.append(`
-            <tr data-id="${u.id}">
-              <td>${u.id}</td>
-              <td>${u.firstname} ${u.lastname}</td>
-              <td>${u.username}</td>
-              <td>${u.email}</td>
-              <td class="cell-active">${active ? "✔️" : "❌"}</td>
-              <td>
-                <button class="btn btn-sm btn-primary edit-customer">Edit</button>
-                <button class="btn btn-sm btn-danger delete-customer">Delete</button>
-              </td>
-            </tr>
-          `);
-        });
-      },
-      onError: err => handleResponse(err, {})  // Backend-message wird angezeigt
+  // --- Selektoren & Modal-Instanz für Kunden ---
+  const customersTableBody   = document.querySelector('#customersTable tbody');
+  const customerFormElement  = document.getElementById('customerForm');
+  const customerModalElement = document.getElementById('customerModal');
+  const customerModal        = new bootstrap.Modal(customerModalElement);
+
+  // --- Promise-basierte API-Funktionen ---
+  function fetchAllCustomers() {
+    return new Promise((resolve, reject) => {
+      apiRequest({
+        url: '../../backend/api/ApiAdmin.php?listCustomers',
+        method: 'GET',
+        onSuccess: resolve,
+        onError: err => { handleResponse(err, {}); reject(err); }
+      });
+    });
+  }
+  function fetchCustomerData(customerId) {
+    return new Promise((resolve, reject) => {
+      apiRequest({
+        url: `../../backend/api/ApiAdmin.php?getCustomer&id=${customerId}`,
+        method: 'GET',
+        onSuccess: resolve,
+        onError: err => { handleResponse(err, {}); reject(err); }
+      });
+    });
+  }
+  function submitCustomerData(customerData) {
+    return new Promise((resolve, reject) => {
+      apiRequest({
+        url: `../../backend/api/ApiAdmin.php?updateCustomer&id=${customerData.id}`,
+        method: 'POST',
+        data: customerData,
+        successMessage: 'Customer settings saved successfully.',
+        onSuccess: resolve,
+        onError: err => { handleResponse(err, {}); reject(err); }
+      });
+    });
+  }
+  function deleteCustomerById(customerId) {
+    return new Promise((resolve, reject) => {
+      apiRequest({
+        url: `../../backend/api/ApiAdmin.php?deleteCustomer&id=${customerId}`,
+        method: 'POST',
+        successMessage: 'Customer deleted successfully.',
+        onSuccess: resolve,
+        onError: err => { handleResponse(err, {}); reject(err); }
+      });
     });
   }
 
-  function openCustomerModal(id) {
-    resetForm("#customerForm");
-    $("#customer_password").val("");
+  // --- View-/Render-Funktionen: Tabelle & Modal ---
+  function renderCustomersTable(customers) {
+    customersTableBody.innerHTML = '';
+    customers.forEach(c => {
+      const isActive = c.is_active === 'true' || c.is_active === true;
+      const row = document.createElement('tr');
+      row.dataset.id = c.id;
+      row.className  = isActive ? '' : 'table-secondary';
+      row.innerHTML = `
+        <td>${c.id}</td>
+        <td>${c.firstname} ${c.lastname}</td>
+        <td>${c.username}</td>
+        <td>${c.email}</td>
+        <td>${isActive ? '✔️' : '❌'}</td>
+        <td>
+          <button class="btn btn-sm btn-primary edit-customer">Edit</button>
+          <button class="btn btn-sm btn-danger delete-customer">Delete</button>
+        </td>
+      `;
+      customersTableBody.appendChild(row);
+    });
+  }
+  function openCustomerModal(c = {}) {
+    customerFormElement.classList.remove('was-validated');
+    $('#customerForm')[0].reset();
 
-    if (id) {
-      apiRequest({
-        url: `../../backend/api/ApiAdmin.php?getCustomer&id=${id}`,
-        method: "GET",
-        onSuccess: res => {
-          const u = res.data;
-          $("#customer_id").val(u.id);
-          $("#customer_firstname").val(u.firstname);
-          $("#customer_lastname").val(u.lastname);
-          $("#customer_email").val(u.email);
-          $("#customer_username").val(u.username);
-          $("#customer_salutation").val(u.salutation);
-          $("#customer_role").val(u.role);
-          $("#customer_active").val(u.is_active === "true" ? "1" : "0");
-          $("#customer_address").val(u.address || "");
-          $("#customer_zip_code").val(u.zip_code || "");
-          $("#customer_city").val(u.city || "");
-          $("#customer_country").val(u.country || "");
-          customerModal.show();
-        },
-        onError: err => handleResponse(err, {})
-      });
-    } else {
-      customerModal.show();
-    }
+    $('#customer_id').val(c.id || '');
+    $('#customer_firstname').val(c.firstname || '');
+    $('#customer_lastname').val(c.lastname || '');
+    $('#customer_email').val(c.email || '');
+    $('#customer_username').val(c.username || '');
+    $('#customer_salutation').val(c.salutation || '');
+    $('#customer_role').val(c.role || '');
+    $('#customer_active').val(c.is_active === 'true' ? '1' : '0');
+    $('#customer_address').val(c.address || '');
+    $('#customer_zip_code').val(c.zip_code || '');
+    $('#customer_city').val(c.city || '');
+    $('#customer_country').val(c.country || '');
+    $('#customer_password').val('');
+
+    customerModal.show();
   }
 
-  function saveCustomer() {
-    const form = $("#customerForm")[0];
-    if (!form.checkValidity()) {
-      form.classList.add("was-validated");
+  // --- Event-Handler für Add, Edit, Save, Delete ---
+  function handleAddCustomerClick() {
+    openCustomerModal();
+  }
+  function handleEditCustomerClick(e) {
+    const id = +e.currentTarget.closest('tr').dataset.id;
+    fetchCustomerData(id)
+      .then(res => openCustomerModal(res.data))
+      .catch(() => {});
+  }
+  function handleSaveCustomerClick() {
+    if (!customerFormElement.checkValidity()) {
+      customerFormElement.classList.add('was-validated');
       return;
     }
-
-    const payload = {
-      id:          +$("#customer_id").val(),
-      firstname:   $("#customer_firstname").val(),
-      lastname:    $("#customer_lastname").val(),
-      email:       $("#customer_email").val(),
-      username:    $("#customer_username").val(),
-      salutation:  $("#customer_salutation").val(),
-      role:        $("#customer_role").val(),
-      is_active:   +$("#customer_active").val(),
-      address:     $("#customer_address").val() || null,
-      zip_code:    $("#customer_zip_code").val() || null,
-      city:        $("#customer_city").val() || null,
-      country:     $("#customer_country").val() || null
+    const customerData = {
+      id:         +$('#customer_id').val(),
+      firstname:  $('#customer_firstname').val(),
+      lastname:   $('#customer_lastname').val(),
+      email:      $('#customer_email').val(),
+      username:   $('#customer_username').val(),
+      salutation: $('#customer_salutation').val(),
+      role:       $('#customer_role').val(),
+      is_active:  +$('#customer_active').val(),
+      address:    $('#customer_address').val() || null,
+      zip_code:   $('#customer_zip_code').val() || null,
+      city:       $('#customer_city').val() || null,
+      country:    $('#customer_country').val() || null
     };
-    const pw = $("#customer_password").val().trim();
-    if (pw) payload.password = pw;
+    const pw = $('#customer_password').val().trim();
+    if (pw) customerData.password = pw;
 
-    apiRequest({
-      url: `../../backend/api/ApiAdmin.php?updateCustomer&id=${payload.id}`,
-      method: "POST",
-      data: payload,
-      successMessage: "Customer settings saved successfully.",
-      onSuccess: () => {
-        loadCustomers();
+    submitCustomerData(customerData)
+      .then(() => {
         customerModal.hide();
-      },
-      onError: err => handleResponse(err, {})
-    });
-  }
-
-  function deleteCustomer(id) {
-    if (!confirm("Are you sure you want to delete this customer?")) return;
-
-    apiRequest({
-      url: `../../backend/api/ApiAdmin.php?deleteCustomer&id=${id}`,
-      method: "POST",
-      successMessage: "Customer deleted successfully.",
-      onSuccess: loadCustomers,
-      onError: err => handleResponse(err, {})
-    });
-  }
-
-  function bindCustomerEvents() {
-    $tableBody
-      .on("click", ".edit-customer", e => {
-        const id = $(e.currentTarget).closest("tr").data("id");
-        openCustomerModal(id);
+        loadAndRenderCustomers();
       })
-      .on("click", ".delete-customer", e => {
-        const id = $(e.currentTarget).closest("tr").data("id");
-        deleteCustomer(id);
-      });
-
-    $("#saveCustomerBtn").on("click", saveCustomer);
-    $("#addCustomerBtn").on("click", () => openCustomerModal());  
+      .catch(() => {});
+  }
+  function handleDeleteCustomerClick(e) {
+    const id = +e.currentTarget.closest('tr').dataset.id;
+    deleteCustomerById(id)
+      .then(() => loadAndRenderCustomers())
+      .catch(() => {});
   }
 
-  // Initialisierung
-  $(function() {
-    loadCustomers();
+  // --- Events binden: Buttons & Delegation mit Null-Check ---
+  function bindCustomerEvents() {
+    const addBtn = document.getElementById('addCustomerBtn');
+    if (addBtn) addBtn.addEventListener('click', handleAddCustomerClick);
+
+    const saveBtn = document.getElementById('saveCustomerBtn');
+    if (saveBtn) saveBtn.addEventListener('click', handleSaveCustomerClick);
+
+    if (customersTableBody) {
+      $(customersTableBody)
+        .on('click', '.edit-customer', handleEditCustomerClick)
+        .on('click', '.delete-customer', handleDeleteCustomerClick);
+    }
+  }
+
+  // --- Initialisierung: Laden & Events binden ---
+  function loadAndRenderCustomers() {
+    fetchAllCustomers()
+      .then(res => renderCustomersTable(res.data))
+      .catch(() => {});
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    loadAndRenderCustomers();
     bindCustomerEvents();
   });
+
 })(window, jQuery);

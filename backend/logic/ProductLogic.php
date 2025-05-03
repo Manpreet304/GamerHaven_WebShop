@@ -82,10 +82,16 @@ class ProductLogic {
     }
 
     private function extractImages(string $imageField): array {
+        // JSON decode, ansonsten am Komma trennen
         $images = json_decode($imageField, true);
-        if (is_array($images)) {
-            return array_map(fn($img) => "/GamerHaven_WebShop/" . ltrim($img, "/"), $images);
+        if (!is_array($images)) {
+            $images = explode(',', $imageField);
         }
-        return array_map(fn($img) => "/GamerHaven_WebShop/" . ltrim($img, "/"), explode(",", $imageField));
+    
+        // Relativer Pfad von frontend/website/homepage.html zu /pictures
+        return array_map(
+            fn(string $img) => '../../' . ltrim($img, '/'),
+            $images
+        );
     }
 }

@@ -218,123 +218,198 @@ class AdminLogic {
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
 
-    public function removeOrderItem(int $itemId, int $qty, mysqli $conn): bool {
-        // 1) Aktuelles Item holen
-        $stmt = $conn->prepare("SELECT order_id, quantity, price_snapshot FROM order_items WHERE id = ?");
-        $stmt->bind_param("i", $itemId);
-        $stmt->execute();
-        $item = $stmt->get_result()->fetch_assoc();
-    
-        if (!$item) return false;
-    
-        $orderId = (int)$item['order_id'];
-        $currentQty = (int)$item['quantity'];
-        $pricePerUnit = (float)$item['price_snapshot'];
-    
-        if ($qty >= $currentQty) {
-            // Komplett löschen, wenn zu viel oder alles gelöscht wird
-            $del = $conn->prepare("DELETE FROM order_items WHERE id = ?");
-            $del->bind_param("i", $itemId);
-            $del->execute();
-        } else {
-            // Nur Teil entfernen → Update
-            $newQty = $currentQty - $qty;
-            $newTotal = $newQty * $pricePerUnit;
-    
-            $upd = $conn->prepare("UPDATE order_items SET quantity = ?, total_price = ? WHERE id = ?");
-            $upd->bind_param("idi", $newQty, $newTotal, $itemId);
-            $upd->execute();
-        }
-    
-        // Neue Summen aktualisieren
-        $rs = $conn->prepare("
-            SELECT COALESCE(SUM(total_price),0) AS subtotal
-            FROM order_items
-            WHERE order_id = ?
-        ");
-        $rs->bind_param("i", $orderId);
-        $rs->execute();
-        $subtotal = (float)$rs->get_result()->fetch_assoc()['subtotal'];
-    
-        $shipping = $subtotal >= 300.0 ? 0.0 : 9.90;
-        $total = $subtotal + $shipping;
-    
-        $us = $conn->prepare("
-            UPDATE orders
-               SET subtotal=?, shipping_amount=?, total_amount=?
-            WHERE id=?
-        ");
-        $us->bind_param("dddi", $subtotal, $shipping, $total, $orderId);
-        return $us->execute();
-    }    
+    // ----- ORDERS -----
 
+/**
+ * Entfernt eine Menge eines Order-Items. 
+ * Wird die vollständige Menge entfernt, so wird auch die gesamte Bestellung gelöscht.
+ */
+public function removeOrderItem(int $itemId, int $qty, mysqli $conn): bool {
+    // 1) Aktuelles Item holen
+    $stmt = $conn->prepare("
+        SELECT order_id, quantity, price_snapshot 
+          FROM order_items 
+         WHERE id = ?
+    ");
+    $stmt->bind_param("i", $itemId);
+    $stmt->execute();
+    $item = $stmt->get_result()->fetch_assoc();
+    if (!$item) {
+        return false;
+    }
+
+    $orderId      = (int)$item['order_id'];
+    $currentQty   = (int)$item['quantity'];
+    $pricePerUnit = (float)$item['price_snapshot'];
+
+    if ($qty >= $currentQty) {
+        // 2a) Komplett löschen → Order-Item entfernen
+        $delItem = $conn->prepare("DELETE FROM order_items WHERE id = ?");
+        $delItem->bind_param("i", $itemId);
+        $delItem->execute();
+
+        // 2b) Prüfen, ob noch weitere Items existieren
+        $countStmt = $conn->prepare("
+            SELECT COUNT(*) AS cnt 
+              FROM order_items 
+             WHERE order_id = ?
+        ");
+        $countStmt->bind_param("i", $orderId);
+        $countStmt->execute();
+        $cnt = (int)$countStmt->get_result()->fetch_assoc()['cnt'];
+
+        if ($cnt === 0) {
+            // Keine Items mehr → gesamte Bestellung löschen
+            $delOrder = $conn->prepare("DELETE FROM orders WHERE id = ?");
+            $delOrder->bind_param("i", $orderId);
+            return $delOrder->execute();
+        }
+    } else {
+        // 3) Teilmenge entfernen → Menge und Preis updaten
+        $newQty   = $currentQty - $qty;
+        $newTotal = $newQty * $pricePerUnit;
+        $upd = $conn->prepare("
+            UPDATE order_items 
+               SET quantity = ?, total_price = ? 
+             WHERE id = ?
+        ");
+        $upd->bind_param("idi", $newQty, $newTotal, $itemId);
+        $upd->execute();
+    }
+
+    // 4) verbleibende Ordersummen aktualisieren
+    $rs = $conn->prepare("
+        SELECT COALESCE(SUM(total_price),0) AS subtotal 
+          FROM order_items 
+         WHERE order_id = ?
+    ");
+    $rs->bind_param("i", $orderId);
+    $rs->execute();
+    $subtotal = (float)$rs->get_result()->fetch_assoc()['subtotal'];
+
+    $shipping = $subtotal >= 300.0 ? 0.0 : 9.90;
+    $total    = $subtotal + $shipping;
+
+    $us = $conn->prepare("
+        UPDATE orders 
+           SET subtotal = ?, shipping_amount = ?, total_amount = ? 
+         WHERE id = ?
+    ");
+    $us->bind_param("dddi", $subtotal, $shipping, $total, $orderId);
+    return $us->execute();
+}
+  
     // ----- VOUCHERS -----
-    public function fetchAllVouchers(mysqli $conn): array {
-        $res = $conn->query("
-            SELECT id, code, value, remaining_value, is_active, expires_at
-            FROM vouchers
-            ORDER BY created_at DESC
-        ");
-        return $res->fetch_all(MYSQLI_ASSOC);
-    }
 
-    public function fetchVoucherById(int $id, mysqli $conn): array {
+/**
+ * Deaktiviert automatisch alle Gutscheine, die abgelaufen sind (expires_at < heute
+ * oder remaining_value ≤ 0), und reaktiviert alle anderen.
+ * Gibt dann die gesamte Liste zurück.
+ */
+public function fetchAllVouchers(mysqli $conn): array {
+    $conn->query("
+        UPDATE vouchers
+           SET is_active = CASE
+               WHEN expires_at < CURDATE() OR remaining_value <= 0 THEN 0
+               ELSE 1
+           END
+    ");
+
+    $res = $conn->query("
+        SELECT id, code, value, remaining_value, is_active, expires_at, created_at
+          FROM vouchers
+         ORDER BY created_at DESC
+    ");
+    return $res->fetch_all(MYSQLI_ASSOC);
+}
+
+/**
+ * Holt einen einzelnen Gutschein, wendet vorab dieselbe Logik zur (De-)Aktivierung an.
+ */
+public function fetchVoucherById(int $id, mysqli $conn): array {
+    // Synchronisiere den is_active-Status
+    $conn->query("
+        UPDATE vouchers
+           SET is_active = CASE
+               WHEN expires_at < CURDATE() OR remaining_value <= 0 THEN 0
+               ELSE 1
+           END
+    ");
+
+    $stmt = $conn->prepare("
+        SELECT id, code, value, remaining_value, is_active, expires_at
+          FROM vouchers
+         WHERE id = ?
+    ");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    return $stmt->get_result()->fetch_assoc() ?: [];
+}
+
+/**
+ * Generiert einen neuen zufälligen 5-stelligen Gutscheincode.
+ */
+private function generateCode(): string {
+    $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    $code = '';
+    for ($i = 0; $i < 5; $i++) {
+        $code .= $chars[random_int(0, strlen($chars) - 1)];
+    }
+    return $code;
+}
+
+public function getNewVoucherCode(): string {
+    return $this->generateCode();
+}
+
+/**
+ * Speichert oder aktualisiert einen Gutschein.
+ * Wandelt is_active in 0/1 um und deaktiviert ihn sofort, falls expires_at < heute
+ * oder remaining_value ≤ 0.
+ */
+public function saveVoucher(array $d, mysqli $conn): array {
+    $isActive  = (!empty($d['is_active']) ? 1 : 0)
+               && ($d['expires_at'] >= date('Y-m-d'))
+               && ((float)($d['remaining_value'] ?? $d['value']) > 0)
+               ? 1 : 0;
+
+    $remaining = isset($d['remaining_value'])
+               ? (float)$d['remaining_value']
+               : (float)$d['value'];
+    $expiresAt = $d['expires_at'];
+
+    if (!empty($d['id'])) {
+        // UPDATE
+        $code  = $d['code'];
+        $value = (float)$d['value'];
+        $id    = (int)$d['id'];
+
         $stmt = $conn->prepare("
-            SELECT id, code, value, remaining_value, is_active, expires_at
-            FROM vouchers
-            WHERE id = ?
+            UPDATE vouchers
+               SET code = ?,
+                   value = ?,
+                   remaining_value = ?,
+                   is_active = ?,
+                   expires_at = ?
+             WHERE id = ?
         ");
-        $stmt->bind_param("i", $id);
-        $stmt->execute();
-        return $stmt->get_result()->fetch_assoc() ?: [];
-    }
+        $stmt->bind_param('sddisi', $code, $value, $remaining, $isActive, $expiresAt, $id);
+        $ok = $stmt->execute();
+        return ['success' => $ok];
+    } else {
+        // INSERT
+        $code  = $this->generateCode();
+        $value = (float)$d['value'];
 
-    private function generateCode(): string {
-        $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        $code = '';
-        for ($i = 0; $i < 5; $i++) {
-            $code .= $chars[random_int(0, strlen($chars) - 1)];
-        }
-        return $code;
+        $stmt = $conn->prepare("
+            INSERT INTO vouchers
+              (code, value, remaining_value, is_active, expires_at, created_at)
+            VALUES(?,?,?,?,?, NOW())
+        ");
+        $stmt->bind_param('sddis', $code, $value, $remaining, $isActive, $expiresAt);
+        $ok = $stmt->execute();
+        return ['success' => $ok, 'id' => $conn->insert_id];
     }
+}
 
-    public function getNewVoucherCode(): string {
-        return $this->generateCode();
-    }
-
-    public function saveVoucher(array $d, mysqli $conn): array {
-        if (!empty($d['id'])) {
-            $stmt = $conn->prepare("
-                UPDATE vouchers
-                SET code=?, value=?, remaining_value=?, is_active=?, expires_at=?
-                WHERE id=?
-            ");
-            $remaining = $d['remaining_value'] ?? $d['value'];
-            $stmt->bind_param("sddisi",
-                $d['code'], $d['value'], $remaining,
-                $d['is_active'], $d['expires_at'], $d['id']
-            );
-            $stmt->execute();
-            return ['success' => true];
-        } else {
-            $code = $this->generateCode();
-            $stmt = $conn->prepare("
-                INSERT INTO vouchers
-                (code, value, remaining_value, is_active, expires_at, created_at)
-                VALUES(?,?,?,?,?,NOW())
-            ");
-            $stmt->bind_param("sddis",
-                $code, $d['value'], $d['value'],
-                $d['is_active'], $d['expires_at']
-            );
-            $stmt->execute();
-            return ['success' => true, 'id' => $conn->insert_id];
-        }
-    }
-
-    public function deleteVoucher(int $id, mysqli $conn): bool {
-        $stmt = $conn->prepare("UPDATE vouchers SET is_active = 0 WHERE id = ?");
-        $stmt->bind_param("i", $id);
-        return $stmt->execute();
-    }
 }
