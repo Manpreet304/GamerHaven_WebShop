@@ -37,8 +37,8 @@ class AccountLogic {
         return $row && password_verify($password, $row["password"]);
     }
 
-    public function changePassword(int $userId, array $data, $conn) {
-        // Alte prüfen
+    public function changePassword(int $userId, array $data, mysqli $conn): bool|string {
+        // 1) Aktuelles Passwort holen und prüfen
         $stmt = $conn->prepare("SELECT password FROM users WHERE id = ?");
         if ($stmt === false) {
             error_log("changePassword SELECT prepare failed: " . $conn->error);
@@ -50,16 +50,45 @@ class AccountLogic {
         if (!$row || !password_verify($data["old_password"], $row["password"])) {
             return "Current password is incorrect.";
         }
-        // Hash & aktualisieren
-        $newHash = password_hash($data["new_password"], PASSWORD_DEFAULT);
+    
+        $new    = $data["new_password"] ?? '';
+        $confirm= $data["confirm_password"] ?? '';
+    
+        // 2) Neue Passwörter stimmen überein?
+        if ($new !== $confirm) {
+            return "Passwords do not match.";
+        }
+    
+        // 3) Mindestlänge prüfen
+        if (strlen($new) < 8) {
+            return "Password must be at least 8 characters long.";
+        }
+    
+        // 4) Komplexität prüfen
+        if (!preg_match('/[A-Z]/', $new) ||
+            !preg_match('/[a-z]/', $new) ||
+            !preg_match('/[0-9]/', $new)) {
+            return "Password must contain uppercase, lowercase and a number.";
+        }
+    
+        // 5) Neues Passwort darf nicht dasselbe sein wie das alte (Klartext-Vergleich)
+        if (password_verify($new, $row["password"])) {
+            return "New password must be different from the current password.";
+        }
+    
+        // 6) Hash und speichern
+        $newHash = password_hash($new, PASSWORD_DEFAULT);
         $upd = $conn->prepare("UPDATE users SET password = ? WHERE id = ?");
         if ($upd === false) {
             error_log("changePassword UPDATE prepare failed: " . $conn->error);
             return "Internal error";
         }
         $upd->bind_param("si", $newHash, $userId);
-        return $upd->execute() ? true : "Could not update password.";
+        return $upd->execute()
+            ? true
+            : "Could not update password.";
     }
+    
 
     public function getUserOrders(int $userId, $conn): array {
         $stmt = $conn->prepare("
