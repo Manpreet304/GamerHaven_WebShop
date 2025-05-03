@@ -1,10 +1,16 @@
-// products.render.js
-(function (window, $) {
+/**
+ * js/products/products_render.js
+ * Verantwortlich für Rendern der Produkt-Cards, Modals und Sterne-Ratings
+ */
+(function(window, $) {
+  'use strict';
+
   const ProductsRender = {
+    // Sterne-Rating als HTML
     renderStars(rating) {
-      const r = parseFloat(rating) || 0;
-      const full = Math.floor(r);
-      const half = r - full >= 0.5;
+      const r     = parseFloat(rating) || 0;
+      const full  = Math.floor(r);
+      const half  = r - full >= 0.5;
       const empty = 5 - full - (half ? 1 : 0);
       return (
         '<span class="stars">' +
@@ -16,100 +22,106 @@
       );
     },
 
+    // Produktattribute als HTML
     renderAttributes(attrString) {
       try {
         const obj = JSON.parse(attrString);
         return Object.entries(obj)
           .map(([k, v]) => `<div><strong>${k}:</strong> ${v}</div>`)
-          .join("");
+          .join('');
       } catch {
-        return "<i>No attributes</i>";
+        return '<i>No attributes</i>';
       }
     },
 
+    // Bild-Rotation im Hover-State
     setupHoverRotation(products) {
-      $(".product-card").each(function () {
-        const $img = $(this).find(".product-image");
-        const idx = $img.data("index");
+      $('.product-card').each(function() {
+        const $img = $(this).find('.product-image');
+        const idx  = $img.data('index');
         const imgs = products[idx]?.images || [];
         if (imgs.length <= 1) return;
-
         let interval;
         $(this).hover(
           () => {
             interval = setInterval(() => {
-              const cur = imgs.indexOf($img.attr("src"));
+              const cur  = imgs.indexOf($img.attr('src'));
               const next = (cur + 1) % imgs.length;
-              $img.attr("src", imgs[next]);
+              $img.attr('src', imgs[next]);
             }, 2000);
           },
           () => {
             clearInterval(interval);
-            $img.attr("src", imgs[0]);
+            $img.attr('src', imgs[0]);
           }
         );
       });
     },
 
+    // Produkt-Grid und Modals rendern
     renderProducts(products) {
-      const grid = $("#productGrid").empty();
-      const mods = $("#modals-container").empty();
-      const tplCard = document.getElementById("product-template").content;
-      const tplModal = document.getElementById("product-modal-template").content;
+      const grid = $('#productGrid').empty();
+      const mods = $('#modals-container').empty();
+      const tplCard  = document.getElementById('product-template').content;
+      const tplModal = document.getElementById('product-modal-template').content;
 
-      products.forEach((p, i) => {
-        // --- Product Card ---
-        const $card = $(tplCard.cloneNode(true)).find(".product-card")
-          .attr("data-product-id", p.id)
-          .attr("draggable", "true")
-          .on("dragstart", ev => {
-            ev.originalEvent.dataTransfer.setData("text/plain", p.id);
-            $card.addClass("dragging");
+      products.forEach((p, idx) => {
+        // Card
+        const $card = $(tplCard.cloneNode(true)).find('.product-card')
+          .attr('data-product-id', p.id)
+          .attr('draggable','true')
+          .on('dragstart', ev => {
+            ev.originalEvent.dataTransfer.setData('text/plain', p.id);
+            $card.addClass('dragging');
           })
-          .on("dragend", () => $card.removeClass("dragging"));
+          .on('dragend', () => $card.removeClass('dragging'));
 
-        $card.find(".product-image")
-          .attr("src", p.images?.[0] || "pictures/placeholder.jpg")
-          .attr("data-index", i);
-        $card.find(".card-title").text(p.name);
-        $card.find(".card-meta").text(`${p.category} · ${p.brand}`);
-        $card.find(".product-price").text(`€${p.price}`);
-        $card.find(".rating").html(this.renderStars(p.rating));
-        $card.find(".view-details")
-          .attr("data-bs-toggle", "modal")
-          .attr("data-bs-target", `#productModal${p.id}`);
+        $card.find('.product-image')
+          .attr('src', p.images?.[0] || 'pictures/placeholder.jpg')
+          .attr('data-index', idx);
+        $card.find('.card-title').text(p.name);
+        $card.find('.card-meta').text(`${p.category} · ${p.brand}`);
+        $card.find('.product-price').text(`€${p.price}`);
+        $card.find('.rating').html(this.renderStars(p.rating));
+        $card.find('.view-details')
+          .attr('data-bs-toggle','modal')
+          .attr('data-bs-target',`#productModal${p.id}`);
 
-        grid.append($card.closest(".col-md-4"));
+        grid.append($card.closest('.col-md-4'));
 
-        // --- Product Modal ---
-        const $mod = $(tplModal.cloneNode(true)).find(".product-modal")
-          .attr("id", `productModal${p.id}`);
-        const $modImg = $mod.find(".modal-product-image")
-          .attr("src", p.images?.[0] || "pictures/placeholder.jpg");
+        // Modal
+        const $mod    = $(tplModal.cloneNode(true)).find('.product-modal')
+                          .attr('id',`productModal${p.id}`);
+        const $modImg = $mod.find('.modal-product-image')
+                          .attr('src', p.images?.[0] || 'pictures/placeholder.jpg');
 
-        // Modal image slideshow (local to this modal only)
         if (p.images?.length > 1) {
-          let idx = 0;
-          $mod.on("shown.bs.modal", () => {
-            const intervalId = setInterval(() => {
-              idx = (idx + 1) % p.images.length;
-              $modImg.attr("src", p.images[idx]);
+          let i = 0;
+          $mod.on('shown.bs.modal', () => {
+            const iv = setInterval(() => {
+              i = (i + 1) % p.images.length;
+              $modImg.attr('src', p.images[i]);
             }, 2500);
-            $mod.data("slideshowInterval", intervalId);
-          }).on("hidden.bs.modal", () => {
-            clearInterval($mod.data("slideshowInterval"));
+            $mod.data('slideshowInterval', iv);
+          }).on('hidden.bs.modal', () => {
+            clearInterval($mod.data('slideshowInterval'));
           });
         }
 
-        $mod.find(".modal-title").text(p.name);
-        $mod.find(".product-description").html(`<strong>Description:</strong><br>${p.description || "No description"}`);
-        $mod.find(".product-price-text").html(`<strong>Price:</strong> €${p.price}`);
-        $mod.find(".product-stock").html(`<strong>Stock:</strong> ${p.stock > 0 ? "✅ In Stock" : "❌ Out of Stock"}`);
-        $mod.find(".product-category").html(`<strong>Category:</strong> ${p.category} / ${p.sub_category || "-"}`);
-        $mod.find(".product-rating").html(`<strong>Rating:</strong> ${this.renderStars(p.rating)}`);
-        $mod.find(".attributes").html(`<strong>Attributes:</strong><br>${this.renderAttributes(p.attributes)}`);
+        $mod.find('.modal-title').text(p.name);
+        $mod.find('.product-description')
+          .html(`<strong>Description:</strong><br>${p.description||'No description'}`);
+        $mod.find('.product-price-text')
+          .html(`<strong>Price:</strong> €${p.price}`);
+        $mod.find('.product-stock')
+          .html(`<strong>Stock:</strong> ${p.stock>0?'✅ In Stock':'❌ Out of Stock'}`);
+        $mod.find('.product-category')
+          .html(`<strong>Category:</strong> ${p.category}${p.sub_category?'/'+p.sub_category:''}`);
+        $mod.find('.product-rating').html(`<strong>Rating:</strong> ${this.renderStars(p.rating)}`);
+        $mod.find('.attributes')
+          .html(`<strong>Attributes:</strong><br>${this.renderAttributes(p.attributes)}`);
 
-        mods.append($mod.closest(".modal"));
+        mods.append($mod.closest('.modal'));
       });
     }
   };

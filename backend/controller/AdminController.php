@@ -136,12 +136,4 @@ class AdminController {
             "body" => $result
         ];
     }
-
-    public function deleteVoucher(int $id, mysqli $conn): array {
-        $ok = $this->logic->deleteVoucher($id, $conn);
-        return [
-            "status" => $ok ? 200 : 400,
-            "body" => ["deactivated" => $ok]
-        ];
-    }
 }

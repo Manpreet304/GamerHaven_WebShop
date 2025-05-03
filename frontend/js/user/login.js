@@ -1,57 +1,84 @@
-// js/user/login.js
+/**
+ * js/user/login.js
+ * Verantwortlich für Benutzer-Login im Frontend
+ */
 (function(window, $) {
+  'use strict';
+
+  // --- Selektoren ---
+  const loginForm     = $('#loginForm');
+  const identifierInput = $('#identifier');
+  const passwordInput   = $('#password');
+  const rememberCheckbox = $('#rememberMe');
+  const formFields       = loginForm.find('.form-control');
+
+  // --- Initialisierung bei DOM-Ready ---
   $(function() {
-    // Tooltips initialisieren
-    $('[data-bs-toggle="tooltip"]').each((_, el) => new bootstrap.Tooltip(el));
-
-    $("#loginForm").on("submit", function(e) {
-      e.preventDefault();
-      const formEl = this;
-
-      // Bootstrap-Validation-Klasse setzen
-      formEl.classList.add("was-validated");
-      if (!formEl.checkValidity()) return;
-
-      const data = {
-        identifier: $("#identifier").val().trim(),
-        password:   $("#password").val(),
-        remember:   $("#rememberMe").is(":checked")
-      };
-
-      apiRequest({
-        url: "../../backend/api/ApiGuest.php?login",
-        method: "POST",
-        data,
-        formSelector: "#loginForm",
-        showValidation: false,       // wir übernehmen das Feld-Highlighting selbst
-        successMessage: "Login successful! Redirecting...",
-        // kein statischer errorMessage
-        onSuccess: () => setTimeout(() => {
-          window.location.href = "../website/homepage.html";
-        }, 2000),
-        onError: resp => {
-          // Zeige exakt das Backend-message
-          handleResponse(resp, { errorMessage: resp.message });
-          // Feld-spezifische Fehler markieren
-          const fieldErrors = resp.data?.errors || {};
-          showFieldErrors(fieldErrors);
-        }
-      });
-    });
+    initTooltips();
+    bindEvents();
   });
 
-  function showFieldErrors(errors) {
-    // Alte Validierungs-Klassen entfernen
-    $("#loginForm .is-invalid, #loginForm .is-valid")
-      .removeClass("is-invalid is-valid");
+  // --- Tooltips aktivieren ---
+  function initTooltips() {
+    $('[data-bs-toggle="tooltip"]').each((_, el) =>
+      new bootstrap.Tooltip(el)
+    );
+  }
 
-    Object.entries(errors).forEach(([field, msg]) => {
-      const $input = $(`#${field}`);
-      const $fb    = $input.next(".invalid-feedback");
-      if (!$input.length || !$fb.length) return;
+  // --- Events binden ---
+  function bindEvents() {
+    loginForm.on('submit', handleLoginSubmit);
+  }
 
-      $input.addClass("is-invalid");
-      $fb.text(msg).show();
+  // --- Event-Handler für Login-Formular ---
+  function handleLoginSubmit(event) {
+    event.preventDefault();
+    const formEl = loginForm[0];
+
+    // Bootstrap-Validation-Klasse setzen
+    formEl.classList.add('was-validated');
+    if (!formEl.checkValidity()) return;
+
+    const payload = {
+      identifier: identifierInput.val().trim(),
+      password:   passwordInput.val(),
+      remember:   rememberCheckbox.is(':checked')
+    };
+
+    apiRequest({
+      url: '../../backend/api/ApiGuest.php?login',
+      method: 'POST',
+      data: payload,
+      formSelector: '#loginForm',
+      showValidation: false,
+      successMessage: 'Login successful! Redirecting...',
+      onSuccess: () => setTimeout(
+        () => window.location.href = '../website/homepage.html',
+        2000
+      ),
+      onError: resp => {
+        // Backend-Meldung anzeigen
+        handleResponse(resp, { errorMessage: resp.message });
+        // Feld-spezifische Fehler markieren
+        const errors = resp.data?.errors || {};
+        displayFieldErrors(errors);
+      }
     });
   }
+
+  // --- Feld-Fehlermarkierung ---
+  function displayFieldErrors(errors) {
+    // Alte Validierungsklassen entfernen
+    formFields.removeClass('is-invalid is-valid');
+
+    Object.entries(errors).forEach(([field, msg]) => {
+      const input = $(`#${field}`);
+      const feedback = input.next('.invalid-feedback');
+      if (!input.length || !feedback.length) return;
+
+      input.addClass('is-invalid');
+      feedback.text(msg).show();
+    });
+  }
+
 })(window, jQuery);

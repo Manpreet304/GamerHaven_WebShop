@@ -1,31 +1,32 @@
-// js/account/account_render.js
+/**
+ * js/account/account_render.js
+ * Verantwortlich für Darstellen von Account-Daten, Zahlungen und Bestellungen
+ */
 (function(window, $) {
+  'use strict';
+
   const AccountRender = {
+    // Nutzerinfo anzeigen
     renderAccountInfo(user) {
-      $("#account-info").html(`
+      $('#account-info').html(`
         <p><strong>Name:</strong> ${user.first_name} ${user.last_name}</p>
         <p><strong>Email:</strong> ${user.email}</p>
         <p><strong>Address:</strong> ${user.address}, ${user.zip_code} ${user.city}, ${user.country}</p>
       `);
     },
 
+    // Zahlungsmethoden anzeigen
     renderPaymentMethods(payments) {
-      const container = $("#payment-methods").empty();
+      const container = $('#payment-methods').empty();
       if (!payments.length) {
-        return container.html("<p>No payment methods found.</p>");
+        container.html('<p>No payment methods found.</p>');
+        return;
       }
       payments.forEach(p => {
-        let extra = "";
-        if (p.method === "Credit Card") {
-          extra = `<p><strong>Card:</strong> ****${p.last_digits}</p>`;
-        } else if (p.method === "PayPal") {
-          extra = `
-            <p><strong>PayPal Email:</strong> ${p.paypal_email}</p>
-            <p><strong>PayPal Username:</strong> ${p.paypal_username}</p>
-          `;
-        } else {
-          extra = `<p><strong>IBAN:</strong> ****${p.iban.slice(-4)}</p>`;
-        }
+        let extra = '';
+        if (p.method === 'Credit Card')  extra = `<p><strong>Card:</strong> ****${p.last_digits}</p>`;
+        else if (p.method === 'PayPal')   extra = `<p><strong>PayPal Email:</strong> ${p.paypal_email}</p>`;
+        else                               extra = `<p><strong>IBAN:</strong> ****${p.iban.slice(-4)}</p>`;
         container.append(`
           <div class="mb-3">
             <p><strong>Method:</strong> ${p.method}</p>
@@ -35,10 +36,12 @@
       });
     },
 
+    // Bestellübersicht anzeigen
     renderOrders(orders) {
-      const c = $("#order-list").empty();
+      const c = $('#order-list').empty();
       if (!orders.length) {
-        return c.html("<p>You have no orders.</p>");
+        c.html('<p>You have no orders.</p>');
+        return;
       }
       orders.forEach(o => {
         c.append(`
@@ -56,14 +59,15 @@
       });
     },
 
+    // Bestelldetails im Modal anzeigen
     showOrderDetailsModal(res) {
-      $("#modal-order-id").text(res.order.id);
-      $("#modal-order-date").text(res.order.created_at);
-      $("#modal-subtotal").text(res.order.subtotal);
-      $("#modal-discount").text(res.order.discount);
-      $("#modal-shipping").text(res.order.shipping_amount);
-      $("#modal-total").text(res.order.total_amount);
-      const body = $("#modal-items-body").empty();
+      $('#modal-order-id').text(res.order.id);
+      $('#modal-order-date').text(res.order.created_at);
+      $('#modal-subtotal').text(`€${res.order.subtotal}`);
+      $('#modal-discount').text(`€${res.order.discount}`);
+      $('#modal-shipping').text(`€${res.order.shipping_amount}`);
+      $('#modal-total').text(`€${res.order.total_amount}`);
+      const body = $('#modal-items-body').empty();
       res.items.forEach(item => {
         body.append(`
           <tr>
@@ -74,7 +78,7 @@
           </tr>
         `);
       });
-      new bootstrap.Modal(document.getElementById("orderDetailsModal")).show();
+      new bootstrap.Modal('#orderDetailsModal').show();
     }
   };
 

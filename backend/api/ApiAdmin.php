@@ -67,8 +67,6 @@ try {
         case 'POST?updateVoucher':
             $data = json_decode(file_get_contents('php://input'), true);
             sendApiResponse($ctrl->saveVoucher($data, $conn), "Voucher saved.");
-        case 'POST?deleteVoucher':
-            sendApiResponse($ctrl->deleteVoucher((int)$_GET['id'], $conn), "Voucher deleted.");
 
         default:
             http_response_code(400);
