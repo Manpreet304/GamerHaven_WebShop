@@ -74,7 +74,6 @@ function apiRequest(options) {
 function handleResponse(response, options = {}) {
   const {
     successMessage = null,
-    // Wenn kein errorMessage übergeben wurde, nimm response.message
     errorMessage = response.message || "An error occurred!",
     formSelector = null,
     showValidation = false,
@@ -87,7 +86,7 @@ function handleResponse(response, options = {}) {
     if (formSelector) resetForm(formSelector);
     onSuccess(response);
   } else {
-    const msg = response.error || response.message || errorMessage;
+    const msg = response.data?.error || response.error || response.message || errorMessage;
     showMessage("danger", msg);
 
     if (response.errors && showValidation) {
@@ -99,6 +98,7 @@ function handleResponse(response, options = {}) {
     onError(response);
   }
 }
+
 
 // ----------------------- VALIDATION -----------------------
 
@@ -116,14 +116,6 @@ function applyFieldErrors(errors) {
         }
       }
     }
-  }
-}
-
-function setFieldValid(selector) {
-  const $field = $(selector);
-  if ($field.length) {
-    $field.removeClass("is-invalid").addClass("is-valid");
-    $field[0].setCustomValidity("");
   }
 }
 
@@ -164,6 +156,5 @@ window.showMessage = showMessage;
 window.apiRequest = apiRequest;
 window.handleResponse = handleResponse;
 window.applyFieldErrors = applyFieldErrors;
-window.setFieldValid = setFieldValid;
 window.resetForm = resetForm;
 window.updateCartCount = updateCartCount;

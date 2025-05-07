@@ -6,9 +6,9 @@
   'use strict';
 
   // --- Selektoren ---
-  const loginForm     = $('#loginForm');
-  const identifierInput = $('#identifier');
-  const passwordInput   = $('#password');
+  const loginForm        = $('#loginForm');
+  const identifierInput  = $('#identifier');
+  const passwordInput    = $('#password');
   const rememberCheckbox = $('#rememberMe');
   const formFields       = loginForm.find('.form-control');
 
@@ -57,9 +57,12 @@
         2000
       ),
       onError: resp => {
-        // Backend-Meldung anzeigen
-        handleResponse(resp, { errorMessage: resp.message });
-        // Feld-spezifische Fehler markieren
+        // Backend-Meldung anzeigen (richtig priorisiert!)
+        handleResponse(resp, {
+          errorMessage: resp.data?.error || resp.message
+        });
+
+        // Feldspezifische Fehler markieren
         const errors = resp.data?.errors || {};
         displayFieldErrors(errors);
       }
@@ -68,7 +71,6 @@
 
   // --- Feld-Fehlermarkierung ---
   function displayFieldErrors(errors) {
-    // Alte Validierungsklassen entfernen
     formFields.removeClass('is-invalid is-valid');
 
     Object.entries(errors).forEach(([field, msg]) => {
