@@ -1,7 +1,3 @@
-/**
- * js/products/products_events.js
- * Verantwortlich für Filter-, Such- und Add-to-Cart-Interaktionen
- */
 (function(window, $) {
   'use strict';
 
@@ -19,23 +15,27 @@
         window.ProductsFilters.resetAllFilters();
         this.load();
       });
+
       let debounce;
       $(document).on('input', '#liveSearchInput', () => {
         clearTimeout(debounce);
         debounce = setTimeout(this.onFilters.bind(this), 300);
       });
 
-      // Add-to-Cart in Cards und Modals
+      // Add-to-Cart in Cards (fix für quantity)
       $(document).on('click', '.product-card .add-to-cart', function() {
-        const pid = +$(this).closest('.product-card').data('product-id');
-        const qty = +$(this).siblings('.quantity-input').val() || 1;
-        Events.addToCart(pid, qty);
+        const card = $(this).closest('.product-card');
+        const pid  = +card.data('product-id');
+        const qty  = +card.find('.quantity-input').val() || 1;
+        window.ProductsAPI.addToCart(pid, qty);
       });
+
+      // Add-to-Cart in Modals
       $(document).on('click', '.product-modal .add-to-cart', function() {
         const modal = $(this).closest('.modal');
         const pid   = +modal.attr('id').replace('productModal', '');
         const qty   = +modal.find('.quantity-input').val() || 1;
-        Events.addToCart(pid, qty);
+        window.ProductsAPI.addToCart(pid, qty);
       });
 
       // View-Details Klick-Effekt
@@ -74,25 +74,7 @@
           });
         }
       });
-    },
-
-    // Produkt in den Warenkorb legen
-    addToCart(pid, qty) {
-      apiRequest({
-        url: `../../backend/api/ApiCart.php?addToCart=${pid}`,
-        method: 'POST',
-        data: { quantity: qty },
-        showValidation: false,
-        successMessage: 'Product added to cart.',
-        onSuccess: () => {
-          updateCartCount();
-          window.ProductsCart.animateCartButtons(pid, true);
-        },
-            onError: () => {
-          window.ProductsCart.animateCartButtons(pid, false);
-        }
-      });
-    }    
+    }
   };
 
   $(document).ready(() => Events.init());

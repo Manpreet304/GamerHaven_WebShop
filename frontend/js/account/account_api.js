@@ -1,7 +1,3 @@
-/**
- * js/account/account_api.js
- * Verantwortlich für API-Aufrufe rund um Account, Zahlungen und Bestellungen
- */
 (function(window, $) {
   'use strict';
 
@@ -12,7 +8,10 @@
         url: '../../backend/api/ApiGuest.php?me',
         method: 'GET',
         onSuccess: res => callbacks.onSuccess?.(res.data),
-        onError: err  => callbacks.onError?.(err)
+        onError: err => handleResponse(err, {
+          errorMessage: err?.data?.error || err?.message,
+          onError: () => callbacks.onError?.(err)
+        })
       });
     },
 
@@ -20,7 +19,10 @@
     loadPaymentMethods(callbacks = {}) {
       this.getAccountData({
         onSuccess: user => callbacks.onSuccess?.(user.payments || []),
-        onError:   callbacks.onError
+        onError:   err => handleResponse(err, {
+          errorMessage: err?.data?.error || err?.message,
+          onError: () => callbacks.onError?.(err)
+        })
       });
     },
 
@@ -30,7 +32,10 @@
         url: '../../backend/api/ApiOrder.php?orders',
         method: 'GET',
         onSuccess: res => callbacks.onSuccess?.(res.data.body || []),
-        onError:   err => callbacks.onError?.(err)
+        onError: err => handleResponse(err, {
+          errorMessage: err?.data?.error || err?.message,
+          onError: () => callbacks.onError?.(err)
+        })
       });
     },
 
@@ -40,7 +45,10 @@
         url: `../../backend/api/ApiOrder.php?orderDetails&orderId=${orderId}`,
         method: 'GET',
         onSuccess: res => callbacks.onSuccess?.(res.data),
-        onError:   err => callbacks.onError?.(err)
+        onError: err => handleResponse(err, {
+          errorMessage: err?.data?.error || err?.message,
+          onError: () => callbacks.onError?.(err)
+        })
       });
     },
 
@@ -57,7 +65,10 @@
         data: payload,
         successMessage: 'Account updated successfully.',
         onSuccess: res => callbacks.onSuccess?.(res),
-        onError:  err => callbacks.onError?.(err)
+        onError: err => handleResponse(err, {
+          errorMessage: err?.data?.error || err?.message,
+          onError: () => callbacks.onError?.(err)
+        })
       });
     },
 
@@ -69,7 +80,10 @@
         data: payload,
         successMessage: 'Payment method added.',
         onSuccess: res => callbacks.onSuccess?.(res),
-        onError:  err => callbacks.onError?.(err)
+        onError: err => handleResponse(err, {
+          errorMessage: err?.data?.error || err?.message,
+          onError: () => callbacks.onError?.(err)
+        })
       });
     },
 
@@ -81,16 +95,24 @@
         data: data,
         successMessage: 'Password updated successfully.',
         onSuccess: res => callbacks.onSuccess?.(res),
-        onError:  err => callbacks.onError?.(err)
+        onError: err => handleResponse(err, {
+          errorMessage: err?.data?.error || err?.message,
+          onError: () => callbacks.onError?.(err)
+        })
       });
     }
   };
 
-  window.AccountAPI         = AccountAPI;
-  window.viewOrderDetails   = orderId =>
+  // Exporte & globale Hilfsfunktionen
+  window.AccountAPI = AccountAPI;
+
+  window.viewOrderDetails = orderId =>
     AccountAPI.getOrderDetails(orderId, {
       onSuccess: data => window.AccountRender.showOrderDetailsModal(data),
-      onError:   err  => handleResponse(err, { errorMessage: err.message })
+      onError: err => handleResponse(err, {
+        errorMessage: err?.data?.error || err?.message
+      })
     });
-  window.downloadInvoice    = AccountAPI.downloadInvoice.bind(AccountAPI);
+
+  window.downloadInvoice = AccountAPI.downloadInvoice.bind(AccountAPI);
 })(window, jQuery);

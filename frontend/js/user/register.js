@@ -66,7 +66,9 @@
         3000
       ),
       onError: resp => {
-        handleResponse(resp, { errorMessage: resp.message });
+        handleResponse(resp, {
+          errorMessage: resp.data?.error || resp.message
+        });
         showFieldErrors(resp.data?.errors || {});
       }
     });
