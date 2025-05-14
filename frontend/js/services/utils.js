@@ -1,20 +1,22 @@
 // ----------------------- MESSAGES -----------------------
 
-function showMessage(type, text, target) {
-  target = target || "#messageBox";
-  var alertClass = type === "success" ? "alert-success" : "alert-danger";
-  var html =
-    '<div class="alert ' +
-    alertClass +
-    ' alert-dismissible fade show" role="alert">' +
-    text +
-    '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
-    "</div>";
-  var container = $(target);
-  container.find(".alert").alert("close");
-  container.empty().append(html);
-  setTimeout(() => container.find(".alert").alert("close"), 5000);
+function showMessage(type, text) {
+  const alertClass = type === "success" ? "alert-success" : "alert-danger";
+  const html = `
+    <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+      ${text}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  `;
+
+  const container = $('#globalMessageOverlay');
+  container.stop(true, true).hide().html(html).fadeIn();
+
+  setTimeout(() => {
+    container.fadeOut(() => container.empty());
+  }, 5000);
 }
+
 
 // ----------------------- API WRAPPER -----------------------
 
