@@ -332,3 +332,14 @@ input.quantity-input:focus {
 .text-end-vw{
   color: black !important;
 }
+
+#globalMessageOverlay {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1055;
+  width: auto;
+  max-width: 90%;
+  display: none;
+}
