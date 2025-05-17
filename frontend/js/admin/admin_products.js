@@ -22,6 +22,7 @@
       });
     });
   }
+
   function fetchProductData(productId) {
     return new Promise((resolve, reject) => {
       apiRequest({
@@ -32,6 +33,7 @@
       });
     });
   }
+
   function submitProductData(formData, isUpdate) {
     return new Promise((resolve, reject) => {
       const url = isUpdate
@@ -46,9 +48,13 @@
         xhrFields: { withCredentials: true }
       })
       .done(resolve)
-      .fail(err => { handleResponse(err.responseJSON || {}, {}); reject(err); });
+      .fail(err => {
+        handleResponse(err.responseJSON || {}, {});
+        reject(err);
+      });
     });
   }
+
   function deleteProductById(productId) {
     return new Promise((resolve, reject) => {
       apiRequest({
@@ -81,6 +87,7 @@
       productsTableBody.appendChild(row);
     });
   }
+
   function openProductModal(p = {}) {
     productFormElement.classList.remove('was-validated');
     $('#productForm')[0].reset();
@@ -101,6 +108,7 @@
         $('#existingImages').append(`<li class="list-group-item">${src}</li>`)
       );
     }
+
     if (p.attributes) {
       $('#productAttributes').val(
         Object.entries(JSON.parse(p.attributes))
@@ -116,12 +124,14 @@
   function handleAddProductClick() {
     openProductModal();
   }
+
   function handleEditProductClick(e) {
     const id = +e.currentTarget.closest('tr').dataset.id;
     fetchProductData(id)
       .then(res => openProductModal(res.data))
       .catch(() => {});
   }
+
   function handleSaveProductClick() {
     if (!productFormElement.checkValidity()) {
       productFormElement.classList.add('was-validated');
@@ -143,6 +153,7 @@
       })
       .catch(() => {});
   }
+
   function handleDeleteProductClick(e) {
     const id = +e.currentTarget.closest('tr').dataset.id;
     deleteProductById(id)
@@ -167,6 +178,7 @@
       .then(res => renderProductsTable(res.data))
       .catch(() => {});
   }
+
   document.addEventListener('DOMContentLoaded', () => {
     loadAndRenderProducts();
     bindProductEvents();

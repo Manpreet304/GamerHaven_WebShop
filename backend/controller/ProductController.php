@@ -4,23 +4,15 @@ require_once("../logic/ProductLogic.php");
 class ProductController {
     private ProductLogic $logic;
 
-    public function __construct() {
-        $this->logic = new ProductLogic();
+    public function __construct(mysqli $conn) {
+        $this->logic = new ProductLogic($conn);
     }
 
     public function getAll(): array {
-        global $conn;
-        return [
-            "status" => 200,
-            "body" => $this->logic->getAllProducts($conn)
-        ];
+        return $this->logic->getAllProducts();
     }
 
     public function getAllFiltered(array $filters): array {
-        global $conn;
-        return [
-            "status" => 200,
-            "body" => $this->logic->getFilteredProducts($conn, $filters)
-        ];
+        return $this->logic->getFilteredProducts($filters);
     }
 }

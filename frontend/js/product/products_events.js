@@ -2,7 +2,7 @@
   'use strict';
 
   const Events = {
-    // Initialisiere alle Events
+    // Alle Event-Listener und Start-Logik setzen
     init() {
       // Filter & Suche
       $(document).on(
@@ -16,13 +16,14 @@
         this.load();
       });
 
+      // Suchfeld mit Delay
       let debounce;
       $(document).on('input', '#liveSearchInput', () => {
         clearTimeout(debounce);
         debounce = setTimeout(this.onFilters.bind(this), 300);
       });
 
-      // Add-to-Cart in Cards (fix für quantity)
+      // In Card: Produkt in Warenkorb legen
       $(document).on('click', '.product-card .add-to-cart', function() {
         const card = $(this).closest('.product-card');
         const pid  = +card.data('product-id');
@@ -30,7 +31,7 @@
         window.ProductsAPI.addToCart(pid, qty);
       });
 
-      // Add-to-Cart in Modals
+      // In Modal: Produkt in Warenkorb legen
       $(document).on('click', '.product-modal .add-to-cart', function() {
         const modal = $(this).closest('.modal');
         const pid   = +modal.attr('id').replace('productModal', '');
@@ -38,21 +39,21 @@
         window.ProductsAPI.addToCart(pid, qty);
       });
 
-      // View-Details Klick-Effekt
+      // Animation bei View-Details-Klick
       $(document).on('click', '.product-card .view-details', function() {
         const btn = $(this);
         btn.addClass('clicked');
         setTimeout(() => btn.removeClass('clicked'), 350);
       });
 
-      // Drag-n-Drop ins Cart
+      // Drag & Drop für Warenkorb aktivieren
       window.ProductsCart.initDragDrop();
 
       // Produkte laden
       this.load();
     },
 
-    // Filter anwenden
+    // Filter sammeln & Produkte neu laden
     onFilters() {
       const filters = window.ProductsFilters.collectFilters();
       const term    = $('#liveSearchInput').val().trim();
@@ -60,7 +61,7 @@
       this.load(filters);
     },
 
-    // Produkte holen und rendern
+    // Produkte von API holen und rendern
     load(filters = {}) {
       window.ProductsAPI.loadProducts(filters, {
         onSuccess: (products, cache) => {
@@ -77,5 +78,7 @@
     }
   };
 
+  // Init bei DOM ready
   $(document).ready(() => Events.init());
+
 })(window, jQuery);

@@ -20,6 +20,7 @@
           const clone = tpl.content.cloneNode(true);
           clone.querySelector('#first_name').value = user.first_name;
           clone.querySelector('#last_name').value  = user.last_name;
+          clone.querySelector('#username').value   = user.username; 
           clone.querySelector('#email').value      = user.email;
           clone.querySelector('#address').value    = user.address;
           clone.querySelector('#zip_code').value   = user.zip_code;
@@ -89,5 +90,7 @@
     }
   };
 
+  // Globale Bereitstellung
   window.AccountForms = AccountForms;
+
 })(window, jQuery);

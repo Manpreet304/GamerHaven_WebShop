@@ -1,61 +1,46 @@
-// ----------------------- DATA FETCHING -----------------------
-
+// Navbar und Benutzerdaten automatisch laden
 function loadNavbar() {
-  $.ajax({
-    url: "../../inclusions/navbar.html",
-    method: "GET",
-    dataType: "html",
-    xhrFields: { withCredentials: true }
-  })
+  $.get("../../inclusions/navbar.html")
     .done(html => {
-      // Template klonen
       const $temp = $("<div>").html(html);
       const template = $temp.find("#navbar-template")[0];
-      if (!template) return;
+      if (!template) {
+        console.warn("Navbar template not found.");
+        return;
+      }
 
-      // In den Placeholder einfügen
       $("#navbar-placeholder").empty().append($(template.content).clone());
-
-      // Danach Interceptor und User-Daten laden
       setupCartClickInterceptor();
       fetchUserData();
     })
-    .fail((_, status, err) => console.error("Navbar loading failed", status, err));
+    .fail((_, status, err) => {
+      console.error("Navbar loading failed", status, err);
+    });
 }
 
+// Holt eingeloggten Benutzer (falls vorhanden)
 function fetchUserData() {
-  $.ajax({
-    url: "../../backend/api/ApiGuest.php?me",
-    method: "GET",
-    dataType: "json",
-    xhrFields: { withCredentials: true }
-  })
+  $.getJSON("../../backend/api/ApiGuest.php?me")
     .done(resp => {
-      if (!resp.success) {
-        updateUserNavbar({ loggedIn: false });
-        return;
-      }
-      const user = resp.data;
+      const user = resp.success ? resp.data : { loggedIn: false };
       window.currentUser = user;
       updateUserNavbar(user);
       if (user.loggedIn) updateCartCount();
     })
-    .fail((_, status, err) => console.error("User fetch failed", status, err));
+    .fail((_, status, err) => {
+      console.error("User fetch failed", status, err);
+      updateUserNavbar({ loggedIn: false });
+    });
 }
 
-// ----------------------- NAVBAR UPDATING -----------------------
-
+// Passt Navbar an Benutzerstatus an
 function updateUserNavbar(user) {
-  const $navList = $(".navbar-nav.ms-auto");
-  if (!$navList.length) return;
-
-  // Navbar neu aufbauen: nur User-Teil, Cart bleibt im DOM
-  // Deshalb nicht $navList.empty(), sondern gezielt den user-container leeren:
   const $userContainer = $("#user-dropdown-container");
+  if (!$userContainer.length) return;
+
   $userContainer.empty();
 
   if (!user.loggedIn) {
-    // Nicht eingeloggt: Login/Register-Dropdown
     $userContainer.append(`
       <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
          data-bs-toggle="dropdown" aria-expanded="false">
@@ -69,7 +54,6 @@ function updateUserNavbar(user) {
     return;
   }
 
-  // Eingeloggt: ersetze den leeren container durch Nav-Items
   $userContainer.replaceWith(`
     <li class="nav-item">
       <a class="nav-link" href="../website/account.html">
@@ -92,22 +76,21 @@ function updateUserNavbar(user) {
     </li>
   `);
 
-  // Logout-Handler neu binden
+  // Logout-Logik
   $(".logout-link").on("click", e => {
     e.preventDefault();
     apiRequest({
       url: "../../backend/api/ApiGuest.php?logout",
       method: "POST",
       successMessage: "Logout successful! Redirecting...",
-      onSuccess: () => setTimeout(() => {
-        window.location.href = "../website/homepage.html";
-      }, 2000)
+      onSuccess: () => {
+        setTimeout(() => window.location.href = "../website/homepage.html", 2000);
+      }
     });
   });
 }
 
-// ----------------------- EVENT INTERCEPTORS -----------------------
-
+// Abfangen des Warenkorb-Links (nur für eingeloggte Nutzer)
 function setupCartClickInterceptor() {
   $(document).on("click", "#nav-cart-link", e => {
     e.preventDefault();
@@ -119,6 +102,5 @@ function setupCartClickInterceptor() {
   });
 }
 
-// ----------------------- INITIALIZATION -----------------------
-
+// Start bei Seitenaufruf
 $(document).ready(loadNavbar);

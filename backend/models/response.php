@@ -1,23 +1,18 @@
 <?php
-// models/response.php
 
-function jsonResponse(bool $success, $data = null, string $message = '', array $errors = []): array {
-    return [
-        "success" => $success,
-        "data"    => $data,
-        "message" => $message,
-        "errors"  => $errors
-    ];
-}
+/* Sendet eine standardisierte JSON-Antwort für API-Endpunkte.*/
+function sendApiResponse(int $status, $data = null, string $message = '', array $errors = []): void {
+    // Setzt den HTTP-Statuscode für die Antwort
+    http_response_code($status);
 
-function sendApiResponse(array $controllerResponse, string $messageIfSuccess = "OK", string $messageIfError = "An error occurred"): void {
-    http_response_code($controllerResponse["status"]);
+    // Gibt die Antwort als JSON an den Client zurück
+    echo json_encode([
+        'success' => $status >= 200 && $status < 300, // true bei 2xx-Status
+        'data'    => $data,
+        'message' => $message,
+        'errors'  => $errors
+    ]);
 
-    echo json_encode(jsonResponse(
-        $controllerResponse["status"] === 200,
-        $controllerResponse["body"] ?? null,
-        $controllerResponse["status"] === 200 ? $messageIfSuccess : $messageIfError,
-        $controllerResponse["body"]["errors"] ?? []
-    ));
+    // Beendet die weitere Ausführung des Skripts
     exit;
 }

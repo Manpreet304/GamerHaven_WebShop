@@ -1,43 +1,32 @@
 <?php
-require_once("../logic/CartLogic.php");
+require_once(__DIR__ . '/../logic/CartLogic.php');
 
 class CartController {
     private CartLogic $logic;
+    private mysqli $conn;
 
-    public function __construct() {
+    public function __construct(mysqli $conn) {
+        $this->conn = $conn;
         $this->logic = new CartLogic();
     }
 
     public function getCartCount(int $userId): array {
-        global $conn;
-        $count = $this->logic->getCartCount($userId, $conn);
-        return ["status" => 200, "body" => ["count" => $count]];
+        return $this->logic->count($userId, $this->conn);
     }
 
     public function getCartWithSummary(int $userId): array {
-        global $conn;
-        $summary = $this->logic->getCartWithSummary($userId, $conn);
-        return ["status" => 200, "body" => $summary];
+        return $this->logic->summary($userId, $this->conn);
     }
 
     public function addToCart(int $userId, int $productId, int $quantity): array {
-        global $conn;
-        $result = $this->logic->addToCart($userId, $productId, $quantity, $conn);
-        return [
-            "status" => $result["success"] ? 200 : 400,
-            "body"   => $result
-        ];
+        return $this->logic->add($userId, $productId, $quantity, $this->conn);
     }
 
     public function updateQuantity(int $cartId, int $quantity): array {
-        global $conn;
-        $ok = $this->logic->updateQuantity($cartId, $quantity, $conn);
-        return ["status" => $ok ? 200 : 500, "body" => ["success" => $ok]];
+        return $this->logic->update($cartId, $quantity, $this->conn);
     }
 
     public function removeItem(int $cartId): array {
-        global $conn;
-        $ok = $this->logic->deleteCartItem($cartId, $conn);
-        return ["status" => $ok ? 200 : 500, "body" => ["success" => $ok]];
+        return $this->logic->remove($cartId, $this->conn);
     }
 }

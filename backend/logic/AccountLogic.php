@@ -2,19 +2,49 @@
 declare(strict_types=1);
 
 class AccountLogic {
-    public function updateUser(int $userId, array $data, $conn): bool {
-        $sql = "UPDATE users
-                SET firstname = ?, lastname = ?, email = ?, address = ?, zip_code = ?, city = ?, country = ?
-                WHERE id = ?";
-        $stmt = $conn->prepare($sql);
-        if ($stmt === false) {
-            error_log("updateUser prepare failed: " . $conn->error);
-            return false;
+    private mysqli $conn;
+
+    // Konstruktor zum Speichern der DB-Verbindung
+    public function __construct(mysqli $conn) {
+        $this->conn = $conn;
+    }
+
+    // Account-Daten aktualisieren (mit Passwortprüfung)
+    public function updateAccount(int $userId, array $data): array {
+        // Altes Passwort prüfen
+        if (empty($data['password']) || !$this->verifyPassword($userId, $data['password'])) {
+            return [401, null, 'Current password is incorrect'];
         }
+
+        // Prüfen, ob Username bereits von einem anderen User verwendet wird
+        $stmt = $this->conn->prepare("SELECT id FROM users WHERE username = ? AND id != ?");
+        $stmt->bind_param("si", $data["username"], $userId);
+        $stmt->execute();
+        if ($stmt->get_result()->fetch_assoc()) {
+            return [409, null, 'Username is already taken'];
+        }
+
+        // Prüfen, ob E-Mail bereits vergeben ist
+        $stmt = $this->conn->prepare("SELECT id FROM users WHERE email = ? AND id != ?");
+        $stmt->bind_param("si", $data["email"], $userId);
+        $stmt->execute();
+        if ($stmt->get_result()->fetch_assoc()) {
+            return [409, null, 'Email is already in use'];
+        }
+
+        // Update der Stammdaten
+        $stmt = $this->conn->prepare("
+            UPDATE users
+            SET username = ?, firstname = ?, lastname = ?, email = ?, address = ?, zip_code = ?, city = ?, country = ?
+            WHERE id = ?
+        ");
+        if (!$stmt) return [500, null, 'DB Error: Prepare failed'];
+
         $stmt->bind_param(
-            "sssssssi",
-            $data["firstname"],
-            $data["lastname"],
+            "ssssssssi",
+            $data["username"],
+            $data["first_name"],
+            $data["last_name"],
             $data["email"],
             $data["address"],
             $data["zip_code"],
@@ -22,142 +52,96 @@ class AccountLogic {
             $data["country"],
             $userId
         );
-        return $stmt->execute();
+
+        if ($stmt->execute()) {
+            // Session-Username aktualisieren
+            $_SESSION['user']['username'] = $data['username'];
+            return [200, true, 'Account updated'];
+        }
+
+        return [500, false, 'Account update failed'];
     }
 
-    public function verifyPassword(int $userId, string $password, $conn): bool {
-        $stmt = $conn->prepare("SELECT password FROM users WHERE id = ?");
-        if ($stmt === false) {
-            error_log("verifyPassword prepare failed: " . $conn->error);
-            return false;
-        }
+    // Passwort ändern
+    public function changePassword(int $userId, array $data): array {
+        // Altes Passwort prüfen
+        $stmt = $this->conn->prepare("SELECT password FROM users WHERE id = ?");
+        if (!$stmt) return [500, null, 'DB Error'];
+
         $stmt->bind_param("i", $userId);
         $stmt->execute();
         $row = $stmt->get_result()->fetch_assoc();
-        return $row && password_verify($password, $row["password"]);
-    }
 
-    public function changePassword(int $userId, array $data, mysqli $conn): bool|string {
-        // 1) Aktuelles Passwort holen und prüfen
-        $stmt = $conn->prepare("SELECT password FROM users WHERE id = ?");
-        if ($stmt === false) {
-            error_log("changePassword SELECT prepare failed: " . $conn->error);
-            return "Internal error";
+        if (!$row || !password_verify($data["old_password"] ?? '', $row["password"])) {
+            return [400, false, 'Current password is incorrect.'];
         }
-        $stmt->bind_param("i", $userId);
-        $stmt->execute();
-        $row = $stmt->get_result()->fetch_assoc();
-        if (!$row || !password_verify($data["old_password"], $row["password"])) {
-            return "Current password is incorrect.";
-        }
-    
-        $new    = $data["new_password"] ?? '';
-        $confirm= $data["confirm_password"] ?? '';
-    
-        // 2) Neue Passwörter stimmen überein?
-        if ($new !== $confirm) {
-            return "Passwords do not match.";
-        }
-    
-        // 3) Mindestlänge prüfen
-        if (strlen($new) < 8) {
-            return "Password must be at least 8 characters long.";
-        }
-    
-        // 4) Komplexität prüfen
-        if (!preg_match('/[A-Z]/', $new) ||
-            !preg_match('/[a-z]/', $new) ||
-            !preg_match('/[0-9]/', $new)) {
-            return "Password must contain uppercase, lowercase and a number.";
-        }
-    
-        // 5) Neues Passwort darf nicht dasselbe sein wie das alte (Klartext-Vergleich)
-        if (password_verify($new, $row["password"])) {
-            return "New password must be different from the current password.";
-        }
-    
-        // 6) Hash und speichern
+
+        $new     = $data["new_password"] ?? '';
+        $confirm = $data["confirm_password"] ?? '';
+        $oldHash = $row["password"];
+
+        // Validierung des neuen Passworts
+        if ($new !== $confirm) return [400, false, 'Passwords do not match.'];
+        if (strlen($new) < 8) return [400, false, 'Password must be at least 8 characters.'];
+        if (!preg_match('/[a-z]/', $new)) return [400, false, 'Password must contain at least one lowercase letter.'];
+        if (!preg_match('/[A-Z]/', $new)) return [400, false, 'Password must contain at least one uppercase letter.'];
+        if (!preg_match('/[0-9]/', $new)) return [400, false, 'Password must contain at least one number.'];
+        if (password_verify($new, $oldHash)) return [400, false, 'New password must be different from current password.'];
+
+        // Passwort setzen
         $newHash = password_hash($new, PASSWORD_DEFAULT);
-        $upd = $conn->prepare("UPDATE users SET password = ? WHERE id = ?");
-        if ($upd === false) {
-            error_log("changePassword UPDATE prepare failed: " . $conn->error);
-            return "Internal error";
-        }
-        $upd->bind_param("si", $newHash, $userId);
-        return $upd->execute()
-            ? true
-            : "Could not update password.";
-    }
-    
+        $update = $this->conn->prepare("UPDATE users SET password = ? WHERE id = ?");
+        if (!$update) return [500, null, 'DB Error'];
 
-    public function getUserOrders(int $userId, $conn): array {
-        $stmt = $conn->prepare("
-            SELECT id, subtotal, discount, shipping_amount, total_amount, created_at
-            FROM orders
-            WHERE user_id = ?
-            ORDER BY created_at DESC
+        $update->bind_param("si", $newHash, $userId);
+        return $update->execute()
+            ? [200, true, 'Password changed']
+            : [500, false, 'Failed to change password'];
+    }
+
+    // Neue Zahlungsmethode hinzufügen
+    public function addPaymentMethod(int $userId, array $data): array {
+        $stmt = $this->conn->prepare("
+            INSERT INTO payments (user_id, method, card_number, csv, paypal_email, paypal_username, iban, bic, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
         ");
-        $stmt->bind_param("i", $userId);
-        $stmt->execute();
-        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-    }
+        if (!$stmt) return [500, false, 'DB Error'];
 
-    public function getOrderDetails(int $orderId, $conn): array {
-        $stmt = $conn->prepare("
-            SELECT product_id, name_snapshot, price_snapshot, quantity, total_price
-            FROM order_items
-            WHERE order_id = ?
-        ");
-        $stmt->bind_param("i", $orderId);
-        $stmt->execute();
-        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-    }
+        // Daten extrahieren (z.B. CreditCard/PayPal)
+        $method         = $data['method']           ?? '';
+        $cardNumber     = $data['card_number']      ?? '';
+        $csv            = $data['csv']              ?? '';
+        $paypalEmail    = $data['paypal_email']     ?? '';
+        $paypalUsername = $data['paypal_username']  ?? '';
+        $iban           = $data['iban']             ?? '';
+        $bic            = $data['bic']              ?? '';
 
-    /**
-     * Fügt eine neue Zahlungsmethode für den User hinzu
-     */
-    public function addPaymentMethod(int $userId, array $data, $conn): bool {
-        $sql = "
-            INSERT INTO `payments`
-              (`user_id`, `method`, `card_number`, `csv`,
-               `paypal_email`, `paypal_username`, `iban`, `bic`, `created_at`)
-            VALUES (?,?,?,?,?,?,?,?, NOW())
-        ";
-
-        $stmt = $conn->prepare($sql);
-        if ($stmt === false) {
-            error_log("addPaymentMethod prepare failed: " . $conn->error);
-            return false;
-        }
-
-        $cardNumber  = $data['card_number']     ?? null;
-        $csv         = $data['csv']             ?? null;
-        $paypalEmail = $data['paypal_email']    ?? null;
-        $paypalUser  = $data['paypal_username'] ?? null;
-        $iban        = $data['iban']            ?? null;
-        $bic         = $data['bic']             ?? null;
-
-        $bound = $stmt->bind_param(
+        $stmt->bind_param(
             "isssssss",
             $userId,
-            $data['method'],
+            $method,
             $cardNumber,
             $csv,
             $paypalEmail,
-            $paypalUser,
+            $paypalUsername,
             $iban,
             $bic
         );
-        if ($bound === false) {
-            error_log("addPaymentMethod bind_param failed: " . $stmt->error);
-            return false;
-        }
 
-        $exec = $stmt->execute();
-        if ($exec === false) {
-            error_log("addPaymentMethod execute failed: " . $stmt->error);
-        }
+        return $stmt->execute()
+            ? [200, true, 'Payment method added']
+            : [500, false, 'Failed to add payment method'];
+    }
 
-        return $exec;
+    // Hilfsfunktion: Prüft ob Passwort korrekt ist
+    private function verifyPassword(int $userId, string $password): bool {
+        $stmt = $this->conn->prepare("SELECT password FROM users WHERE id = ?");
+        if (!$stmt) return false;
+
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+
+        return $row && password_verify($password, $row["password"]);
     }
 }

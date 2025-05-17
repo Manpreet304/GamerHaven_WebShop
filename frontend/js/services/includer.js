@@ -1,21 +1,16 @@
-// === Navbar laden via jQuery AJAX ===
-$.ajax({
-    url: "../../inclusions/navbar.html",
-    method: "GET",
-    dataType: "html",
-    xhrFields: {
-      withCredentials: true 
-    }
+// === Navbar laden ===
+$.get("../../inclusions/navbar.html")
+  .done(html => {
+    // HTML einfügen
+    $("#navbar-placeholder").html(html);
+
+    // Navbar-Script dynamisch einbinden
+    const script = document.createElement("script");
+    script.src = "../../frontend/js/services/navbar.js";
+    script.onload = () => console.log("Navbar script loaded");
+    script.onerror = () => console.error("Navbar script failed to load");
+    document.body.appendChild(script);
   })
-    .done(html => {
-      $("#navbar-placeholder").html(html);
-  
-      // Navbar-Logik nachladen
-      const script = document.createElement("script");
-      script.src = "../../frontend/js/services/navbar.js";
-      document.body.appendChild(script);
-    })
-    .fail((xhr, status, err) => {
-      console.error("Error loading Navbar:", status, err);
-    });
-  
+  .fail((xhr, status, err) => {
+    console.error("Error loading Navbar:", status, err);
+  });

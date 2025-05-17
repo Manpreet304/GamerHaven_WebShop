@@ -1,75 +1,64 @@
 <?php
+// api/order.php
+
+// Setzt den HTTP-Header auf JSON-Ausgabe
 header("Content-Type: application/json");
+
+// Startet die Session, falls noch nicht aktiv
 if (session_status() === PHP_SESSION_NONE) session_start();
 
-require_once("../db/dbaccess.php");
-require_once("../controller/OrderController.php");
-require_once("../controller/AccountController.php");
-require_once("../models/response.php"); // zentraler Response-Helper
+// Lädt benötigte Ressourcen
+require_once("../db/dbaccess.php");           // Datenbankverbindung
+require_once("../controller/OrderController.php"); // Order-Logik via Controller
+require_once("../models/response.php");       // Einheitliche Antwortfunktion
 
+// Prüft, ob ein Benutzer eingeloggt ist (Session enthält User-ID)
 if (!isset($_SESSION["user"]["id"])) {
-    http_response_code(401);
-    echo json_encode(jsonResponse(false, null, "Unauthorized!"));
-    exit;
+    sendApiResponse(401, null, "Unauthorized!"); // Abbruch bei fehlender Authentifizierung
 }
 
-$userId            = $_SESSION["user"]["id"];
-$orderController   = new OrderController();
-$accountController = new AccountController();
+// User-ID für alle Aktionen verfügbar machen
+$userId = $_SESSION["user"]["id"];
 
+// Controller-Instanz zur Weitergabe der Logik
+$orderController = new OrderController($conn);
+
+// Unterscheidung nach HTTP-Methode
 switch ($_SERVER["REQUEST_METHOD"]) {
     case "POST":
-        $data = json_decode(file_get_contents("php://input"), true);
+        // Neue Bestellung anlegen
+        $data = json_decode(file_get_contents("php://input"), true); // JSON Body parsen
+
+        // Bestellung über Controller abwickeln
         sendApiResponse(
-            $orderController->placeOrder(
+            ...$orderController->placeOrder(
                 $userId,
-                $data["payment_id"],
-                $data["voucher"] ?? null
-            ),
-            "Order placed.",
-            "Order failed."
+                (int)$data["payment_id"],           // Zahlung
+                $data["voucher"] ?? null            // Optionaler Gutschein
+            )
         );
+        break;
 
     case "GET":
+        // Alle Bestellungen für eingeloggten Benutzer abrufen
         if (isset($_GET["orders"])) {
-            sendApiResponse([
-                "status" => 200,
-                "body" => $accountController->getOrders($userId, $conn)
-            ], "Orders loaded.");
-
-        } elseif (isset($_GET["orderDetails"]) && isset($_GET["orderId"])) {
-            $orderId = intval($_GET["orderId"]);
-
-            // Bestellung abrufen
-            $stmt = $conn->prepare("
-                SELECT id, created_at, subtotal, discount, shipping_amount, total_amount
-                FROM orders
-                WHERE id = ? AND user_id = ?
-            ");
-            $stmt->bind_param("ii", $orderId, $userId);
-            $stmt->execute();
-            $orderData = $stmt->get_result()->fetch_assoc();
-
-            if (!$orderData) {
-                sendApiResponse(["status" => 404, "body" => null], "Not found", "Order not found.");
-            }
-
-            $itemsResult = $accountController->getOrderDetails($orderId, $conn);
-            $items = $itemsResult["body"];
-
-            sendApiResponse([
-                "status" => 200,
-                "body" => [
-                    "order" => $orderData,
-                    "items" => $items
-                ]
-            ], "Order details loaded.");
+            sendApiResponse(...$orderController->getOrders($userId));
+            break;
         }
 
-        sendApiResponse(["status" => 400, "body" => null], "", "Missing parameter");
+        // Details zu einer bestimmten Bestellung (nur falls orderId vorhanden)
+        if (isset($_GET["orderDetails"]) && isset($_GET["orderId"])) {
+            $orderId = (int)$_GET["orderId"];
+            sendApiResponse(...$orderController->getOrderDetails($orderId, $userId));
+            break;
+        }
+
+        // Wenn kein passender Parameter gefunden wurde
+        sendApiResponse(400, null, "Missing parameter.");
+        break;
 
     default:
-        http_response_code(405);
-        echo json_encode(jsonResponse(false, null, "Method not allowed"));
-        exit;
+        // HTTP-Methode nicht erlaubt
+        sendApiResponse(405, null, "Method not allowed.");
+        break;
 }

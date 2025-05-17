@@ -6,7 +6,7 @@
   'use strict';
 
   const ProductsCart = {
-    // Animiert Add-to-Cart-Buttons nach Erfolg oder Fehler
+    // Add-to-Cart Button animieren (Erfolg oder Fehler)
     animateCartButtons(productId, success) {
       const selectors = [
         `.product-card[data-product-id='${productId}'] .add-to-cart`,
@@ -28,20 +28,20 @@
       });
     },
 
-    // Initialisiert Drag-n-Drop aufs ganze Dokument
+    // Drag-n-Drop auf Seite aktivieren
     initDragDrop() {
       const scrollThreshold = 60;
       const scrollSpeed     = 30;
       const dropZone        = '#cart-drop-area';
 
-      // Auto-Scroll während Drag
+      // Scroll bei Randnähe während Drag
       $(document).on('dragover', ev => {
         const y = ev.originalEvent.clientY;
         if (y < scrollThreshold) window.scrollBy(0, -scrollSpeed);
         else if (y > window.innerHeight - scrollThreshold) window.scrollBy(0, scrollSpeed);
       });
 
-      // Drop-Zone Styling
+      // Dropzone-Optik
       $(document).on('dragover', dropZone, ev => {
         ev.preventDefault();
         $(ev.currentTarget).addClass('drag-over');
@@ -51,7 +51,7 @@
         $(ev.currentTarget).removeClass('drag-over');
       });
 
-      // Beim Loslassen im Drop-Bereich
+      // Produkt in Warenkorb via Drop
       $(document).on('drop', dropZone, ev => {
         ev.preventDefault();
         const pid = parseInt(ev.originalEvent.dataTransfer.getData('text/plain'), 10);
@@ -71,5 +71,7 @@
     }
   };
 
+  // Objekt global verfügbar machen
   window.ProductsCart = ProductsCart;
+
 })(window, jQuery);

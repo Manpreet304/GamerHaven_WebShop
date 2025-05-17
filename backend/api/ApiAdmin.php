@@ -1,78 +1,116 @@
 <?php
+// Gibt an, dass der Server JSON-Daten zurückgibt
 header("Content-Type: application/json");
+
+// Startet die Session, falls sie noch nicht läuft
 if (session_status() === PHP_SESSION_NONE) session_start();
 
-require_once("../db/dbaccess.php");
-require_once("../controller/AdminController.php");
-require_once("../models/response.php"); // <- zentrale Hilfen
+// Bindet benötigte Dateien ein
+require_once("../db/dbaccess.php");           // DB-Verbindung
+require_once("../controller/AdminController.php"); // Logik für Admin-Aktionen
+require_once("../models/response.php");       // sendApiResponse()
 
+// Prüft, ob Benutzer eingeloggt ist und Admin-Rechte hat
 if (empty($_SESSION['user']['id']) || $_SESSION['user']['role'] !== 'admin') {
-    http_response_code(401);
-    echo json_encode(jsonResponse(false, null, 'Unauthorized!'));
-    exit;
+    sendApiResponse(401, null, 'Unauthorized!');
 }
 
-$ctrl = new AdminController();
-$conn = $GLOBALS['conn'];
-$qs   = array_keys($_GET)[0] ?? '';
+// Instanziiert den Controller
+$ctrl = new AdminController($conn);
+
+// Ermittelt Methode (GET/POST) und erste GET-Aktion (?key=...)
+$method  = $_SERVER['REQUEST_METHOD'];
+$action  = array_keys($_GET)[0] ?? '';
+
+// Nimmt JSON-Body-Daten oder Fallback auf $_POST
+$payload = json_decode(file_get_contents('php://input'), true) ?? $_POST;
 
 try {
-    $method = $_SERVER['REQUEST_METHOD'].'?'.$qs;
+    // Kombiniert Methode und Aktion zu einem String (z. B. "GET?listProducts")
+    switch ("$method?$action") {
 
-    switch ($method) {
-        // ----- PRODUCTS -----
+        // --- Produkte ---
         case 'GET?listProducts':
-            sendApiResponse($ctrl->listProducts($conn), "Product list loaded.");
+            sendApiResponse(...$ctrl->listProducts());
+            break;
+
         case 'GET?getProduct':
-            sendApiResponse($ctrl->getProduct((int)$_GET['id'], $conn), "Product loaded.");
+            sendApiResponse(...$ctrl->getProduct((int)$_GET['id']));
+            break;
+
         case 'POST?addProduct':
         case 'POST?updateProduct':
-            sendApiResponse($ctrl->saveProduct($_POST, $_FILES, $conn), "Product saved.");
-        case 'POST?deleteProduct':
-            sendApiResponse($ctrl->deleteProduct((int)$_GET['id'], $conn), "Product deleted.");
+            sendApiResponse(...$ctrl->saveProduct($_POST, $_FILES));
+            break;
 
-        // ----- CUSTOMERS -----
+        case 'POST?deleteProduct':
+            sendApiResponse(...$ctrl->deleteProduct((int)$_GET['id']));
+            break;
+
+        // --- Kunden ---
         case 'GET?listCustomers':
-            sendApiResponse($ctrl->listCustomers($conn), "Customer list loaded.");
+            sendApiResponse(...$ctrl->listCustomers());
+            break;
+
         case 'GET?getCustomer':
-            sendApiResponse($ctrl->getCustomer((int)$_GET['id'], $conn), "Customer loaded.");
+            sendApiResponse(...$ctrl->getCustomer((int)$_GET['id']));
+            break;
+
         case 'POST?toggleCustomer':
-            sendApiResponse($ctrl->toggleCustomer((int)$_GET['id'], $conn), "Customer toggled.");
+            sendApiResponse(...$ctrl->toggleCustomer((int)$_GET['id']));
+            break;
+
         case 'POST?addCustomer':
         case 'POST?updateCustomer':
-            $data = json_decode(file_get_contents('php://input'), true) ?? $_POST;
-            sendApiResponse($ctrl->saveCustomer($data, $conn), "Customer saved.");
+            sendApiResponse(...$ctrl->saveCustomer($payload));
+            break;
+
         case 'POST?deleteCustomer':
-            sendApiResponse($ctrl->deleteCustomer((int)$_GET['id'], $conn), "Customer deleted.");
+            sendApiResponse(...$ctrl->deleteCustomer((int)$_GET['id']));
+            break;
 
-        // ----- ORDERS -----
+        // --- Bestellungen ---
         case 'GET?listOrdersByCustomer':
-            sendApiResponse($ctrl->listOrdersByCustomer((int)$_GET['id'], $conn), "Orders loaded.");
-        case 'GET?listOrderItems':
-            sendApiResponse($ctrl->listOrderItems((int)$_GET['order_id'], $conn), "Order items loaded.");
-        case 'POST?removeOrderItem':
-            sendApiResponse(
-                $ctrl->removeOrderItem((int)$_GET['id'], (int)($_GET['qty'] ?? 1), $conn),
-                "Order item removed."
-            );
+            $id = (int)($_GET['id'] ?? 0);
+            if ($id > 0) {
+                sendApiResponse(...$ctrl->listOrdersByCustomer($id));
+            } else {
+                sendApiResponse(...$ctrl->listAllOrders());
+            }
+            break;
 
-        // ----- VOUCHERS -----
+        case 'GET?listOrderItems':
+            sendApiResponse(...$ctrl->listOrderItems((int)$_GET['order_id']));
+            break;
+
+        case 'POST?removeOrderItem':
+            sendApiResponse(...$ctrl->removeOrderItem((int)$_GET['id'], (int)($_GET['qty'] ?? 1)));
+            break;
+
+        // --- Gutscheine ---
         case 'GET?listVouchers':
-            sendApiResponse($ctrl->listVouchers($conn), "Vouchers loaded.");
+            sendApiResponse(...$ctrl->listVouchers());
+            break;
+
         case 'GET?getVoucher':
-            sendApiResponse($ctrl->getVoucher((int)$_GET['id'], $conn), "Voucher loaded.");
+            sendApiResponse(...$ctrl->getVoucher((int)$_GET['id']));
+            break;
+
         case 'GET?generateVoucherCode':
-            sendApiResponse($ctrl->getNewVoucherCode(), "Voucher code generated.");
+            sendApiResponse(...$ctrl->getNewVoucherCode());
+            break;
+
         case 'POST?addVoucher':
         case 'POST?updateVoucher':
-            $data = json_decode(file_get_contents('php://input'), true);
-            sendApiResponse($ctrl->saveVoucher($data, $conn), "Voucher saved.");
+            sendApiResponse(...$ctrl->saveVoucher($payload));
+            break;
 
+        // --- Fallback: ungültige Route ---
         default:
-            http_response_code(400);
-            echo json_encode(jsonResponse(false, null, "Invalid request."));
+            sendApiResponse(400, null, "Invalid request.");
     }
+
+// Fehlerbehandlung: Fangt alle unerwarteten Exceptions ab
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(jsonResponse(false, null, "Server error.", [$e->getMessage()]));
+    sendApiResponse(500, ['error' => $e->getMessage()], 'Server error.');
 }

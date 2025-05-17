@@ -86,14 +86,13 @@
           <div class="invalid-feedback">Last name is required.</div>
         </div>
         <div class="col-md-6">
+          <label class="form-label">Username</label>
+          <input type="text" id="username" class="form-control" required />
+        </div>
+        <div class="col-md-6">
           <label class="form-label">Email</label>
           <input type="email" id="email" class="form-control" required />
           <div class="invalid-feedback">A valid email is required.</div>
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">Current Password (confirm changes)</label>
-          <input type="password" id="password" class="form-control" placeholder="Enter your current password" required />
-          <div class="invalid-feedback">Please enter your current password.</div>
         </div>
         <div class="col-md-12">
           <label class="form-label">Address</label>
@@ -112,6 +111,11 @@
           <input type="text" id="country" class="form-control" />
         </div>
       </div>
+      <div class="col-md-6">
+          <label class="form-label">Current Password (confirm changes)</label>
+          <input type="password" id="password" class="form-control" placeholder="Enter your current password" required />
+          <div class="invalid-feedback">Please enter your current password.</div>
+        </div>
       <div class="mt-4">
         <button type="submit" class="btn btn-primary">
           <i class="bi bi-save me-1"></i>Save Changes
@@ -177,9 +181,9 @@
         <div class="modal-body">
           <p><strong>Order #<span id="modal-order-id"></span></strong> – <span id="modal-order-date"></span></p>
           <table class="table">
-            <thead>
+            <thead class="text-end">
               <tr>
-                <th>Product</th>
+                <th class="text-start">Product</th>
                 <th>Unit Price</th>
                 <th>Qty</th>
                 <th>Total</th>
@@ -191,20 +195,20 @@
             <table class="table table-borderless">
               <tbody>
                 <tr>
-                  <td class="text-end-vw"><strong>Subtotal:</strong></td>
-                  <td class="text-end-vw">€<span id="modal-subtotal"></span></td>
+                  <td class="text-start"><strong>Subtotal:</strong></td>
+                  <td class="text-end text-black"><span id="modal-subtotal"></span></td>
                 </tr>
                 <tr>
-                  <td class="text-end-vw"><strong>Discount:</strong></td>
-                  <td class="text-end-vw">€<span id="modal-discount"></span></td>
+                  <td class="text-start"><strong>Discount:</strong></td>
+                  <td class="text-end text-black"><span id="modal-discount"></span></td>
                 </tr>
                 <tr>
-                  <td class="text-end-vw"><strong>Shipping:</strong></td>
-                  <td class="text-end-vw">€<span id="modal-shipping"></span></td>
+                  <td class="text-start"><strong>Shipping:</strong></td>
+                  <td class="text-end text-black"><span id="modal-shipping"></span></td>
                 </tr>
                 <tr class="table-secondary">
-                  <td class="text-end-vw"><strong>Total:</strong></td>
-                  <td class="text-end-vw">€<span id="modal-total"></span></td>
+                  <td class="text-start"><strong>Total:</strong></td>
+                  <td class="text-end text-black"><span id="modal-total"></span></td>
                 </tr>
               </tbody>
             </table>

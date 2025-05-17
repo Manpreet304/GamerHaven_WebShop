@@ -2,27 +2,21 @@
   'use strict';
 
   const AccountAPI = {
-    // Basis-Userdaten laden
+    // Nutzerdaten laden
     getAccountData(callbacks = {}) {
       apiRequest({
         url: '../../backend/api/ApiGuest.php?me',
         method: 'GET',
         onSuccess: res => callbacks.onSuccess?.(res.data),
-        onError: err => handleResponse(err, {
-          errorMessage: err?.data?.error || err?.message,
-          onError: () => callbacks.onError?.(err)
-        })
+        onError: callbacks.onError
       });
     },
 
-    // Zahlungsmethoden des Nutzers laden
+    // Zahlmethoden extrahieren (aus Nutzerdaten)
     loadPaymentMethods(callbacks = {}) {
       this.getAccountData({
         onSuccess: user => callbacks.onSuccess?.(user.payments || []),
-        onError:   err => handleResponse(err, {
-          errorMessage: err?.data?.error || err?.message,
-          onError: () => callbacks.onError?.(err)
-        })
+        onError: callbacks.onError
       });
     },
 
@@ -31,59 +25,47 @@
       apiRequest({
         url: '../../backend/api/ApiOrder.php?orders',
         method: 'GET',
-        onSuccess: res => callbacks.onSuccess?.(res.data.body || []),
-        onError: err => handleResponse(err, {
-          errorMessage: err?.data?.error || err?.message,
-          onError: () => callbacks.onError?.(err)
-        })
+        onSuccess: res => callbacks.onSuccess?.(res.data),
+        onError: callbacks.onError
       });
     },
 
-    // Details zu einer Bestellung laden
+    // Einzelne Bestelldetails abrufen
     getOrderDetails(orderId, callbacks = {}) {
       apiRequest({
         url: `../../backend/api/ApiOrder.php?orderDetails&orderId=${orderId}`,
         method: 'GET',
         onSuccess: res => callbacks.onSuccess?.(res.data),
-        onError: err => handleResponse(err, {
-          errorMessage: err?.data?.error || err?.message,
-          onError: () => callbacks.onError?.(err)
-        })
+        onError: callbacks.onError
       });
     },
 
-    // Rechnung herunterladen
+    // Rechnung downloaden
     downloadInvoice(orderId) {
       window.open(`../../backend/invoices/Invoice.php?orderId=${orderId}`, '_blank');
     },
 
-    // Kontodaten aktualisieren
+    // Account-Daten speichern
     updateAccountInfo(payload, callbacks = {}) {
       apiRequest({
         url: '../../backend/api/ApiAccount.php?update',
         method: 'POST',
         data: payload,
         successMessage: 'Account updated successfully.',
-        onSuccess: res => callbacks.onSuccess?.(res),
-        onError: err => handleResponse(err, {
-          errorMessage: err?.data?.error || err?.message,
-          onError: () => callbacks.onError?.(err)
-        })
+        onSuccess: callbacks.onSuccess,
+        onError: callbacks.onError
       });
     },
 
-    // Neue Zahlungsmethode hinzufügen
+    // Neue Zahlmethode speichern
     addPaymentMethod(payload, callbacks = {}) {
       apiRequest({
         url: '../../backend/api/ApiAccount.php?addPayment',
         method: 'POST',
         data: payload,
         successMessage: 'Payment method added.',
-        onSuccess: res => callbacks.onSuccess?.(res),
-        onError: err => handleResponse(err, {
-          errorMessage: err?.data?.error || err?.message,
-          onError: () => callbacks.onError?.(err)
-        })
+        onSuccess: callbacks.onSuccess,
+        onError: callbacks.onError
       });
     },
 
@@ -94,18 +76,16 @@
         method: 'POST',
         data: data,
         successMessage: 'Password updated successfully.',
-        onSuccess: res => callbacks.onSuccess?.(res),
-        onError: err => handleResponse(err, {
-          errorMessage: err?.data?.error || err?.message,
-          onError: () => callbacks.onError?.(err)
-        })
+        onSuccess: callbacks.onSuccess,
+        onError: callbacks.onError
       });
     }
   };
 
-  // Exporte & globale Hilfsfunktionen
+  // Globale Bereitstellung
   window.AccountAPI = AccountAPI;
 
+  // Direktfunktionen für Buttons etc.
   window.viewOrderDetails = orderId =>
     AccountAPI.getOrderDetails(orderId, {
       onSuccess: data => window.AccountRender.showOrderDetailsModal(data),
@@ -115,4 +95,5 @@
     });
 
   window.downloadInvoice = AccountAPI.downloadInvoice.bind(AccountAPI);
+
 })(window, jQuery);

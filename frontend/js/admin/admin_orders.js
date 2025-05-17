@@ -1,11 +1,6 @@
-/**
- * js/admin/orders/admin_orders.js
- * Verantwortlich für Laden, Anzeigen und Verwalten von Bestellungen im Admin-Bereich
- */
 (function(window, $) {
   'use strict';
 
-  // --- Selektoren & Modal-Instanz für Bestelldetails ---
   const customerSelect         = document.getElementById('orderCustomerSelect');
   const ordersTableBody        = document.querySelector('#ordersTable tbody');
   const orderItemsContainer    = document.getElementById('orderItemsBody');
@@ -13,7 +8,7 @@
   const orderItemsModal        = new bootstrap.Modal(orderItemsModalElement);
   let   ordersCache            = {};
 
-  // --- Promise-basierte API-Funktionen ---
+  // Kunden für Dropdown laden
   function fetchCustomersForOrders() {
     return new Promise((resolve, reject) => {
       apiRequest({
@@ -24,16 +19,24 @@
       });
     });
   }
-  function fetchOrdersByCustomer(customerId) {
+
+  // Bestellungen nach Kunde (oder alle)
+  function fetchOrdersByCustomer(customerId = '') {
+    const url = customerId
+      ? `../../backend/api/ApiAdmin.php?listOrdersByCustomer&id=${customerId}`
+      : `../../backend/api/ApiAdmin.php?listOrdersByCustomer`;
+
     return new Promise((resolve, reject) => {
       apiRequest({
-        url: `../../backend/api/ApiAdmin.php?listOrdersByCustomer&id=${customerId}`,
+        url,
         method: 'GET',
         onSuccess: resolve,
         onError: err => { handleResponse(err, {}); reject(err); }
       });
     });
   }
+
+  // Einzelne Positionen einer Bestellung laden
   function fetchOrderItems(orderId) {
     return new Promise((resolve, reject) => {
       apiRequest({
@@ -44,6 +47,8 @@
       });
     });
   }
+
+  // Artikel aus Bestellung entfernen (teilweise möglich)
   function removeOrderItem(orderItemId, qty) {
     return new Promise((resolve, reject) => {
       apiRequest({
@@ -56,11 +61,14 @@
     });
   }
 
-  // --- View-/Render-Funktionen: Dropdown, Tabelle, Details ---
+  // Kunden-Auswahl rendern
   function renderCustomerDropdown(customers) {
-    customerSelect.innerHTML = '<option value="">Select…</option>' +
+    customerSelect.innerHTML =
+      '<option value="">All Customers</option>' +
       customers.map(c => `<option value="${c.id}">${c.firstname} ${c.lastname}</option>`).join('');
   }
+
+  // Tabelle der Bestellungen darstellen
   function renderOrdersTable(orders) {
     ordersCache = {};
     ordersTableBody.innerHTML = '';
@@ -79,6 +87,8 @@
       ordersTableBody.appendChild(row);
     });
   }
+
+  // Artikel einer Bestellung im Modal darstellen
   function renderOrderItems(orderId, items) {
     const order = ordersCache[orderId];
     orderItemsContainer.innerHTML = '';
@@ -86,6 +96,7 @@
       orderItemsContainer.innerHTML = '<p>No order found.</p>';
       return;
     }
+
     orderItemsContainer.insertAdjacentHTML('beforeend', `
       <div><strong>Order #${order.id}</strong></div>
       <div>Subtotal: €${order.subtotal}</div>
@@ -94,6 +105,7 @@
       <div><strong>Total: €${order.total_amount}</strong></div>
       <hr/>
     `);
+
     items.forEach(item => {
       const maxQty = Number(item.quantity);
       orderItemsContainer.insertAdjacentHTML('beforeend', `
@@ -116,60 +128,62 @@
         </div>
       `);
     });
+
     orderItemsModal.show();
   }
 
-  // --- Event-Handler für Auswahl, Details, Entfernen ---
+  // Kundenauswahl geändert
   function handleCustomerChange() {
     const id = customerSelect.value;
-    if (!id) {
-      ordersTableBody.innerHTML = '';
-      return;
-    }
     fetchOrdersByCustomer(id)
       .then(res => renderOrdersTable(res.data))
       .catch(() => {});
   }
+
+  // Bestellpositionen anzeigen
   function handleViewItemsClick(e) {
     const id = +e.currentTarget.dataset.id;
     fetchOrderItems(id)
       .then(res => renderOrderItems(id, res.data))
       .catch(() => {});
   }
+
+  // Artikel aus Bestellung entfernen
   function handleRemoveItemClick(e) {
-    const id    = +e.currentTarget.dataset.id;
+    const id = +e.currentTarget.dataset.id;
     const input = document.querySelector(`.remove-quantity[data-id="${id}"]`);
-    let   qty   = parseInt(input.value, 10) || 1;
-    const max   = parseInt(input.dataset.max, 10);
+    let qty = parseInt(input.value, 10) || 1;
+    const max = parseInt(input.dataset.max, 10);
     if (qty < 1) qty = 1;
     if (qty > max) qty = max;
 
     removeOrderItem(id, qty)
       .then(() => {
         orderItemsModal.hide();
-        // Orders neu laden, so dass gelöschte Einträge verschwinden
-        const customerId = customerSelect.value;
-        if (customerId) {
-          fetchOrdersByCustomer(customerId)
-            .then(res => renderOrdersTable(res.data))
-            .catch(() => {});
-        }
+        fetchOrdersByCustomer(customerSelect.value)
+          .then(res => renderOrdersTable(res.data))
+          .catch(() => {});
       })
       .catch(() => {});
   }
 
-  // --- Events binden: Dropdown & Delegation für Buttons ---
+  // Eventbindung
   function bindOrderEvents() {
     customerSelect.addEventListener('change', handleCustomerChange);
     $(ordersTableBody).on('click', '.view-items', handleViewItemsClick);
     $(orderItemsContainer).on('click', '.remove-item', handleRemoveItemClick);
   }
 
-  // --- Initialisierung: Laden & Events binden ---
+  // Startlogik bei DOM-Ready
   document.addEventListener('DOMContentLoaded', () => {
     fetchCustomersForOrders()
       .then(res => renderCustomerDropdown(res.data))
       .catch(() => {});
+
+    fetchOrdersByCustomer()
+      .then(res => renderOrdersTable(res.data))
+      .catch(() => {});
+
     bindOrderEvents();
   });
 

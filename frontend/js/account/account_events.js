@@ -34,6 +34,7 @@
       return;
     }
     const payload = {
+      username:   $('#username').val().trim(),
       first_name: $('#first_name').val().trim(),
       last_name:  $('#last_name').val().trim(),
       email:      $('#email').val().trim(),
@@ -134,4 +135,5 @@
 
     bindUIEvents();
   });
+
 })(window, jQuery);

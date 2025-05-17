@@ -1,71 +1,68 @@
 <?php
+// Gibt an, dass die Antwort im JSON-Format erfolgt
 header("Content-Type: application/json");
+
+// Startet die Session, falls sie noch nicht aktiv ist
 if (session_status() === PHP_SESSION_NONE) session_start();
 
-require_once __DIR__ . '/../db/dbaccess.php';
-require_once __DIR__ . '/../controller/CartController.php';
-require_once __DIR__ . '/../models/response.php'; // <- zentrale jsonResponse/sendApiResponse
+// Bindet notwendige Abhängigkeiten ein
+require_once __DIR__ . '/../db/dbaccess.php';        // Stellt DB-Verbindung her
+require_once __DIR__ . '/../controller/CartController.php'; // Controller für Warenkorb-Funktionen
+require_once __DIR__ . '/../models/response.php';    // sendApiResponse() Funktion
 
+// Prüft, ob der Benutzer eingeloggt ist – andernfalls Abbruch
 if (empty($_SESSION['user']['id'])) {
-    http_response_code(401);
-    echo json_encode(jsonResponse(false, null, 'Please log in to add items to your cart!'));
-    exit;
+    sendApiResponse(401, null, 'Please log in to add items to your cart!');
 }
 
-$ctrl   = new CartController();
+// Erstellt Controller-Instanz + speichert User-ID
+$ctrl   = new CartController($conn);
 $userId = $_SESSION['user']['id'];
 
+// Steuert Verhalten anhand der HTTP-Methode
 switch ($_SERVER['REQUEST_METHOD']) {
+
     case 'GET':
+        // Bei ?cartCount wird nur die Menge zurückgegeben
         if (isset($_GET['cartCount'])) {
-            $count = $ctrl->getCartCount($userId);
-            sendApiResponse([
-                "status" => 200,
-                "body" => $count
-            ], "Cart count loaded.");
+            [$status, $data, $msg] = $ctrl->getCartCount($userId);
+            sendApiResponse($status, $data, $msg);
         } else {
-            $cart = $ctrl->getCartWithSummary($userId);
-            sendApiResponse([
-                "status" => 200,
-                "body" => $cart
-            ], "Cart loaded.");
+            // Sonst: Komplette Cart-Daten + Summen
+            [$status, $data, $msg] = $ctrl->getCartWithSummary($userId);
+            sendApiResponse($status, $data, $msg);
         }
         break;
 
     case 'POST':
+        // Liest JSON-Daten aus dem Request-Body
         $data = json_decode(file_get_contents('php://input'), true);
 
+        // Produkt in den Warenkorb legen (per URL-Query)
         if (isset($_GET['addToCart'])) {
             $pid = (int)$_GET['addToCart'];
-            $qty = max(1, (int)($data['quantity'] ?? 1));
-            sendApiResponse(
-                $ctrl->addToCart($userId, $pid, $qty),
-                "Product added to cart.",
-                "Failed to add product to cart."
-            );
+            $qty = max(1, (int)($data['quantity'] ?? 1)); // Mindestmenge 1
+            [$status, $data, $msg] = $ctrl->addToCart($userId, $pid, $qty);
+            sendApiResponse($status, $data, $msg);
 
+        // Menge eines Artikels im Warenkorb ändern
         } elseif (!empty($data['action']) && $data['action'] === 'update') {
-            sendApiResponse(
-                $ctrl->updateQuantity((int)$data['id'], (int)$data['quantity']),
-                "Quantity updated.",
-                "Failed to update quantity."
-            );
+            [$status, $data, $msg] = $ctrl->updateQuantity((int)$data['id'], (int)$data['quantity']);
+            sendApiResponse($status, $data, $msg);
 
+        // Artikel aus dem Warenkorb entfernen
         } elseif (!empty($data['action']) && $data['action'] === 'delete') {
-            sendApiResponse(
-                $ctrl->removeItem((int)$data['id']),
-                "Item removed from cart.",
-                "Failed to remove item."
-            );
+            [$status, $data, $msg] = $ctrl->removeItem((int)$data['id']);
+            sendApiResponse($status, $data, $msg);
 
+        // Keine bekannte Aktion
         } else {
-            http_response_code(400);
-            echo json_encode(jsonResponse(false, null, "Invalid action."));
+            sendApiResponse(400, null, "Invalid action.");
         }
         break;
 
+    // Andere Methoden (z. B. PUT/DELETE) sind nicht erlaubt
     default:
-        http_response_code(405);
-        echo json_encode(jsonResponse(false, null, 'Method not allowed'));
+        sendApiResponse(405, null, 'Method not allowed');
         break;
 }

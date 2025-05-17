@@ -329,9 +329,6 @@ input.quantity-input:focus {
   100% { transform: scale(1); }
 }
 
-.text-end-vw{
-  color: black !important;
-}
 
 #globalMessageOverlay {
   position: fixed;
