@@ -1,4 +1,3 @@
-
 (function(window, $) {
   'use strict';
 
@@ -44,11 +43,15 @@
       data: { payment_id: paymentId, voucher },
       successMessage: 'Your order was successfully placed! Invoice opens in new tab.',
       onSuccess: res => {
-        const orderId = res.data?.orderId;
+        const orderId = res.orderId;
         window.open(`../../backend/invoices/Invoice.php?orderId=${orderId}`, '_blank');
         setTimeout(() => window.location.href = 'homepage.html', 3000);
       },
-      errorMessage: 'Order could not be completed.'
+      onError: err => {
+        handleResponse(err, {
+          errorMessage: err?.message || 'Order could not be completed.'
+        });
+      }
     });
   }
 
@@ -87,8 +90,8 @@
   function loadPaymentMethods() {
     apiRequest({
       url: '../../backend/api/ApiGuest.php?me',
-      onSuccess: res => {
-        const payments = Array.isArray(res.data?.payments) ? res.data.payments : [];
+      onSuccess: data => {
+        const payments = Array.isArray(data?.payments) ? data.payments : [];
         const select = paymentMethodSelect.empty()
           .append('<option value="">Choose payment method</option>');
 
@@ -103,6 +106,11 @@
           if (p.method === 'PayPal')        label += ` (${p.paypal_email})`;
           if (p.method === 'Bank Transfer') label += ` (IBAN ****${p.iban.slice(-4)})`;
           select.append(`<option value="${p.id}">${label}</option>`);
+        });
+      },
+      onError: err => {
+        handleResponse(err, {
+          errorMessage: 'Could not load payment methods.'
         });
       }
     });

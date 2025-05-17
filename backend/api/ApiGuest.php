@@ -8,12 +8,19 @@ header("Content-Type: application/json");
 if (session_status() === PHP_SESSION_NONE) session_start();
 
 // Einbindung benötigter Ressourcen
-require_once("../db/dbaccess.php");             // Stellt DB-Verbindung her
-require_once("../controller/GuestController.php"); // Controller für nicht-authentifizierte Nutzer
-require_once("../models/response.php");         // Enthält Hilfsfunktion sendApiResponse()
+require_once("../db/dbaccess.php");               // Stellt DB-Verbindung her
+require_once("../logic/RegisterLogic.php");       // Registrierung
+require_once("../logic/LoginLogic.php");          // Login / Token
+require_once("../logic/LogoutLogic.php");         // Logout
+require_once("../logic/GuestInfoLogic.php");      // Statusprüfung
+require_once("../models/UserModel.php");          // Datenmodell
+require_once("../models/response.php");           // Enthält Hilfsfunktion sendApiResponse()
 
-// Controller-Instanz
-$controller = new GuestController($conn);
+// Instanzen der Logik-Klassen
+$registerLogic  = new RegisterLogic();
+$loginLogic     = new LoginLogic();
+$logoutLogic    = new LogoutLogic();
+$guestInfoLogic = new GuestInfoLogic();
 
 // Routing basierend auf HTTP-Methode
 switch ($_SERVER["REQUEST_METHOD"]) {
@@ -21,7 +28,7 @@ switch ($_SERVER["REQUEST_METHOD"]) {
     case "GET":
         // Anfrage: User-Status prüfen (eingeloggt oder nicht)
         if (isset($_GET["me"])) {
-            sendApiResponse(...$controller->getGuestInfo());
+            sendApiResponse(...$guestInfoLogic->getUserStatus($conn));
         }
         break;
 
@@ -31,16 +38,18 @@ switch ($_SERVER["REQUEST_METHOD"]) {
 
         // Registrierung durchführen
         if (isset($_GET["register"])) {
-            sendApiResponse(...$controller->register($data));
+            $user = new User($data);
+            $pw2  = $data["password2"] ?? '';
+            sendApiResponse(...$registerLogic->register($user, $pw2, $conn));
 
         // Login durchführen (optional mit "Remember Me")
         } elseif (isset($_GET["login"])) {
             $remember = $data["remember"] ?? false;
-            sendApiResponse(...$controller->login($data, $remember));
+            sendApiResponse(...$loginLogic->login($data, $remember, $conn));
 
         // Logout durchführen
         } elseif (isset($_GET["logout"])) {
-            sendApiResponse(...$controller->logout());
+            sendApiResponse(...$logoutLogic->logout($conn));
 
         // Keine gültige Aktion
         } else {

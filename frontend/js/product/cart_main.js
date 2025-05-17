@@ -1,4 +1,3 @@
-
 (function(window, $) {
   'use strict';
 
@@ -32,11 +31,13 @@
   function loadCart(callback) {
     apiRequest({
       url: '../../backend/api/ApiCart.php',
-      onSuccess: res => {
-        const data = res.data || {};
+      onSuccess: data => {
         renderCart(data);
         if (typeof callback === 'function') callback(data);
-      }
+      },
+      onError: err => handleResponse(err, {
+        errorMessage: "Could not load cart."
+      })
     });
   }
 
@@ -86,7 +87,10 @@
       onSuccess: () => {
         loadCart();
         updateCartCount();
-      }
+      },
+      onError: err => handleResponse(err, {
+        errorMessage: err?.message || "Could not update quantity."
+      })
     });
   }
 
@@ -100,10 +104,12 @@
       onSuccess: () => {
         loadCart();
         updateCartCount();
-      }
+      },
+      onError: err => handleResponse(err, {
+        errorMessage: err?.message || "Could not remove item."
+      })
     });
   }
-
 
   // Modul global verfügbar machen
   window.CartMain = { loadCart };

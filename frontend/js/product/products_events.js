@@ -2,7 +2,6 @@
   'use strict';
 
   const Events = {
-    // Alle Event-Listener und Start-Logik setzen
     init() {
       // Filter & Suche
       $(document).on(
@@ -16,14 +15,14 @@
         this.load();
       });
 
-      // Suchfeld mit Delay
+      // Live-Suche mit Delay
       let debounce;
       $(document).on('input', '#liveSearchInput', () => {
         clearTimeout(debounce);
         debounce = setTimeout(this.onFilters.bind(this), 300);
       });
 
-      // In Card: Produkt in Warenkorb legen
+      // In Card: Produkt zum Warenkorb
       $(document).on('click', '.product-card .add-to-cart', function() {
         const card = $(this).closest('.product-card');
         const pid  = +card.data('product-id');
@@ -31,7 +30,7 @@
         window.ProductsAPI.addToCart(pid, qty);
       });
 
-      // In Modal: Produkt in Warenkorb legen
+      // In Modal: Produkt zum Warenkorb
       $(document).on('click', '.product-modal .add-to-cart', function() {
         const modal = $(this).closest('.modal');
         const pid   = +modal.attr('id').replace('productModal', '');
@@ -39,46 +38,43 @@
         window.ProductsAPI.addToCart(pid, qty);
       });
 
-      // Animation bei View-Details-Klick
+      // Animation beim Klick auf "Details"
       $(document).on('click', '.product-card .view-details', function() {
         const btn = $(this);
         btn.addClass('clicked');
         setTimeout(() => btn.removeClass('clicked'), 350);
       });
 
-      // Drag & Drop für Warenkorb aktivieren
+      // Drag-and-Drop aktivieren
       window.ProductsCart.initDragDrop();
 
-      // Produkte laden
+      // Initiale Produktladung
       this.load();
     },
 
-    // Filter sammeln & Produkte neu laden
     onFilters() {
       const filters = window.ProductsFilters.collectFilters();
-      const term    = $('#liveSearchInput').val().trim();
+      const term = $('#liveSearchInput').val().trim();
       if (term) filters.search = term;
       this.load(filters);
     },
 
-    // Produkte von API holen und rendern
     load(filters = {}) {
       window.ProductsAPI.loadProducts(filters, {
-        onSuccess: (products, cache) => {
-          window.ProductsFilters.renderFilters(cache, filters);
+        onSuccess: products => {
+          window.ProductsFilters.renderFilters(ProductsAPI.allProductsCache, filters);
           window.ProductsRender.renderProducts(products);
           window.ProductsRender.setupHoverRotation(products);
         },
         onError: err => {
           handleResponse(err, {
-            errorMessage: err.message || 'Products could not be loaded.'
+            errorMessage: err?.message || err?.data?.error || 'Products could not be loaded.'
           });
         }
       });
     }
   };
 
-  // Init bei DOM ready
   $(document).ready(() => Events.init());
 
 })(window, jQuery);

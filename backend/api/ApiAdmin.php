@@ -5,112 +5,114 @@ header("Content-Type: application/json");
 // Startet die Session, falls sie noch nicht läuft
 if (session_status() === PHP_SESSION_NONE) session_start();
 
-// Bindet benötigte Dateien ein
-require_once("../db/dbaccess.php");           // DB-Verbindung
-require_once("../controller/AdminController.php"); // Logik für Admin-Aktionen
-require_once("../models/response.php");       // sendApiResponse()
+// DB-Verbindung und Logikklassen einbinden
+require_once("../db/dbaccess.php");
+require_once("../logic/AdminProductLogic.php");
+require_once("../logic/AdminCustomerLogic.php");
+require_once("../logic/AdminOrderLogic.php");
+require_once("../logic/AdminVoucherLogic.php");
+require_once("../models/response.php");
 
-// Prüft, ob Benutzer eingeloggt ist und Admin-Rechte hat
+// Zugriffsschutz: Nur Admins erlaubt
 if (empty($_SESSION['user']['id']) || $_SESSION['user']['role'] !== 'admin') {
     sendApiResponse(401, null, 'Unauthorized!');
 }
 
-// Instanziiert den Controller
-$ctrl = new AdminController($conn);
+// Instanzen der Logic-Klassen erzeugen
+$productLogic  = new AdminProductLogic();
+$customerLogic = new AdminCustomerLogic();
+$orderLogic    = new AdminOrderLogic();
+$voucherLogic  = new AdminVoucherLogic();
 
-// Ermittelt Methode (GET/POST) und erste GET-Aktion (?key=...)
 $method  = $_SERVER['REQUEST_METHOD'];
 $action  = array_keys($_GET)[0] ?? '';
-
-// Nimmt JSON-Body-Daten oder Fallback auf $_POST
 $payload = json_decode(file_get_contents('php://input'), true) ?? $_POST;
 
 try {
-    // Kombiniert Methode und Aktion zu einem String (z. B. "GET?listProducts")
     switch ("$method?$action") {
 
         // --- Produkte ---
         case 'GET?listProducts':
-            sendApiResponse(...$ctrl->listProducts());
+            sendApiResponse(...$productLogic->list($conn));
             break;
 
         case 'GET?getProduct':
-            sendApiResponse(...$ctrl->getProduct((int)$_GET['id']));
+            sendApiResponse(...$productLogic->get((int)$_GET['id'], $conn));
             break;
 
         case 'POST?addProduct':
         case 'POST?updateProduct':
-            sendApiResponse(...$ctrl->saveProduct($_POST, $_FILES));
+            sendApiResponse(...$productLogic->save($_POST, $_FILES, $conn));
             break;
 
         case 'POST?deleteProduct':
-            sendApiResponse(...$ctrl->deleteProduct((int)$_GET['id']));
+            sendApiResponse(...$productLogic->delete((int)$_GET['id'], $conn));
             break;
 
         // --- Kunden ---
         case 'GET?listCustomers':
-            sendApiResponse(...$ctrl->listCustomers());
+            sendApiResponse(...$customerLogic->list($conn));
             break;
 
         case 'GET?getCustomer':
-            sendApiResponse(...$ctrl->getCustomer((int)$_GET['id']));
+            sendApiResponse(...$customerLogic->get((int)$_GET['id'], $conn));
             break;
 
         case 'POST?toggleCustomer':
-            sendApiResponse(...$ctrl->toggleCustomer((int)$_GET['id']));
+            sendApiResponse(...$customerLogic->toggle((int)$_GET['id'], $conn));
             break;
 
         case 'POST?addCustomer':
         case 'POST?updateCustomer':
-            sendApiResponse(...$ctrl->saveCustomer($payload));
+            sendApiResponse(...$customerLogic->save($payload, $conn));
             break;
 
         case 'POST?deleteCustomer':
-            sendApiResponse(...$ctrl->deleteCustomer((int)$_GET['id']));
+            sendApiResponse(...$customerLogic->delete((int)$_GET['id'], $conn));
             break;
 
         // --- Bestellungen ---
         case 'GET?listOrdersByCustomer':
             $id = (int)($_GET['id'] ?? 0);
             if ($id > 0) {
-                sendApiResponse(...$ctrl->listOrdersByCustomer($id));
+                sendApiResponse(...$orderLogic->listByCustomer($id, $conn));
             } else {
-                sendApiResponse(...$ctrl->listAllOrders());
+                sendApiResponse(...$orderLogic->listAll($conn));
             }
             break;
 
         case 'GET?listOrderItems':
-            sendApiResponse(...$ctrl->listOrderItems((int)$_GET['order_id']));
+            sendApiResponse(...$orderLogic->listItems((int)$_GET['order_id'], $conn));
             break;
 
         case 'POST?removeOrderItem':
-            sendApiResponse(...$ctrl->removeOrderItem((int)$_GET['id'], (int)($_GET['qty'] ?? 1)));
+            sendApiResponse(...$orderLogic->removeItem((int)$_GET['id'], (int)($_GET['qty'] ?? 1), $conn));
             break;
 
         // --- Gutscheine ---
         case 'GET?listVouchers':
-            sendApiResponse(...$ctrl->listVouchers());
+            sendApiResponse(...$voucherLogic->list($conn));
             break;
 
         case 'GET?getVoucher':
-            sendApiResponse(...$ctrl->getVoucher((int)$_GET['id']));
+            sendApiResponse(...$voucherLogic->get((int)$_GET['id'], $conn));
             break;
 
         case 'GET?generateVoucherCode':
-            sendApiResponse(...$ctrl->getNewVoucherCode());
+            sendApiResponse(...$voucherLogic->generateCode());
             break;
 
         case 'POST?addVoucher':
         case 'POST?updateVoucher':
-            sendApiResponse(...$ctrl->saveVoucher($payload));
+            sendApiResponse(...$voucherLogic->save($payload, $conn));
             break;
 
-        // --- Fallback: ungültige Route ---
+        // --- Fallback für ungültige Aktionen ---
         default:
             sendApiResponse(400, null, "Invalid request.");
     }
 
-// Fehlerbehandlung: Fangt alle unerwarteten Exceptions ab
 } catch (Exception $e) {
+    // Fehlerbehandlung mit Logging
     sendApiResponse(500, ['error' => $e->getMessage()], 'Server error.');
 }

@@ -6,18 +6,18 @@ header("Content-Type: application/json");
 if (session_status() === PHP_SESSION_NONE) session_start();
 
 // Bindet notwendige Abhängigkeiten ein
-require_once __DIR__ . '/../db/dbaccess.php';        // Stellt DB-Verbindung her
-require_once __DIR__ . '/../controller/CartController.php'; // Controller für Warenkorb-Funktionen
-require_once __DIR__ . '/../models/response.php';    // sendApiResponse() Funktion
+require_once __DIR__ . '/../db/dbaccess.php';     // Stellt DB-Verbindung her
+require_once __DIR__ . '/../logic/CartLogic.php'; // Direktzugriff auf Logik
+require_once __DIR__ . '/../models/response.php'; // sendApiResponse() Funktion
 
 // Prüft, ob der Benutzer eingeloggt ist – andernfalls Abbruch
 if (empty($_SESSION['user']['id'])) {
     sendApiResponse(401, null, 'Please log in to add items to your cart!');
 }
 
-// Erstellt Controller-Instanz + speichert User-ID
-$ctrl   = new CartController($conn);
-$userId = $_SESSION['user']['id'];
+// Erstellt Logik-Instanz + speichert User-ID
+$logic   = new CartLogic();
+$userId  = (int)$_SESSION['user']['id'];
 
 // Steuert Verhalten anhand der HTTP-Methode
 switch ($_SERVER['REQUEST_METHOD']) {
@@ -25,11 +25,11 @@ switch ($_SERVER['REQUEST_METHOD']) {
     case 'GET':
         // Bei ?cartCount wird nur die Menge zurückgegeben
         if (isset($_GET['cartCount'])) {
-            [$status, $data, $msg] = $ctrl->getCartCount($userId);
+            [$status, $data, $msg] = $logic->count($userId, $conn);
             sendApiResponse($status, $data, $msg);
         } else {
             // Sonst: Komplette Cart-Daten + Summen
-            [$status, $data, $msg] = $ctrl->getCartWithSummary($userId);
+            [$status, $data, $msg] = $logic->summary($userId, $conn);
             sendApiResponse($status, $data, $msg);
         }
         break;
@@ -42,17 +42,17 @@ switch ($_SERVER['REQUEST_METHOD']) {
         if (isset($_GET['addToCart'])) {
             $pid = (int)$_GET['addToCart'];
             $qty = max(1, (int)($data['quantity'] ?? 1)); // Mindestmenge 1
-            [$status, $data, $msg] = $ctrl->addToCart($userId, $pid, $qty);
+            [$status, $data, $msg] = $logic->add($userId, $pid, $qty, $conn);
             sendApiResponse($status, $data, $msg);
 
         // Menge eines Artikels im Warenkorb ändern
         } elseif (!empty($data['action']) && $data['action'] === 'update') {
-            [$status, $data, $msg] = $ctrl->updateQuantity((int)$data['id'], (int)$data['quantity']);
+            [$status, $data, $msg] = $logic->update((int)$data['id'], (int)$data['quantity'], $conn);
             sendApiResponse($status, $data, $msg);
 
         // Artikel aus dem Warenkorb entfernen
         } elseif (!empty($data['action']) && $data['action'] === 'delete') {
-            [$status, $data, $msg] = $ctrl->removeItem((int)$data['id']);
+            [$status, $data, $msg] = $logic->remove((int)$data['id'], $conn);
             sendApiResponse($status, $data, $msg);
 
         // Keine bekannte Aktion

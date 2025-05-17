@@ -5,20 +5,18 @@
 (function(window, $) {
   'use strict';
 
-  // --- Selektoren & Modal-Instanz für Kunden ---
   const customersTableBody   = document.querySelector('#customersTable tbody');
   const customerFormElement  = document.getElementById('customerForm');
   const customerModalElement = document.getElementById('customerModal');
   const customerModal        = new bootstrap.Modal(customerModalElement);
 
-  // --- Promise-basierte API-Funktionen ---
   function fetchAllCustomers() {
     return new Promise((resolve, reject) => {
       apiRequest({
         url: '../../backend/api/ApiAdmin.php?listCustomers',
         method: 'GET',
         onSuccess: resolve,
-        onError: err => { handleResponse(err, {}); reject(err); }
+        onError: reject
       });
     });
   }
@@ -29,7 +27,7 @@
         url: `../../backend/api/ApiAdmin.php?getCustomer&id=${customerId}`,
         method: 'GET',
         onSuccess: resolve,
-        onError: err => { handleResponse(err, {}); reject(err); }
+        onError: reject
       });
     });
   }
@@ -42,7 +40,7 @@
         data: customerData,
         successMessage: 'Customer settings saved successfully.',
         onSuccess: resolve,
-        onError: err => { handleResponse(err, {}); reject(err); }
+        onError: reject
       });
     });
   }
@@ -55,12 +53,11 @@
         data: { id: customerId },
         successMessage: 'Customer deleted successfully.',
         onSuccess: resolve,
-        onError: err => { handleResponse(err, {}); reject(err); }
+        onError: reject
       });
     });
   }
 
-  // --- View-/Render-Funktionen: Tabelle & Modal ---
   function renderCustomersTable(customers) {
     customersTableBody.innerHTML = '';
     customers.forEach(c => {
@@ -100,11 +97,9 @@
     $('#customer_city').val(c.city || '');
     $('#customer_country').val(c.country || '');
     $('#customer_password').val('');
-
     customerModal.show();
   }
 
-  // --- Event-Handler für Add, Edit, Save, Delete ---
   function handleAddCustomerClick() {
     openCustomerModal();
   }
@@ -112,7 +107,7 @@
   function handleEditCustomerClick(e) {
     const id = +e.currentTarget.closest('tr').dataset.id;
     fetchCustomerData(id)
-      .then(res => openCustomerModal(res.data))
+      .then(data => openCustomerModal(data))
       .catch(() => {});
   }
 
@@ -154,7 +149,6 @@
       .catch(() => {});
   }
 
-  // --- Events binden: Buttons & Delegation mit Null-Check ---
   function bindCustomerEvents() {
     const addBtn = document.getElementById('addCustomerBtn');
     if (addBtn) addBtn.addEventListener('click', handleAddCustomerClick);
@@ -169,10 +163,9 @@
     }
   }
 
-  // --- Initialisierung: Laden & Events binden ---
   function loadAndRenderCustomers() {
     fetchAllCustomers()
-      .then(res => renderCustomersTable(res.data))
+      .then(data => renderCustomersTable(data))
       .catch(() => {});
   }
 
