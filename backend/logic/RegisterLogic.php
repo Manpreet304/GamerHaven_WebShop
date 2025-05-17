@@ -1,6 +1,18 @@
 <?php
 class RegisterLogic {
-    public function validate(User $user, string $password2, $conn): true|array {
+
+    // Registrierung: Validieren und Speichern
+    public function register(User $user, string $password2, mysqli $conn): array {
+        $errors = $this->validate($user, $password2, $conn);
+        if (!empty($errors)) {
+            return [400, ["errors" => $errors], "Validation failed"];
+        }
+
+        return $this->save($user, $conn);
+    }
+
+    // Validierung der Nutzerdaten
+    public function validate(User $user, string $password2, mysqli $conn): array {
         $errors = [];
 
         if ($user->password !== $password2) {
@@ -8,50 +20,49 @@ class RegisterLogic {
         }
 
         if (strlen($user->password) < 8) {
-            $errors["password"] = "Password must be at least 8 characters long.";
+            $errors["password"] = "Password too short.";
         }
 
         if (!preg_match('/[A-Z]/', $user->password) ||
             !preg_match('/[a-z]/', $user->password) ||
             !preg_match('/[0-9]/', $user->password)) {
-            $errors["password"] = "Password must contain uppercase, lowercase and a number.";
+            $errors["password"] = "Password must contain uppercase, lowercase, and number.";
         }
 
         if (!filter_var($user->email, FILTER_VALIDATE_EMAIL)) {
-            $errors["email"] = "Invalid email format.";
+            $errors["email"] = "Invalid email.";
         }
 
-        // Prüfe, ob Username schon existiert
+        // Prüfen auf doppelte Benutzernamen
         $stmt = $conn->prepare("SELECT id FROM users WHERE username = ?");
         $stmt->bind_param("s", $user->username);
         $stmt->execute();
         $stmt->store_result();
         if ($stmt->num_rows > 0) {
-            $errors["username"] = "Username already taken.";
+            $errors["username"] = "Username taken.";
         }
 
-        // Prüfe, ob E-Mail schon existiert
+        // Prüfen auf doppelte E-Mail
         $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
         $stmt->bind_param("s", $user->email);
         $stmt->execute();
         $stmt->store_result();
         if ($stmt->num_rows > 0) {
-            $errors["email"] = "Email address already registered.";
+            $errors["email"] = "Email already registered.";
         }
 
-        return empty($errors) ? true : $errors;
+        return $errors;
     }
 
-    public function save(User $user, $conn): bool {
+    // Speichern von Benutzer + Zahlmethode in Datenbank
+    public function save(User $user, mysqli $conn): array {
         $conn->begin_transaction();
 
         try {
-            $sql = "INSERT INTO users (salutation, firstname, lastname, address, zip_code, city, email, username, password, country, created_at, role)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'user')";
+            $stmt = $conn->prepare("INSERT INTO users (salutation, firstname, lastname, address, zip_code, city, email, username, password, country, created_at, role)
+                                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'user')");
 
-            $stmt = $conn->prepare($sql);
-            $hashed = password_hash($user->password, PASSWORD_DEFAULT);
-
+            $hash = password_hash($user->password, PASSWORD_DEFAULT);
             $stmt->bind_param("ssssssssss",
                 $user->salutation,
                 $user->first_name,
@@ -61,16 +72,14 @@ class RegisterLogic {
                 $user->city,
                 $user->email,
                 $user->username,
-                $hashed,
+                $hash,
                 $user->country
             );
             $stmt->execute();
             $userId = $conn->insert_id;
 
-            $sql2 = "INSERT INTO payments (user_id, method, card_number, csv, paypal_email, paypal_username, iban, bic, created_at)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())";
-
-            $stmt2 = $conn->prepare($sql2);
+            $stmt2 = $conn->prepare("INSERT INTO payments (user_id, method, card_number, csv, paypal_email, paypal_username, iban, bic, created_at)
+                                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
             $stmt2->bind_param("isssssss",
                 $userId,
                 $user->payment_method,
@@ -84,10 +93,11 @@ class RegisterLogic {
             $stmt2->execute();
 
             $conn->commit();
-            return true;
+            return [200, ["id" => $userId], "Registration successful"];
+
         } catch (Exception $e) {
             $conn->rollback();
-            return false;
+            return [500, null, "Registration failed"];
         }
     }
 }

@@ -6,7 +6,7 @@
   'use strict';
 
   const ProductsRender = {
-    // Sterne-Rating als HTML
+    // Sterne-Rating als HTML erzeugen
     renderStars(rating) {
       const r     = parseFloat(rating) || 0;
       const full  = Math.floor(r);
@@ -22,7 +22,7 @@
       );
     },
 
-    // Produktattribute als HTML
+    // Produktattribute als HTML darstellen
     renderAttributes(attrString) {
       try {
         const obj = JSON.parse(attrString);
@@ -34,7 +34,7 @@
       }
     },
 
-    // Bild-Rotation im Hover-State
+    // Bildrotation bei Hover aktivieren
     setupHoverRotation(products) {
       $('.product-card').each(function() {
         const $img = $(this).find('.product-image');
@@ -58,7 +58,7 @@
       });
     },
 
-    // Produkt-Grid und Modals rendern
+    // Produktkarten und zugehörige Modals erstellen
     renderProducts(products) {
       const grid = $('#productGrid').empty();
       const mods = $('#modals-container').empty();
@@ -66,7 +66,7 @@
       const tplModal = document.getElementById('product-modal-template').content;
 
       products.forEach((p, idx) => {
-        // Card
+        // Produktkarte aufbauen
         const $card = $(tplCard.cloneNode(true)).find('.product-card')
           .attr('data-product-id', p.id)
           .attr('draggable','true')
@@ -89,7 +89,7 @@
 
         grid.append($card.closest('.col-md-4'));
 
-        // Modal
+        // Modal aufbauen
         const $mod    = $(tplModal.cloneNode(true)).find('.product-modal')
                           .attr('id',`productModal${p.id}`);
         const $modImg = $mod.find('.modal-product-image')
@@ -126,5 +126,7 @@
     }
   };
 
+  // Objekt global verfügbar machen
   window.ProductsRender = ProductsRender;
+
 })(window, jQuery);

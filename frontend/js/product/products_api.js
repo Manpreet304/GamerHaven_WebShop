@@ -1,18 +1,11 @@
-/**
- * js/products/products_api.js
- * Verantwortlich für Laden der Produktdaten und Hinzufügen zum Warenkorb
- */
 (function(window, $) {
   'use strict';
 
-  // --- ProductsAPI Objekt ---
   const ProductsAPI = {
     allProductsCache: [],
     filtersInitialized: false,
 
-    /**
-     * Lädt Produkte mit optionalen Filtern.
-     */
+    // Produkte mit optionalen Filtern laden
     loadProducts(filters = {}, callbacks = {}) {
       const query = new URLSearchParams(filters).toString();
       const url = `../../backend/api/ApiProducts.php${query ? '?' + query : ''}`;
@@ -21,39 +14,34 @@
         url,
         method: 'GET',
         onSuccess: res => {
-          const products = res.body || [];
+          const products = res.data || [];
           if (!this.filtersInitialized) {
             this.allProductsCache = products.slice();
             this.filtersInitialized = true;
           }
           callbacks.onSuccess?.(products, this.allProductsCache);
         },
-        onError: err => {
-          callbacks.onError?.(err);
-        }
+        onError: callbacks.onError
       });
     },
 
-    /**
-     * Fügt ein Produkt dem Warenkorb hinzu.
-     */
+    // Produkt zum Warenkorb hinzufügen
     addToCart(productId, quantity = 1, callbacks = {}) {
       apiRequest({
         url: `../../backend/api/ApiCart.php?addToCart=${productId}`,
         method: 'POST',
-        data: { quantity },
-        showValidation: false,
+        data: { action: 'add', product_id: productId, quantity },
         successMessage: 'Product added to cart!',
         onSuccess: res => {
           updateCartCount();
-          window.ProductsCart.animateCartButtons(productId, true);
+          window.ProductsCart?.animateCartButtons?.(productId, true);
           callbacks.onSuccess?.(res);
         },
         onError: err => {
           handleResponse(err, {
-            errorMessage: err.message,
+            errorMessage: err?.data?.error || err?.message || "Could not add product to cart.",
             onError: () => {
-              window.ProductsCart.animateCartButtons(productId, false);
+              window.ProductsCart?.animateCartButtons?.(productId, false);
               callbacks.onError?.(err);
             }
           });
@@ -62,5 +50,7 @@
     }
   };
 
+  // Objekt global verfügbar machen
   window.ProductsAPI = ProductsAPI;
+
 })(window, jQuery);

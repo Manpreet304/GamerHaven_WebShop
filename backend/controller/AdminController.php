@@ -1,139 +1,95 @@
 <?php
-// controller/AdminController.php
 declare(strict_types=1);
 
-require_once("../logic/AdminLogic.php");
+require_once(__DIR__ . '/../logic/AdminProductLogic.php');
+require_once(__DIR__ . '/../logic/AdminCustomerLogic.php');
+require_once(__DIR__ . '/../logic/AdminOrderLogic.php');
+require_once(__DIR__ . '/../logic/AdminVoucherLogic.php');
 
 class AdminController {
-    private AdminLogic $logic;
+    private AdminProductLogic $products;
+    private AdminCustomerLogic $customers;
+    private AdminOrderLogic $orders;
+    private AdminVoucherLogic $vouchers;
+    private mysqli $conn;
 
-    public function __construct() {
-        $this->logic = new AdminLogic();
+    public function __construct(mysqli $conn) {
+        $this->conn = $conn;
+        $this->products  = new AdminProductLogic();
+        $this->customers = new AdminCustomerLogic();
+        $this->orders    = new AdminOrderLogic();
+        $this->vouchers  = new AdminVoucherLogic();
     }
 
-    // ----- PRODUCTS -----
-    public function listProducts(mysqli $conn): array {
-        return [
-            "status" => 200,
-            "body" => $this->logic->fetchAllProducts($conn)
-        ];
+    // PRODUCTS
+    public function listProducts(): array {
+        return $this->products->list($this->conn);
     }
 
-    public function getProduct(int $id, mysqli $conn): array {
-        $product = $this->logic->fetchProductById($id, $conn);
-        return [
-            "status" => !empty($product) ? 200 : 404,
-            "body" => $product
-        ];
+    public function getProduct(int $id): array {
+        return $this->products->get($id, $this->conn);
     }
 
-    public function saveProduct(array $post, array $files, mysqli $conn): array {
-        $result = $this->logic->saveProduct($post, $files, $conn);
-        return [
-            "status" => $result["success"] ? 200 : 400,
-            "body" => $result
-        ];
+    public function saveProduct(array $post, array $files): array {
+        return $this->products->save($post, $files, $this->conn);
     }
 
-    public function deleteProduct(int $id, mysqli $conn): array {
-        $ok = $this->logic->deleteProduct($id, $conn);
-        return [
-            "status" => $ok ? 200 : 400,
-            "body" => ["deleted" => $ok]
-        ];
+    public function deleteProduct(int $id): array {
+        return $this->products->delete($id, $this->conn);
     }
 
-    // ----- CUSTOMERS -----
-    public function listCustomers(mysqli $conn): array {
-        return [
-            "status" => 200,
-            "body" => $this->logic->fetchAllCustomers($conn)
-        ];
+    // CUSTOMERS
+    public function listCustomers(): array {
+        return $this->customers->list($this->conn);
     }
 
-    public function getCustomer(int $id, mysqli $conn): array {
-        $customer = $this->logic->fetchCustomerById($id, $conn);
-        return [
-            "status" => !empty($customer) ? 200 : 404,
-            "body" => $customer
-        ];
+    public function getCustomer(int $id): array {
+        return $this->customers->get($id, $this->conn);
     }
 
-    public function toggleCustomer(int $id, mysqli $conn): array {
-        $ok = $this->logic->toggleCustomerActive($id, $conn);
-        return [
-            "status" => $ok ? 200 : 400,
-            "body" => ["toggled" => $ok]
-        ];
+    public function toggleCustomer(int $id): array {
+        return $this->customers->toggle($id, $this->conn);
     }
 
-    public function saveCustomer(array $data, mysqli $conn): array {
-        $result = $this->logic->saveCustomer($data, $conn);
-        return [
-            "status" => $result["success"] ? 200 : 400,
-            "body" => $result
-        ];
+    public function saveCustomer(array $data): array {
+        return $this->customers->save($data, $this->conn);
     }
 
-    public function deleteCustomer(int $id, mysqli $conn): array {
-        $ok = $this->logic->deleteCustomer($id, $conn);
-        return [
-            "status" => $ok ? 200 : 400,
-            "body" => ["deleted" => $ok]
-        ];
+    public function deleteCustomer(int $id): array {
+        return $this->customers->delete($id, $this->conn);
     }
 
-    // ----- ORDERS -----
-    public function listOrdersByCustomer(int $userId, mysqli $conn): array {
-        return [
-            "status" => 200,
-            "body" => $this->logic->fetchOrdersByCustomer($userId, $conn)
-        ];
+    // ORDERS
+    public function listOrdersByCustomer(int $customerId): array {
+        return $this->orders->listByCustomer($customerId, $this->conn);
     }
 
-    public function listOrderItems(int $orderId, mysqli $conn): array {
-        return [
-            "status" => 200,
-            "body" => $this->logic->fetchOrderItems($orderId, $conn)
-        ];
+    public function listAllOrders(): array {
+        return $this->orders->listAll($this->conn);
     }
 
-    public function removeOrderItem(int $itemId, int $qty, mysqli $conn): array {
-        $ok = $this->logic->removeOrderItem($itemId, $qty, $conn);
-        return [
-            "status" => $ok ? 200 : 400,
-            "body" => ["removed" => $ok]
-        ];
+    public function listOrderItems(int $orderId): array {
+        return $this->orders->listItems($orderId, $this->conn);
     }
 
-    // ----- VOUCHERS -----
-    public function listVouchers(mysqli $conn): array {
-        return [
-            "status" => 200,
-            "body" => $this->logic->fetchAllVouchers($conn)
-        ];
+    public function removeOrderItem(int $itemId, int $qty): array {
+        return $this->orders->removeItem($itemId, $qty, $this->conn);
     }
 
-    public function getVoucher(int $id, mysqli $conn): array {
-        $voucher = $this->logic->fetchVoucherById($id, $conn);
-        return [
-            "status" => !empty($voucher) ? 200 : 404,
-            "body" => $voucher
-        ];
+    // VOUCHERS
+    public function listVouchers(): array {
+        return $this->vouchers->list($this->conn);
+    }
+
+    public function getVoucher(int $id): array {
+        return $this->vouchers->get($id, $this->conn);
     }
 
     public function getNewVoucherCode(): array {
-        return [
-            "status" => 200,
-            "body" => ["code" => $this->logic->getNewVoucherCode()]
-        ];
+        return $this->vouchers->generateCode();
     }
 
-    public function saveVoucher(array $data, mysqli $conn): array {
-        $result = $this->logic->saveVoucher($data, $conn);
-        return [
-            "status" => $result["success"] ? 200 : 400,
-            "body" => $result
-        ];
+    public function saveVoucher(array $data): array {
+        return $this->vouchers->save($data, $this->conn);
     }
 }

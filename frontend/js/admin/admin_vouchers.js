@@ -22,6 +22,7 @@
       });
     });
   }
+
   function fetchVoucherData(voucherId) {
     return new Promise((resolve, reject) => {
       apiRequest({
@@ -32,6 +33,7 @@
       });
     });
   }
+
   function generateNewVoucherCode() {
     return new Promise((resolve, reject) => {
       apiRequest({
@@ -42,19 +44,23 @@
       });
     });
   }
+
   function submitVoucherData(voucherData, isUpdate) {
     return new Promise((resolve, reject) => {
       apiRequest({
         url: isUpdate
-          ? `../../backend/api/ApiAdmin.php?updateVoucher&id=${voucherData.id}`
-          : `../../backend/api/ApiAdmin.php?addVoucher`,
+          ? '../../backend/api/ApiAdmin.php?updateVoucher'
+          : '../../backend/api/ApiAdmin.php?addVoucher',
         method: 'POST',
         data: voucherData,
         successMessage: isUpdate
           ? 'Voucher updated successfully.'
           : 'Voucher created successfully.',
         onSuccess: resolve,
-        onError: err => { handleResponse(err, {}); reject(err); }
+        onError: err => {
+          handleResponse(err, {});
+          reject(err);
+        }
       });
     });
   }
@@ -78,6 +84,7 @@
       vouchersTableBody.appendChild(row);
     });
   }
+
   function openVoucherModal(v = {}) {
     voucherFormElement.classList.remove('was-validated');
     $('#voucherForm')[0].reset();
@@ -99,12 +106,14 @@
       .then(res => openVoucherModal({ code: res.data.code }))
       .catch(() => {});
   }
+
   function handleEditVoucherClick(e) {
     const id = +e.currentTarget.closest('tr').dataset.id;
     fetchVoucherData(id)
       .then(res => openVoucherModal(res.data))
       .catch(() => {});
   }
+
   function handleSaveVoucherClick() {
     if (!voucherFormElement.checkValidity()) {
       voucherFormElement.classList.add('was-validated');
@@ -142,6 +151,7 @@
       .then(res => renderVouchersTable(res.data))
       .catch(() => {});
   }
+
   document.addEventListener('DOMContentLoaded', () => {
     loadAndRenderVouchers();
     bindVoucherEvents();

@@ -1,43 +1,44 @@
-/**
- * js/user/login.js
- * Verantwortlich für Benutzer-Login im Frontend
- */
 (function(window, $) {
   'use strict';
 
-  // --- Selektoren ---
+  // Elementreferenzen
   const loginForm        = $('#loginForm');
   const identifierInput  = $('#identifier');
   const passwordInput    = $('#password');
   const rememberCheckbox = $('#rememberMe');
   const formFields       = loginForm.find('.form-control');
 
-  // --- Initialisierung bei DOM-Ready ---
+  // Init bei DOM ready
   $(function() {
     initTooltips();
-    bindEvents();
+    loginForm.on('submit', handleLoginSubmit);
   });
 
-  // --- Tooltips aktivieren ---
+  // Tooltips aktivieren
   function initTooltips() {
     $('[data-bs-toggle="tooltip"]').each((_, el) =>
       new bootstrap.Tooltip(el)
     );
   }
 
-  // --- Events binden ---
-  function bindEvents() {
-    loginForm.on('submit', handleLoginSubmit);
-  }
-
-  // --- Event-Handler für Login-Formular ---
+  // Login absenden
   function handleLoginSubmit(event) {
     event.preventDefault();
     const formEl = loginForm[0];
-
-    // Bootstrap-Validation-Klasse setzen
     formEl.classList.add('was-validated');
-    if (!formEl.checkValidity()) return;
+
+    // Feedback zurücksetzen
+    formFields.removeClass('is-invalid is-valid');
+    loginForm.find('.invalid-feedback').hide();
+
+    // Ungültige Felder markieren
+    if (!formEl.checkValidity()) {
+      $(formEl).find(':invalid').each(function () {
+        $(this).addClass('is-invalid');
+        $(this).next('.invalid-feedback').show();
+      });
+      return;
+    }
 
     const payload = {
       identifier: identifierInput.val().trim(),
@@ -45,6 +46,7 @@
       remember:   rememberCheckbox.is(':checked')
     };
 
+    // Login-Anfrage
     apiRequest({
       url: '../../backend/api/ApiGuest.php?login',
       method: 'POST',
@@ -52,27 +54,20 @@
       formSelector: '#loginForm',
       showValidation: false,
       successMessage: 'Login successful! Redirecting...',
-      onSuccess: () => setTimeout(
-        () => window.location.href = '../website/homepage.html',
-        2000
+      onSuccess: () => setTimeout(() =>
+        window.location.href = '../website/homepage.html', 2000
       ),
       onError: resp => {
-        // Backend-Meldung anzeigen (richtig priorisiert!)
         handleResponse(resp, {
           errorMessage: resp.data?.error || resp.message
         });
-
-        // Feldspezifische Fehler markieren
-        const errors = resp.data?.errors || {};
-        displayFieldErrors(errors);
+        displayFieldErrors(resp.data?.errors || {});
       }
     });
   }
 
-  // --- Feld-Fehlermarkierung ---
+  // Fehler an Formularfeldern anzeigen
   function displayFieldErrors(errors) {
-    formFields.removeClass('is-invalid is-valid');
-
     Object.entries(errors).forEach(([field, msg]) => {
       const input = $(`#${field}`);
       const feedback = input.next('.invalid-feedback');

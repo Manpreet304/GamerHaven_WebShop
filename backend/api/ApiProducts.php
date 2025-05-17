@@ -1,15 +1,24 @@
 <?php
+// api/product.php
+
+// Antwort-Header setzen: JSON als Rückgabeformat
 header("Content-Type: application/json");
+
+// Session starten, falls noch nicht aktiv
 if (session_status() === PHP_SESSION_NONE) session_start();
 
-require_once("../db/dbaccess.php");
-require_once("../controller/ProductController.php");
-require_once("../models/response.php"); // zentrale Helfer
+// Benötigte Abhängigkeiten einbinden
+require_once("../db/dbaccess.php");             // DB-Verbindung
+require_once("../controller/ProductController.php"); // Controller-Logik
+require_once("../models/response.php");         // sendApiResponse() für einheitliche Antwortstruktur
 
-$controller = new ProductController();
+// Controller-Instanz erstellen
+$productController = new ProductController($conn);
 
+// HTTP-Methode auswerten
 switch ($_SERVER["REQUEST_METHOD"]) {
     case "GET":
+        // Filter aus Query-String übernehmen (optional, default: null)
         $filters = [
             "category"  => $_GET["category"] ?? null,
             "brand"     => $_GET["brand"] ?? null,
@@ -20,16 +29,11 @@ switch ($_SERVER["REQUEST_METHOD"]) {
             "search"    => $_GET["search"] ?? null
         ];
 
-        try {
-            $result = $controller->getAllFiltered($filters);
-            sendApiResponse($result, "Products loaded.", "Failed to load products.");
-        } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode(jsonResponse(false, null, "Server error.", [$e->getMessage()]));
-        }
+        // Controller-Methode aufrufen und API-Antwort zurücksenden
+        sendApiResponse(...$productController->getAllFiltered($filters));
         break;
 
     default:
-        http_response_code(405);
-        echo json_encode(jsonResponse(false, null, "Method not allowed"));
+        // Alle anderen Methoden (POST, PUT, DELETE, ...) sind nicht erlaubt
+        sendApiResponse(405, null, "Method not allowed");
 }

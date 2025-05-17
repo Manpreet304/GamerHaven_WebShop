@@ -4,32 +4,19 @@ require_once("../logic/OrderLogic.php");
 class OrderController {
     private OrderLogic $logic;
 
-    public function __construct() {
-        $this->logic = new OrderLogic();
+    public function __construct(mysqli $conn) {
+        $this->logic = new OrderLogic($conn);
     }
-    
+
     public function placeOrder(int $userId, int $paymentId, ?string $voucher): array {
-        global $conn;
+        return $this->logic->createOrder($userId, $paymentId, $voucher);
+    }
 
-        try {
-            // Jetzt liefert createOrder die neue orderId zurück
-            $orderId = $this->logic->createOrder($userId, $paymentId, $voucher, $conn);
+    public function getOrders(int $userId): array {
+        return $this->logic->getOrdersByUser($userId);
+    }
 
-            return [
-                "status" => 200,
-                "body"   => [
-                    "success" => true,
-                    "orderId" => $orderId
-                ]
-            ];
-        } catch (Exception $e) {
-            return [
-                "status" => 500,
-                "body"   => [
-                    "success" => false,
-                    "error"   => $e->getMessage()
-                ]
-            ];
-        }
+    public function getOrderDetails(int $orderId, int $userId): array {
+        return $this->logic->getOrderWithItems($orderId, $userId);
     }
 }

@@ -70,8 +70,8 @@
       const body = $('#modal-items-body').empty();
       res.items.forEach(item => {
         body.append(`
-          <tr>
-            <td>${item.name_snapshot}</td>
+          <tr class="text-end">
+            <td class="text-start">${item.name_snapshot}</td>
             <td>€${item.price_snapshot}</td>
             <td>${item.quantity}</td>
             <td>€${item.total_price}</td>
@@ -82,5 +82,7 @@
     }
   };
 
+  // Globale Bereitstellung
   window.AccountRender = AccountRender;
+
 })(window, jQuery);

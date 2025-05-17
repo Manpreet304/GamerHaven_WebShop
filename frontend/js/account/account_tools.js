@@ -12,5 +12,7 @@
     }
   };
 
+  // Globale Bereitstellung
   window.AccountTools = AccountTools;
+
 })(window, jQuery);

@@ -6,7 +6,7 @@
   'use strict';
 
   const ProductsFilters = {
-    // Aktuelle Filter auslesen
+    // Aktuelle Filterwerte ermitteln
     collectFilters() {
       return {
         category: $('input[name="category"]:checked').val() || '',
@@ -18,14 +18,14 @@
       };
     },
 
-    // Alle Filter zurücksetzen
+    // Filter auf Ausgangszustand zurücksetzen
     resetAllFilters() {
       $('#filter-category input[type="radio"]').prop('checked', false);
       $('#filter-brand input[type="checkbox"]').prop('checked', false);
       $('#priceMin, #priceMax, #filter-rating, #filter-stock').val('');
     },
 
-    // Filter-Controls rendern
+    // Filterdarstellung dynamisch erzeugen
     renderFilters(products, filters = {}) {
       const selectedCategory = filters.category || '';
       const selectedBrands   = (filters.brand || '').split(',');
@@ -63,11 +63,14 @@
     }
   };
 
+  // HTML aus Strings absichern
   function escapeHTML(str) {
     return str.replace(/[&<>"']/g, ch =>
-      ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[ch]
+      ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;' })[ch]
     );
   }
 
+  // Objekt global verfügbar machen
   window.ProductsFilters = ProductsFilters;
+
 })(window, jQuery);

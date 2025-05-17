@@ -1,5 +1,6 @@
 // ----------------------- MESSAGES -----------------------
 
+// Zeigt eine globale Bootstrap-Meldung (Success oder Danger)
 function showMessage(type, text) {
   const alertClass = type === "success" ? "alert-success" : "alert-danger";
   const html = `
@@ -12,56 +13,35 @@ function showMessage(type, text) {
   const container = $('#globalMessageOverlay');
   container.stop(true, true).hide().html(html).fadeIn();
 
-  setTimeout(() => {
-    container.fadeOut(() => container.empty());
-  }, 5000);
+  setTimeout(() => container.fadeOut(() => container.empty()), 5000);
 }
-
 
 // ----------------------- API WRAPPER -----------------------
 
-function apiRequest(options) {
-  const {
-    url,
-    method = "GET",
-    data = null,
-    headers = {},
-    contentType = "application/json",
-    successMessage = null,
-    errorMessage = null,            // kein statischer Fehlertext mehr
-    onSuccess = () => {},
-    onError = () => {},
-    formSelector = null,
-    showValidation = false
-  } = options;
-
+// Wrapper für Ajax-Request mit Erfolgs- & Fehlerbehandlung
+function apiRequest({
+  url,
+  method = "GET",
+  data = null,
+  headers = {},
+  successMessage = null,
+  errorMessage = null,
+  onSuccess = () => {},
+  onError = () => {}
+}) {
   $.ajax({
     url,
     method,
     data: data ? JSON.stringify(data) : null,
-    contentType,
-    dataType: "json",
-    headers,
-    xhrFields: {
-      withCredentials: true // ← wichtig für Cookies (Session)
-    }
+    contentType: "application/json",
+    dataType: "json"
   })
     .done(response => {
       if (response.success) {
-        const wrapped = {
-          ...response,
-          body: response.data ?? null
-        };
         if (successMessage) showMessage("success", successMessage);
-        if (formSelector) resetForm(formSelector);
-        onSuccess(wrapped);
+        onSuccess(response);
       } else {
-        handleResponse(response, {
-          errorMessage,     // null oder überschrieben beim Aufruf
-          formSelector,
-          showValidation,
-          onError
-        });
+        handleResponse(response, { errorMessage, onError });
       }
     })
     .fail(xhr => {
@@ -73,90 +53,29 @@ function apiRequest(options) {
 
 // ----------------------- RESPONSE HANDLER -----------------------
 
-function handleResponse(response, options = {}) {
-  const {
-    successMessage = null,
-    errorMessage = response.message || "An error occurred!",
-    formSelector = null,
-    showValidation = false,
-    onSuccess = () => {},
-    onError = () => {}
-  } = options;
-
-  if (response.success) {
-    if (successMessage) showMessage("success", successMessage);
-    if (formSelector) resetForm(formSelector);
-    onSuccess(response);
-  } else {
-    const msg = response.data?.error || response.error || response.message || errorMessage;
-    showMessage("danger", msg);
-
-    if (response.errors && showValidation) {
-      applyFieldErrors(response.errors);
-      if (formSelector) {
-        $(formSelector).addClass("was-validated");
-      }
-    }
-    onError(response);
-  }
-}
-
-
-// ----------------------- VALIDATION -----------------------
-
-function applyFieldErrors(errors) {
-  for (let field in errors) {
-    if (errors.hasOwnProperty(field)) {
-      const message = errors[field];
-      const $field = $("#" + field);
-      if ($field.length) {
-        $field.addClass("is-invalid").removeClass("is-valid");
-        $field[0].setCustomValidity("Invalid");
-        const $feedback = $field.closest(".mb-3").find(".invalid-feedback");
-        if ($feedback.length) {
-          $feedback.text(message).show();
-        }
-      }
-    }
-  }
-}
-
-function resetForm(selector) {
-  const form = document.querySelector(selector);
-  if (form) {
-    form.reset();
-    form.classList.remove("was-validated");
-    $(form).find(".is-valid, .is-invalid").removeClass("is-valid is-invalid");
-    $(form).find(".invalid-feedback").hide();
-  }
+// Zeigt Fehlernachricht aus der Antwort und ruft optionalen Fehler-Callback auf
+function handleResponse(response, { errorMessage = "An error occurred!", onError = () => {} } = {}) {
+  const msg = response.data?.error || response.error || response.message || errorMessage;
+  showMessage("danger", msg);
+  onError(response);
 }
 
 // ----------------------- CART COUNT -----------------------
 
+// Holt und zeigt die aktuelle Anzahl der Warenkorb-Artikel
 function updateCartCount() {
-  $.ajax({
-    url: "../../backend/api/ApiCart.php?cartCount",
-    method: "GET",
-    dataType: "json",
-    xhrFields: { withCredentials: true }
-  })
+  $.getJSON("../../backend/api/ApiCart.php?cartCount")
     .done(res => {
-      let count = 0;
-      if (res.success && res.data && res.data.body) {
-        count = parseInt(res.data.body.count, 10) || 0;
-      }
+      const count = res.success && res.data?.count != null ? parseInt(res.data.count, 10) || 0 : 0;
       $("#cart-count").text(count);
     })
-    .fail(() => {
-      $("#cart-count").text(0);
-    });
+    .fail(() => $("#cart-count").text(0));
 }
 
 // ----------------------- GLOBAL EXPORT -----------------------
 
+// Funktionen global verfügbar machen
 window.showMessage = showMessage;
 window.apiRequest = apiRequest;
 window.handleResponse = handleResponse;
-window.applyFieldErrors = applyFieldErrors;
-window.resetForm = resetForm;
 window.updateCartCount = updateCartCount;

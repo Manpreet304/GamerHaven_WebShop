@@ -22,6 +22,7 @@
       });
     });
   }
+
   function fetchCustomerData(customerId) {
     return new Promise((resolve, reject) => {
       apiRequest({
@@ -32,6 +33,7 @@
       });
     });
   }
+
   function submitCustomerData(customerData) {
     return new Promise((resolve, reject) => {
       apiRequest({
@@ -44,11 +46,13 @@
       });
     });
   }
+
   function deleteCustomerById(customerId) {
     return new Promise((resolve, reject) => {
       apiRequest({
         url: `../../backend/api/ApiAdmin.php?deleteCustomer&id=${customerId}`,
         method: 'POST',
+        data: { id: customerId },
         successMessage: 'Customer deleted successfully.',
         onSuccess: resolve,
         onError: err => { handleResponse(err, {}); reject(err); }
@@ -78,6 +82,7 @@
       customersTableBody.appendChild(row);
     });
   }
+
   function openCustomerModal(c = {}) {
     customerFormElement.classList.remove('was-validated');
     $('#customerForm')[0].reset();
@@ -103,17 +108,20 @@
   function handleAddCustomerClick() {
     openCustomerModal();
   }
+
   function handleEditCustomerClick(e) {
     const id = +e.currentTarget.closest('tr').dataset.id;
     fetchCustomerData(id)
       .then(res => openCustomerModal(res.data))
       .catch(() => {});
   }
+
   function handleSaveCustomerClick() {
     if (!customerFormElement.checkValidity()) {
       customerFormElement.classList.add('was-validated');
       return;
     }
+
     const customerData = {
       id:         +$('#customer_id').val(),
       firstname:  $('#customer_firstname').val(),
@@ -138,6 +146,7 @@
       })
       .catch(() => {});
   }
+
   function handleDeleteCustomerClick(e) {
     const id = +e.currentTarget.closest('tr').dataset.id;
     deleteCustomerById(id)
@@ -166,6 +175,7 @@
       .then(res => renderCustomersTable(res.data))
       .catch(() => {});
   }
+
   document.addEventListener('DOMContentLoaded', () => {
     loadAndRenderCustomers();
     bindCustomerEvents();
