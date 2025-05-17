@@ -1,17 +1,11 @@
-/**
- * js/admin/vouchers/admin_vouchers.js
- * Verantwortlich für Laden, Anzeigen und Verwalten von Gutscheinen im Admin-Bereich
- */
 (function(window, $) {
   'use strict';
 
-  // --- Selektoren & Modal-Instanz für Gutscheine ---
   const vouchersTableBody   = document.querySelector('#vouchersTable tbody');
   const voucherFormElement  = document.getElementById('voucherForm');
   const voucherModalElement = document.getElementById('voucherModal');
   const voucherModal        = new bootstrap.Modal(voucherModalElement);
 
-  // --- Promise-basierte API-Funktionen ---
   function fetchAllVouchers() {
     return new Promise((resolve, reject) => {
       apiRequest({
@@ -65,7 +59,6 @@
     });
   }
 
-  // --- View-/Render-Funktionen: Tabelle & Modal ---
   function renderVouchersTable(vouchers) {
     vouchersTableBody.innerHTML = '';
     vouchers.forEach(v => {
@@ -77,7 +70,7 @@
         <td>${v.code}</td>
         <td>€${Number(v.value).toFixed(2)}</td>
         <td>€${Number(v.remaining_value).toFixed(2)}</td>
-        <td>${v.expires_at.split(' ')[0]}</td>
+        <td>${v.expires_at?.split(' ')[0] || '-'}</td>
         <td>${v.is_active ? '✔️' : '❌'}</td>
         <td><button class="btn btn-sm btn-primary edit-voucher">Edit</button></td>
       `;
@@ -100,18 +93,17 @@
     voucherModal.show();
   }
 
-  // --- Event-Handler für Add, Edit, Save ---
   function handleAddVoucherClick() {
     generateNewVoucherCode()
-      .then(res => openVoucherModal({ code: res.data.code }))
-      .catch(() => {});
+      .then(data => openVoucherModal({ code: data.code }))
+      .catch(err => console.error('Generate code failed', err));
   }
 
   function handleEditVoucherClick(e) {
     const id = +e.currentTarget.closest('tr').dataset.id;
     fetchVoucherData(id)
-      .then(res => openVoucherModal(res.data))
-      .catch(() => {});
+      .then(data => openVoucherModal(data))
+      .catch(err => console.error('Fetch voucher failed', err));
   }
 
   function handleSaveVoucherClick() {
@@ -119,6 +111,7 @@
       voucherFormElement.classList.add('was-validated');
       return;
     }
+
     const voucherData = {
       id:         +$('#voucherId').val(),
       code:       $('#voucherCode').val(),
@@ -127,15 +120,15 @@
       is_active:  +$('#voucherActive').val()
     };
     const isUpdate = Boolean(voucherData.id);
+
     submitVoucherData(voucherData, isUpdate)
       .then(() => {
         voucherModal.hide();
         loadAndRenderVouchers();
       })
-      .catch(() => {});
+      .catch(err => console.error("Voucher save failed", err));
   }
 
-  // --- Events binden: Buttons & Delegation ---
   function bindVoucherEvents() {
     document.getElementById('addVoucherBtn')
       .addEventListener('click', handleAddVoucherClick);
@@ -145,11 +138,10 @@
       .addEventListener('click', handleSaveVoucherClick);
   }
 
-  // --- Initialisierung: Laden & Events binden ---
   function loadAndRenderVouchers() {
     fetchAllVouchers()
-      .then(res => renderVouchersTable(res.data))
-      .catch(() => {});
+      .then(data => renderVouchersTable(data))
+      .catch(err => console.error("Loading vouchers failed", err));
   }
 
   document.addEventListener('DOMContentLoaded', () => {

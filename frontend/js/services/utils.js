@@ -1,6 +1,4 @@
-// ----------------------- MESSAGES -----------------------
-
-// Zeigt eine globale Bootstrap-Meldung (Success oder Danger)
+// Zeigt Bootstrap-Alert
 function showMessage(type, text) {
   const alertClass = type === "success" ? "alert-success" : "alert-danger";
   const html = `
@@ -16,9 +14,7 @@ function showMessage(type, text) {
   setTimeout(() => container.fadeOut(() => container.empty()), 5000);
 }
 
-// ----------------------- API WRAPPER -----------------------
-
-// Wrapper für Ajax-Request mit Erfolgs- & Fehlerbehandlung
+// Universeller Ajax-Wrapper
 function apiRequest({
   url,
   method = "GET",
@@ -32,37 +28,38 @@ function apiRequest({
   $.ajax({
     url,
     method,
-    data: data ? JSON.stringify(data) : null,
+    data: method === 'GET' ? data : JSON.stringify(data),
     contentType: "application/json",
-    dataType: "json"
+    dataType: "json",
+    headers
   })
     .done(response => {
       if (response.success) {
         if (successMessage) showMessage("success", successMessage);
-        onSuccess(response);
+        onSuccess(response.data); // Nur die Daten übergeben
       } else {
         handleResponse(response, { errorMessage, onError });
       }
     })
     .fail(xhr => {
-      const msg = xhr.responseJSON?.message || "An error occurred!";
+      const response = xhr.responseJSON || {};
+      const msg = response.message || "An error occurred!";
       showMessage("danger", msg);
-      onError(xhr.responseJSON || {});
+      onError(response);
     });
 }
 
-// ----------------------- RESPONSE HANDLER -----------------------
-
-// Zeigt Fehlernachricht aus der Antwort und ruft optionalen Fehler-Callback auf
-function handleResponse(response, { errorMessage = "An error occurred!", onError = () => {} } = {}) {
-  const msg = response.data?.error || response.error || response.message || errorMessage;
+// Fehler verarbeiten (Backend-Fehler)
+function handleResponse(response, {
+  errorMessage = "An error occurred!",
+  onError = () => {}
+} = {}) {
+  const msg = response?.message || response?.data?.error || response?.error || errorMessage;
   showMessage("danger", msg);
   onError(response);
 }
 
-// ----------------------- CART COUNT -----------------------
-
-// Holt und zeigt die aktuelle Anzahl der Warenkorb-Artikel
+// Aktuelle Cart-Anzahl laden
 function updateCartCount() {
   $.getJSON("../../backend/api/ApiCart.php?cartCount")
     .done(res => {
@@ -72,9 +69,7 @@ function updateCartCount() {
     .fail(() => $("#cart-count").text(0));
 }
 
-// ----------------------- GLOBAL EXPORT -----------------------
-
-// Funktionen global verfügbar machen
+// Global exportieren
 window.showMessage = showMessage;
 window.apiRequest = apiRequest;
 window.handleResponse = handleResponse;

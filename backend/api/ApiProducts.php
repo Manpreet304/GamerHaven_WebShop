@@ -8,12 +8,12 @@ header("Content-Type: application/json");
 if (session_status() === PHP_SESSION_NONE) session_start();
 
 // Benötigte Abhängigkeiten einbinden
-require_once("../db/dbaccess.php");             // DB-Verbindung
-require_once("../controller/ProductController.php"); // Controller-Logik
-require_once("../models/response.php");         // sendApiResponse() für einheitliche Antwortstruktur
+require_once("../db/dbaccess.php");           // DB-Verbindung
+require_once("../logic/ProductLogic.php");    // Produkt-Logik direkt
+require_once("../models/response.php");       // sendApiResponse() für einheitliche Antwortstruktur
 
-// Controller-Instanz erstellen
-$productController = new ProductController($conn);
+// Produktlogik-Instanz direkt erstellen
+$logic = new ProductLogic($conn);
 
 // HTTP-Methode auswerten
 switch ($_SERVER["REQUEST_METHOD"]) {
@@ -29,8 +29,8 @@ switch ($_SERVER["REQUEST_METHOD"]) {
             "search"    => $_GET["search"] ?? null
         ];
 
-        // Controller-Methode aufrufen und API-Antwort zurücksenden
-        sendApiResponse(...$productController->getAllFiltered($filters));
+        // Methode direkt aus der Logik aufrufen und Antwort senden
+        sendApiResponse(...$logic->getFilteredProducts($filters));
         break;
 
     default:

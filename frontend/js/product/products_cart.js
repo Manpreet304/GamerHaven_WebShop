@@ -1,7 +1,3 @@
-/**
- * js/products/products.cart.js
- * Verantwortlich für Animation und Drag-n-Drop im Warenkorb
- */
 (function(window, $) {
   'use strict';
 
@@ -61,9 +57,11 @@
               updateCartCount();
               ProductsCart.animateCartButtons(pid, true);
             },
-            onError: () => {
+            onError: err => {
               ProductsCart.animateCartButtons(pid, false);
-              showMessage('danger', 'Failed to add product to cart.');
+              handleResponse(err, {
+                errorMessage: err?.message || err?.data?.error || 'Failed to add product to cart.'
+              });
             }
           });
         }
@@ -71,7 +69,6 @@
     }
   };
 
-  // Objekt global verfügbar machen
   window.ProductsCart = ProductsCart;
 
 })(window, jQuery);

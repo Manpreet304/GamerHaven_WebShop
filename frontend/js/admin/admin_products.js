@@ -1,17 +1,11 @@
-/**
- * js/admin/products/admin_products.js
- * Verantwortlich für Laden, Anzeigen und Verwalten von Produkten im Admin-Bereich
- */
 (function(window, $) {
   'use strict';
 
-  // --- Selektoren & Modal-Instanz für Produkte ---
   const productsTableBody   = document.querySelector('#productsTable tbody');
   const productFormElement  = document.getElementById('productForm');
   const productModalElement = document.getElementById('productModal');
   const productModal        = new bootstrap.Modal(productModalElement);
 
-  // --- Promise-basierte API-Funktionen ---
   function fetchAllProducts() {
     return new Promise((resolve, reject) => {
       apiRequest({
@@ -47,7 +41,15 @@
         data: formData,
         xhrFields: { withCredentials: true }
       })
-      .done(resolve)
+      .done(response => {
+        if (response.success) {
+          showMessage("success", response.message || "Success");
+          resolve(response.data);
+        } else {
+          handleResponse(response, {});
+          reject(response);
+        }
+      })
       .fail(err => {
         handleResponse(err.responseJSON || {}, {});
         reject(err);
@@ -67,7 +69,6 @@
     });
   }
 
-  // --- View-/Render-Funktionen: Tabelle & Modal ---
   function renderProductsTable(products) {
     productsTableBody.innerHTML = '';
     products.forEach(p => {
@@ -120,7 +121,6 @@
     productModal.show();
   }
 
-  // --- Event-Handler für Add, Edit, Save, Delete ---
   function handleAddProductClick() {
     openProductModal();
   }
@@ -128,7 +128,7 @@
   function handleEditProductClick(e) {
     const id = +e.currentTarget.closest('tr').dataset.id;
     fetchProductData(id)
-      .then(res => openProductModal(res.data))
+      .then(data => openProductModal(data))
       .catch(() => {});
   }
 
@@ -161,7 +161,6 @@
       .catch(() => {});
   }
 
-  // --- Events binden: Buttons & Delegation ---
   function bindProductEvents() {
     document.getElementById('addProductBtn')
       .addEventListener('click', handleAddProductClick);
@@ -172,10 +171,9 @@
       .addEventListener('click', handleSaveProductClick);
   }
 
-  // --- Initialisierung: Laden & Events binden ---
   function loadAndRenderProducts() {
     fetchAllProducts()
-      .then(res => renderProductsTable(res.data))
+      .then(data => renderProductsTable(data))
       .catch(() => {});
   }
 

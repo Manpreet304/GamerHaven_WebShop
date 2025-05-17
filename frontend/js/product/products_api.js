@@ -13,15 +13,20 @@
       apiRequest({
         url,
         method: 'GET',
-        onSuccess: res => {
-          const products = res.data || [];
+        onSuccess: products => {
+          const resultList = products || [];
           if (!this.filtersInitialized) {
-            this.allProductsCache = products.slice();
+            this.allProductsCache = resultList.slice();
             this.filtersInitialized = true;
           }
-          callbacks.onSuccess?.(products, this.allProductsCache);
+          callbacks.onSuccess?.(resultList, this.allProductsCache);
         },
-        onError: callbacks.onError
+        onError: err => {
+          handleResponse(err, {
+            errorMessage: err?.message || "Failed to load products.",
+            onError: () => callbacks.onError?.(err)
+          });
+        }
       });
     },
 
@@ -50,7 +55,6 @@
     }
   };
 
-  // Objekt global verfügbar machen
   window.ProductsAPI = ProductsAPI;
 
 })(window, jQuery);
