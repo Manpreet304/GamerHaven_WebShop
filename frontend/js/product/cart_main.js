@@ -104,10 +104,6 @@
     });
   }
 
-  // Checkout-Aktion (platzhalter)
-  function onProceedToCheckout() {
-    checkoutModal.modal('show');
-  }
 
   // Modul global verfügbar machen
   window.CartMain = { loadCart };
