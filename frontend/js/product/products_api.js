@@ -5,7 +5,7 @@
     allProductsCache: [],
     filtersInitialized: false,
 
-    // Produkte mit optionalen Filtern laden
+    // [1] Produkte vom Server laden (optional mit Filtern)
     loadProducts(filters = {}, callbacks = {}) {
       const query = new URLSearchParams(filters).toString();
       const url = `../../backend/api/ApiProducts.php${query ? '?' + query : ''}`;
@@ -16,7 +16,7 @@
         onSuccess: products => {
           const resultList = products || [];
           if (!this.filtersInitialized) {
-            this.allProductsCache = resultList.slice();
+            this.allProductsCache = resultList.slice(); // Kopie für spätere Filter
             this.filtersInitialized = true;
           }
           callbacks.onSuccess?.(resultList, this.allProductsCache);
@@ -30,7 +30,7 @@
       });
     },
 
-    // Produkt zum Warenkorb hinzufügen
+    // [2] Produkt zum Warenkorb hinzufügen
     addToCart(productId, quantity = 1, callbacks = {}) {
       apiRequest({
         url: `../../backend/api/ApiCart.php?addToCart=${productId}`,

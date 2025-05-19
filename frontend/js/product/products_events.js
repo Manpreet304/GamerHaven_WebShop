@@ -2,8 +2,9 @@
   'use strict';
 
   const Events = {
+    // [1] Initialisierung (wird beim Laden der Seite aufgerufen)
     init() {
-      // Filter & Suche
+      // [1.1] Filteraktionen binden
       $(document).on(
         'change',
         '#filter-category input, #filter-brand input, #filter-rating, #filter-stock, #priceMin, #priceMax',
@@ -15,14 +16,14 @@
         this.load();
       });
 
-      // Live-Suche mit Delay
+      // [1.2] Live-Suche mit Verzögerung
       let debounce;
       $(document).on('input', '#liveSearchInput', () => {
         clearTimeout(debounce);
         debounce = setTimeout(this.onFilters.bind(this), 300);
       });
 
-      // In Card: Produkt zum Warenkorb
+      // [1.3] Produkt in Card zum Warenkorb
       $(document).on('click', '.product-card .add-to-cart', function() {
         const card = $(this).closest('.product-card');
         const pid  = +card.data('product-id');
@@ -30,7 +31,7 @@
         window.ProductsAPI.addToCart(pid, qty);
       });
 
-      // In Modal: Produkt zum Warenkorb
+      // [1.4] Produkt im Modal zum Warenkorb
       $(document).on('click', '.product-modal .add-to-cart', function() {
         const modal = $(this).closest('.modal');
         const pid   = +modal.attr('id').replace('productModal', '');
@@ -38,20 +39,21 @@
         window.ProductsAPI.addToCart(pid, qty);
       });
 
-      // Animation beim Klick auf "Details"
+      // [1.5] Klickanimation bei Details
       $(document).on('click', '.product-card .view-details', function() {
         const btn = $(this);
         btn.addClass('clicked');
         setTimeout(() => btn.removeClass('clicked'), 350);
       });
 
-      // Drag-and-Drop aktivieren
+      // [1.6] Drag-and-Drop aktivieren
       window.ProductsCart.initDragDrop();
 
-      // Initiale Produktladung
+      // [1.7] Produkte initial laden
       this.load();
     },
 
+    // [2] Filter aktualisieren & neu laden
     onFilters() {
       const filters = window.ProductsFilters.collectFilters();
       const term = $('#liveSearchInput').val().trim();
@@ -59,6 +61,7 @@
       this.load(filters);
     },
 
+    // [3] Produkte laden mit optionalen Filtern
     load(filters = {}) {
       window.ProductsAPI.loadProducts(filters, {
         onSuccess: products => {
@@ -75,6 +78,7 @@
     }
   };
 
+  // [4] Bei DOM ready starten
   $(document).ready(() => Events.init());
 
 })(window, jQuery);

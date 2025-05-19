@@ -5,14 +5,16 @@
 (function(window, $) {
   'use strict';
 
+  // [1] Formular-Logik für den Account-Bereich
   const AccountForms = {
-    // Passwort-Formular in die Seite injizieren
+
+    // [1.1] Passwort-Formular in DOM injizieren (via Template)
     injectPasswordForm() {
       const tpl  = document.getElementById('password-change-template');
       $('#password-change-section').append(tpl.content.cloneNode(true));
     },
 
-    // Edit-Account-Modal befüllen und anzeigen
+    // [1.2] Modal zur Kontobearbeitung mit aktuellen Daten füllen und anzeigen
     openAccountEditForm() {
       window.AccountAPI.getAccountData({
         onSuccess: user => {
@@ -34,7 +36,7 @@
       });
     },
 
-    // Add-Payment-Modal befüllen und anzeigen
+    // [1.3] Modal zur Zahlungsmethode hinzufügen anzeigen (leeres Template)
     openAddPaymentMethodForm() {
       const tpl   = document.getElementById('add-payment-template');
       const clone = tpl.content.cloneNode(true);
@@ -42,7 +44,7 @@
       bootstrap.Modal.getOrCreateInstance('#addPaymentModal').show();
     },
 
-    // Zeigt die passenden Felder je nach gewählter Methode
+    // [1.4] Dynamisches Umschalten der Eingabefelder je nach Zahlungsart
     renderPaymentFields() {
       const method    = this.value;
       const $cont     = $('#payment-fields').empty();
@@ -90,7 +92,7 @@
     }
   };
 
-  // Globale Bereitstellung
+  // [2] Objekt global verfügbar machen
   window.AccountForms = AccountForms;
 
 })(window, jQuery);

@@ -1,7 +1,7 @@
 (function(window, $) {
   'use strict';
 
-  // Formularelemente zwischenspeichern
+  // [1] Formularelemente zwischenspeichern
   const registerForm        = $('#registerForm');
   const salutationInput     = $('#salutation');
   const firstNameInput      = $('#first_name');
@@ -16,37 +16,37 @@
   const password2Input      = $('#password2');
   const paymentMethodSelect = $('#payment_method');
 
-  // Initialisierung bei DOM-Ready
+  // [2] Initialisierung bei DOM-Ready
   $(function() {
     initCountryDropdown();
     initTooltips();
     bindEvents();
   });
 
-  // Tooltips aktivieren
+  // [3] Tooltips aktivieren
   function initTooltips() {
     $('[data-bs-toggle="tooltip"]').each((_, el) =>
       new bootstrap.Tooltip(el)
     );
   }
 
-  // Event-Listener setzen
+  // [4] Events an Formularelemente binden
   function bindEvents() {
     paymentMethodSelect.on('change', handlePaymentMethodToggle);
     registerForm.on('submit', handleFormSubmit);
   }
 
-  // Formular absenden
+  // [5] Formular absenden und validieren
   function handleFormSubmit(e) {
     e.preventDefault();
     const formEl = registerForm[0];
     formEl.classList.add('was-validated');
 
-    // Feedback-Reset
+    // [5.1] Feedback zurücksetzen
     registerForm.find('.is-valid, .is-invalid').removeClass('is-valid is-invalid');
     registerForm.find('.invalid-feedback').hide();
 
-    // Fehlerhafte Felder hervorheben
+    // [5.2] Fehlerhafte Felder markieren
     $(formEl).find(':invalid').each(function () {
       $(this).addClass('is-invalid');
       $(this).next('.invalid-feedback').show();
@@ -54,13 +54,16 @@
 
     if (!formEl.checkValidity()) return;
 
+    // [5.3] Formulardaten erfassen
     const data = getFormData();
+
+    // [5.4] Zahlungsdaten validieren
     if (!validatePaymentFields(data)) {
       showMessage("danger", "Please complete all required payment fields.");
       return;
     }
 
-    // API-Aufruf zur Registrierung
+    // [5.5] Registrierung abschicken
     apiRequest({
       url: '../../backend/api/ApiGuest.php?register',
       method: 'POST',
@@ -78,7 +81,7 @@
     });
   }
 
-  // Feldfehler visuell anzeigen
+  // [6] Feldfehler visuell anzeigen
   function applyFieldErrors(errors) {
     Object.entries(errors).forEach(([field, msg]) => {
       const $input = $(`#${field}`);
@@ -90,7 +93,7 @@
     });
   }
 
-  // Formulardaten sammeln
+  // [7] Formulardaten sammeln
   function getFormData() {
     return {
       salutation:      salutationInput.val(),
@@ -114,7 +117,7 @@
     };
   }
 
-  // Zahlungsmethoden prüfen
+  // [8] Zahlungsmethoden prüfen
   function validatePaymentFields(data) {
     switch (data.payment_method) {
       case 'Credit Card':   return data.card_number && data.csv;
@@ -124,7 +127,7 @@
     }
   }
 
-  // Zahlungsfelder anzeigen/verstecken
+  // [9] Zahlungsfelder anzeigen/verstecken je nach Auswahl
   function handlePaymentMethodToggle() {
     const method = paymentMethodSelect.val();
     $('#paymentDetailsWrapper').toggle(!!method);
@@ -135,7 +138,7 @@
     else if (method === 'Bank Transfer') $('#bankFields').show();
   }
 
-  // Länder-Dropdown befüllen
+  // [10] Länder-Dropdown dynamisch befüllen
   function initCountryDropdown() {
     const countries = [
       'Afghanistan','Albania','Algeria','Andorra','Angola','Argentina','Armenia',
