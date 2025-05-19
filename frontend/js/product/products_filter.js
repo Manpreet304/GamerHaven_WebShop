@@ -1,8 +1,12 @@
+/**
+ * js/products/products_filters.js
+ * Verantwortlich für Sammeln, Zurücksetzen und Rendern der Filter-UI
+ */
 (function(window, $) {
   'use strict';
 
   const ProductsFilters = {
-    // [1] Aktuelle Filterwerte ermitteln
+    // Aktuelle Filterwerte ermitteln
     collectFilters() {
       return {
         category: $('input[name="category"]:checked').val() || '',
@@ -14,21 +18,20 @@
       };
     },
 
-    // [2] Alle Filter zurücksetzen (auf Standard)
+    // Filter auf Ausgangszustand zurücksetzen
     resetAllFilters() {
       $('#filter-category input[type="radio"]').prop('checked', false);
       $('#filter-brand input[type="checkbox"]').prop('checked', false);
       $('#priceMin, #priceMax, #filter-rating, #filter-stock').val('');
     },
 
-    // [3] Filterbereich (Kategorie & Marke) neu rendern
+    // Filterdarstellung dynamisch erzeugen
     renderFilters(products, filters = {}) {
       const selectedCategory = filters.category || '';
       const selectedBrands   = (filters.brand || '').split(',');
 
       const unique = arr => [...new Set(arr.filter(Boolean))];
 
-      // [3.1] Kategorien rendern
       const categories = unique(products.map(p => p.category)).sort();
       const catHTML = [
         `<div class="form-check">
@@ -44,7 +47,6 @@
       ];
       $('#filter-category').html(catHTML.join(''));
 
-      // [3.2] Marken rendern (abhängig von gewählter Kategorie)
       const brands = unique(
         (selectedCategory
           ? products.filter(p => p.category === selectedCategory)
@@ -61,14 +63,14 @@
     }
   };
 
-  // [4] Hilfsfunktion: HTML aus Benutzereingaben absichern
+  // HTML aus Strings absichern
   function escapeHTML(str) {
     return str.replace(/[&<>"']/g, ch =>
-      ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', '\'':'&#39;' })[ch]
+      ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;' })[ch]
     );
   }
 
-  // [5] Global verfügbar machen
+  // Objekt global verfügbar machen
   window.ProductsFilters = ProductsFilters;
 
 })(window, jQuery);

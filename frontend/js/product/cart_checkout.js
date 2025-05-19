@@ -1,92 +1,26 @@
 (function(window, $) {
   'use strict';
 
-  // [1] DOM-Elemente für das Formular
   const checkoutForm        = $('#checkout-form');
   const paymentMethodSelect = $('#paymentMethod');
   const voucherInput        = $('#voucher');
 
-  // [2] Event beim Laden des Dokuments
-  document.addEventListener('DOMContentLoaded', bindCheckoutEvents);
-
-  // [3] Formular-Submit binden
+  // Events beim Laden binden
   function bindCheckoutEvents() {
     checkoutForm.on('submit', onSubmitCheckout);
   }
 
-  // [4] Modal öffnen, Warenkorb + Zahlungsmethoden laden
+  // Modal öffnen und Daten laden
   function onProceedToCheckout() {
     if ($('#proceedToCheckout').prop('disabled')) return;
-
-    $('#checkoutModal').modal('show'); // Modal öffnen
-
-    window.CartMain.loadCart(renderCheckoutSummary); // Warenkorb im Modal anzeigen
-    loadPaymentMethods();                            // Zahlungsmethoden laden
+    $('#checkoutModal').modal('show');
+    window.CartMain.loadCart(renderCheckoutSummary);
+    loadPaymentMethods();
   }
 
-  // [5] Warenkorb-Zusammenfassung anzeigen
-  function renderCheckoutSummary(data) {
-    const items = data.items || [];
-    const subtotal = data.subtotal || 0;
-    const shipping = data.shipping || 0;
-    const total = data.total || 0;
-
-    const list = $('#checkout-cart-items').empty();
-    const tpl = document.getElementById('checkout-item-template');
-
-    items.forEach(item => {
-      const lineSubtotal = item.price * item.quantity;
-      const clone = tpl.content.cloneNode(true);
-      $(clone).find('.item-name').text(item.name);
-      $(clone).find('.item-details').text(`Quantity: ${item.quantity} × €${item.price.toFixed(2)}`);
-      $(clone).find('.item-subtotal').text(`€${lineSubtotal.toFixed(2)}`);
-      list.append(clone);
-    });
-
-    updatePriceDisplay(subtotal, shipping, total);
-  }
-
-  // [6] Preisfelder im Modal setzen
-  function updatePriceDisplay(sub, ship, total) {
-    $('#checkout-subtotal').text(`€${sub.toFixed(2)}`);
-    $('#checkout-shipping').text(ship === 0 ? 'Free' : `€${ship.toFixed(2)}`);
-    $('#checkout-total').text(`€${total.toFixed(2)}`);
-  }
-
-  // [7] Zahlungsmethoden vom Server holen
-  function loadPaymentMethods() {
-    apiRequest({
-      url: '../../backend/api/ApiGuest.php?me',
-      onSuccess: data => {
-        const payments = Array.isArray(data?.payments) ? data.payments : [];
-        const select = paymentMethodSelect.empty()
-          .append('<option value="">Choose payment method</option>');
-
-        if (!payments.length) {
-          select.append('<option disabled>No payment methods found</option>');
-          return;
-        }
-
-        payments.forEach(p => {
-          let label = p.method;
-          if (p.method === 'Credit Card')   label += ` (****${p.last_digits})`;
-          if (p.method === 'PayPal')        label += ` (${p.paypal_email})`;
-          if (p.method === 'Bank Transfer') label += ` (IBAN ****${p.iban.slice(-4)})`;
-          select.append(`<option value="${p.id}">${label}</option>`);
-        });
-      },
-      onError: err => {
-        handleResponse(err, {
-          errorMessage: 'Could not load payment methods.'
-        });
-      }
-    });
-  }
-
-  // [8] Bestellung absenden
+  // Checkout absenden
   function onSubmitCheckout(e) {
     e.preventDefault();
-
     const formEl = e.currentTarget;
     formEl.classList.remove('was-validated');
 
@@ -121,7 +55,69 @@
     });
   }
 
-  // [9] Funktion global verfügbar machen
+  // Zusammenfassung im Checkout anzeigen
+  function renderCheckoutSummary(data) {
+    const items = data.items || [];
+    const subtotal = data.subtotal || 0;
+    const shipping = data.shipping || 0;
+    const total = data.total || 0;
+
+    const list = $('#checkout-cart-items').empty();
+    const tpl = document.getElementById('checkout-item-template');
+
+    items.forEach(item => {
+      const lineSubtotal = item.price * item.quantity;
+      const clone = tpl.content.cloneNode(true);
+      $(clone).find('.item-name').text(item.name);
+      $(clone).find('.item-details').text(
+        `Quantity: ${item.quantity} × €${item.price.toFixed(2)}`
+      );
+      $(clone).find('.item-subtotal').text(`€${lineSubtotal.toFixed(2)}`);
+      list.append(clone);
+    });
+
+    updatePriceDisplay(subtotal, shipping, total);
+  }
+
+  // Preisfelder im Modal setzen
+  function updatePriceDisplay(sub, ship, total) {
+    $('#checkout-subtotal').text(`€${sub.toFixed(2)}`);
+    $('#checkout-shipping').text(ship === 0 ? 'Free' : `€${ship.toFixed(2)}`);
+    $('#checkout-total').text(`€${total.toFixed(2)}`);
+  }
+
+  // Zahlungsmethoden vom Server laden
+  function loadPaymentMethods() {
+    apiRequest({
+      url: '../../backend/api/ApiGuest.php?me',
+      onSuccess: data => {
+        const payments = Array.isArray(data?.payments) ? data.payments : [];
+        const select = paymentMethodSelect.empty()
+          .append('<option value="">Choose payment method</option>');
+
+        if (!payments.length) {
+          select.append('<option disabled>No payment methods found</option>');
+          return;
+        }
+
+        payments.forEach(p => {
+          let label = p.method;
+          if (p.method === 'Credit Card')   label += ` (****${p.last_digits})`;
+          if (p.method === 'PayPal')        label += ` (${p.paypal_email})`;
+          if (p.method === 'Bank Transfer') label += ` (IBAN ****${p.iban.slice(-4)})`;
+          select.append(`<option value="${p.id}">${label}</option>`);
+        });
+      },
+      onError: err => {
+        handleResponse(err, {
+          errorMessage: 'Could not load payment methods.'
+        });
+      }
+    });
+  }
+
+  // Initialisierung bei DOM ready
+  document.addEventListener('DOMContentLoaded', bindCheckoutEvents);
   window.onProceedToCheckout = onProceedToCheckout;
 
 })(window, jQuery);

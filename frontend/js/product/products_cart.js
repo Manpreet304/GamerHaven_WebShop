@@ -2,7 +2,7 @@
   'use strict';
 
   const ProductsCart = {
-    // [1] Add-to-Cart Button animieren (grün bei Erfolg, rot bei Fehler)
+    // Add-to-Cart Button animieren (Erfolg oder Fehler)
     animateCartButtons(productId, success) {
       const selectors = [
         `.product-card[data-product-id='${productId}'] .add-to-cart`,
@@ -24,20 +24,20 @@
       });
     },
 
-    // [2] Drag-and-Drop-Verhalten aktivieren
+    // Drag-n-Drop auf Seite aktivieren
     initDragDrop() {
       const scrollThreshold = 60;
       const scrollSpeed     = 30;
       const dropZone        = '#cart-drop-area';
 
-      // [2.1] Beim Rand scrollen
+      // Scroll bei Randnähe während Drag
       $(document).on('dragover', ev => {
         const y = ev.originalEvent.clientY;
         if (y < scrollThreshold) window.scrollBy(0, -scrollSpeed);
         else if (y > window.innerHeight - scrollThreshold) window.scrollBy(0, scrollSpeed);
       });
 
-      // [2.2] Dropzone optisch markieren
+      // Dropzone-Optik
       $(document).on('dragover', dropZone, ev => {
         ev.preventDefault();
         $(ev.currentTarget).addClass('drag-over');
@@ -47,7 +47,7 @@
         $(ev.currentTarget).removeClass('drag-over');
       });
 
-      // [2.3] Produkt ablegen → zum Warenkorb hinzufügen
+      // Produkt in Warenkorb via Drop
       $(document).on('drop', dropZone, ev => {
         ev.preventDefault();
         const pid = parseInt(ev.originalEvent.dataTransfer.getData('text/plain'), 10);

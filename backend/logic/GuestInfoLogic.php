@@ -3,20 +3,6 @@ class GuestInfoLogic {
 
   // Gibt eingeloggte Userdaten + gespeicherte Zahlungsmethoden zurück
   public function getUserStatus(mysqli $conn): array {
-    // 🔐 Auto-Login mit Remember Me Token, falls keine Session existiert
-    if (!isset($_SESSION["user"]) && isset($_COOKIE["remember_token"])) {
-      require_once("../logic/LoginLogic.php");
-      $loginLogic = new LoginLogic();
-      [$status, $userData, $msg] = $loginLogic->loginWithToken($_COOKIE["remember_token"], $conn);
-
-      if ($status === 200) {
-        $_SESSION["user"] = $userData;
-        // Cookie erneuern (optional, für verlängertes Login)
-        setcookie("remember_token", $_COOKIE["remember_token"], time() + 60 * 60 * 24 * 30, "/");
-      }
-    }
-
-    // Noch nicht eingeloggt → Rückgabe
     if (!isset($_SESSION["user"])) {
       return [200, [
         "loggedIn" => false,

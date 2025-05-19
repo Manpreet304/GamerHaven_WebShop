@@ -1,13 +1,11 @@
 (function(window, $) {
   'use strict';
 
-  // [1] DOM-Elemente vorbereiten
   const productsTableBody   = document.querySelector('#productsTable tbody');
   const productFormElement  = document.getElementById('productForm');
   const productModalElement = document.getElementById('productModal');
   const productModal        = new bootstrap.Modal(productModalElement);
 
-  // [2] Alle Produkte laden
   function fetchAllProducts() {
     return new Promise((resolve, reject) => {
       apiRequest({
@@ -19,7 +17,6 @@
     });
   }
 
-  // [3] Einzelnes Produkt abrufen
   function fetchProductData(productId) {
     return new Promise((resolve, reject) => {
       apiRequest({
@@ -31,13 +28,11 @@
     });
   }
 
-  // [4] Produkt speichern (neu oder Update)
   function submitProductData(formData, isUpdate) {
     return new Promise((resolve, reject) => {
       const url = isUpdate
         ? `../../backend/api/ApiAdmin.php?updateProduct&id=${formData.get('id')}`
         : `../../backend/api/ApiAdmin.php?addProduct`;
-
       $.ajax({
         url,
         method: 'POST',
@@ -62,7 +57,6 @@
     });
   }
 
-  // [5] Produkt löschen
   function deleteProductById(productId) {
     return new Promise((resolve, reject) => {
       apiRequest({
@@ -75,7 +69,6 @@
     });
   }
 
-  // [6] Produkte in Tabelle anzeigen
   function renderProductsTable(products) {
     productsTableBody.innerHTML = '';
     products.forEach(p => {
@@ -96,7 +89,6 @@
     });
   }
 
-  // [7] Modal mit Produktdaten öffnen
   function openProductModal(p = {}) {
     productFormElement.classList.remove('was-validated');
     $('#productForm')[0].reset();
@@ -129,12 +121,10 @@
     productModal.show();
   }
 
-  // [8] "Hinzufügen" Button gedrückt
   function handleAddProductClick() {
     openProductModal();
   }
 
-  // [9] "Bearbeiten" Button gedrückt
   function handleEditProductClick(e) {
     const id = +e.currentTarget.closest('tr').dataset.id;
     fetchProductData(id)
@@ -142,7 +132,6 @@
       .catch(() => {});
   }
 
-  // [10] Speichern-Button gedrückt
   function handleSaveProductClick() {
     if (!productFormElement.checkValidity()) {
       productFormElement.classList.add('was-validated');
@@ -165,7 +154,6 @@
       .catch(() => {});
   }
 
-  // [11] Löschen-Button gedrückt
   function handleDeleteProductClick(e) {
     const id = +e.currentTarget.closest('tr').dataset.id;
     deleteProductById(id)
@@ -173,7 +161,6 @@
       .catch(() => {});
   }
 
-  // [12] Events binden
   function bindProductEvents() {
     document.getElementById('addProductBtn')
       .addEventListener('click', handleAddProductClick);
@@ -184,14 +171,12 @@
       .addEventListener('click', handleSaveProductClick);
   }
 
-  // [13] Produkte laden und anzeigen
   function loadAndRenderProducts() {
     fetchAllProducts()
       .then(data => renderProductsTable(data))
       .catch(() => {});
   }
 
-  // [14] Initialisierung beim Laden der Seite
   document.addEventListener('DOMContentLoaded', () => {
     loadAndRenderProducts();
     bindProductEvents();

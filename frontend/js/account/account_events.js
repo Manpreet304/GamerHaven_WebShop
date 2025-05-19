@@ -5,25 +5,27 @@
 (function(window, $) {
   'use strict';
 
-  // [1] UI-Events an DOM-Elemente binden
   function bindUIEvents() {
-    // [1.1] Modale öffnen
+    // Buttons zum Öffnen der Modals
     $('#edit-account-btn')
       .on('click', () => window.AccountForms.openAccountEditForm());
     $('#add-payment-method-btn')
       .on('click', () => window.AccountForms.openAddPaymentMethodForm());
 
-    // [1.2] Formulare verarbeiten
+    // Account-Daten speichern
     $(document).on('submit', '#edit-account-form', handleEditAccountSubmit);
+
+    // Neue Zahlungsmethode hinzufügen
     $(document).on('submit', '#add-payment-method-form', handleAddPaymentSubmit);
+
+    // Passwort ändern
     $(document).on('submit', '#change-password-form', handleChangePasswordSubmit);
 
-    // [1.3] Dynamische Formularfelder (je nach Zahlungsart)
+    // Dynamisches Umschalten der Payment-Felder
     $(document).on('change', '#new-payment-method',
       window.AccountForms.renderPaymentFields);
   }
 
-  // [2] Formular "Konto bearbeiten" abschicken
   function handleEditAccountSubmit(e) {
     e.preventDefault();
     const form = e.currentTarget;
@@ -58,7 +60,6 @@
     });
   }
 
-  // [3] Formular "Zahlungsmethode hinzufügen" abschicken
   function handleAddPaymentSubmit(e) {
     e.preventDefault();
     const form = e.currentTarget;
@@ -94,7 +95,6 @@
     });
   }
 
-  // [4] Formular "Passwort ändern" abschicken
   function handleChangePasswordSubmit(e) {
     e.preventDefault();
     const form = e.currentTarget;
@@ -118,7 +118,7 @@
     });
   }
 
-  // [5] Initialisierung bei DOM-Ready
+  // Initialisierung bei DOM-Ready
   $(document).ready(() => {
     window.AccountTools.initTooltips();
     window.AccountForms.injectPasswordForm();

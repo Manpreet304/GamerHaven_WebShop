@@ -2,11 +2,11 @@
 // logic/LogoutLogic.php
 
 class LogoutLogic {
-  // Benutzer abmelden: Token + Ablauf entfernen, Cookie löschen, Session beenden
+  // Benutzer abmelden: Token entfernen, Cookies löschen, Session beenden
   public function logout(mysqli $conn): array {
-    // Token + Ablauf aus DB entfernen
+    // Token aus DB entfernen
     if (isset($_SESSION["user"]["id"])) {
-      $stmt = $conn->prepare("UPDATE users SET remember_token = NULL, remember_token_expires = NULL WHERE id = ?");
+      $stmt = $conn->prepare("UPDATE users SET remember_token = NULL WHERE id = ?");
       $stmt->bind_param("i", $_SESSION["user"]["id"]);
       $stmt->execute();
     }
@@ -14,7 +14,6 @@ class LogoutLogic {
     // Cookie löschen
     if (isset($_COOKIE["remember_token"])) {
       setcookie("remember_token", "", time() - 3600, "/");
-      unset($_COOKIE["remember_token"]); // optional: aus PHP löschen
     }
 
     // Session zurücksetzen

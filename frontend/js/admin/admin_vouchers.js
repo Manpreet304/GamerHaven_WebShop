@@ -1,13 +1,11 @@
 (function(window, $) {
   'use strict';
 
-  // [1] DOM-Elemente vorbereiten
   const vouchersTableBody   = document.querySelector('#vouchersTable tbody');
   const voucherFormElement  = document.getElementById('voucherForm');
   const voucherModalElement = document.getElementById('voucherModal');
   const voucherModal        = new bootstrap.Modal(voucherModalElement);
 
-  // [2] Alle Gutscheine laden
   function fetchAllVouchers() {
     return new Promise((resolve, reject) => {
       apiRequest({
@@ -19,7 +17,6 @@
     });
   }
 
-  // [3] Einzelnen Gutschein abrufen
   function fetchVoucherData(voucherId) {
     return new Promise((resolve, reject) => {
       apiRequest({
@@ -31,7 +28,6 @@
     });
   }
 
-  // [4] Neuen Gutscheincode generieren
   function generateNewVoucherCode() {
     return new Promise((resolve, reject) => {
       apiRequest({
@@ -43,7 +39,6 @@
     });
   }
 
-  // [5] Gutschein speichern (neu oder aktualisieren)
   function submitVoucherData(voucherData, isUpdate) {
     return new Promise((resolve, reject) => {
       apiRequest({
@@ -64,7 +59,6 @@
     });
   }
 
-  // [6] Tabelle mit Gutscheinen rendern
   function renderVouchersTable(vouchers) {
     vouchersTableBody.innerHTML = '';
     vouchers.forEach(v => {
@@ -84,7 +78,6 @@
     });
   }
 
-  // [7] Modal öffnen mit Gutscheinwerten
   function openVoucherModal(v = {}) {
     voucherFormElement.classList.remove('was-validated');
     $('#voucherForm')[0].reset();
@@ -100,14 +93,12 @@
     voucherModal.show();
   }
 
-  // [8] Neuer Gutschein: Code generieren & Modal öffnen
   function handleAddVoucherClick() {
     generateNewVoucherCode()
       .then(data => openVoucherModal({ code: data.code }))
       .catch(err => console.error('Generate code failed', err));
   }
 
-  // [9] Bestehenden Gutschein bearbeiten
   function handleEditVoucherClick(e) {
     const id = +e.currentTarget.closest('tr').dataset.id;
     fetchVoucherData(id)
@@ -115,7 +106,6 @@
       .catch(err => console.error('Fetch voucher failed', err));
   }
 
-  // [10] Gutschein speichern
   function handleSaveVoucherClick() {
     if (!voucherFormElement.checkValidity()) {
       voucherFormElement.classList.add('was-validated');
@@ -139,7 +129,6 @@
       .catch(err => console.error("Voucher save failed", err));
   }
 
-  // [11] Event-Listener verbinden
   function bindVoucherEvents() {
     document.getElementById('addVoucherBtn')
       .addEventListener('click', handleAddVoucherClick);
@@ -149,14 +138,12 @@
       .addEventListener('click', handleSaveVoucherClick);
   }
 
-  // [12] Alle Gutscheine laden & anzeigen
   function loadAndRenderVouchers() {
     fetchAllVouchers()
       .then(data => renderVouchersTable(data))
       .catch(err => console.error("Loading vouchers failed", err));
   }
 
-  // [13] Initialisierung bei Seitenstart
   document.addEventListener('DOMContentLoaded', () => {
     loadAndRenderVouchers();
     bindVoucherEvents();
