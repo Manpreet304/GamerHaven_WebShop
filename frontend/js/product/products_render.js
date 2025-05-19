@@ -1,12 +1,8 @@
-/**
- * js/products/products_render.js
- * Verantwortlich für Rendern der Produkt-Cards, Modals und Sterne-Ratings
- */
 (function(window, $) {
   'use strict';
 
   const ProductsRender = {
-    // Sterne-Rating als HTML erzeugen
+    // [1] Sterne-Rating als HTML
     renderStars(rating) {
       const r     = parseFloat(rating) || 0;
       const full  = Math.floor(r);
@@ -22,7 +18,7 @@
       );
     },
 
-    // Produktattribute als HTML darstellen
+    // [2] Attributliste als HTML generieren
     renderAttributes(attrString) {
       try {
         const obj = JSON.parse(attrString);
@@ -34,13 +30,14 @@
       }
     },
 
-    // Bildrotation bei Hover aktivieren
+    // [3] Hover-Bildwechsel aktivieren (Galerie)
     setupHoverRotation(products) {
       $('.product-card').each(function() {
         const $img = $(this).find('.product-image');
         const idx  = $img.data('index');
         const imgs = products[idx]?.images || [];
         if (imgs.length <= 1) return;
+
         let interval;
         $(this).hover(
           () => {
@@ -58,7 +55,7 @@
       });
     },
 
-    // Produktkarten und zugehörige Modals erstellen
+    // [4] Produktkarten und zugehörige Modals erzeugen
     renderProducts(products) {
       const grid = $('#productGrid').empty();
       const mods = $('#modals-container').empty();
@@ -66,7 +63,7 @@
       const tplModal = document.getElementById('product-modal-template').content;
 
       products.forEach((p, idx) => {
-        // Produktkarte aufbauen
+        // [4.1] Karte bauen
         const $card = $(tplCard.cloneNode(true)).find('.product-card')
           .attr('data-product-id', p.id)
           .attr('draggable','true')
@@ -89,12 +86,13 @@
 
         grid.append($card.closest('.col-md-4'));
 
-        // Modal aufbauen
+        // [4.2] Modal bauen
         const $mod    = $(tplModal.cloneNode(true)).find('.product-modal')
                           .attr('id',`productModal${p.id}`);
         const $modImg = $mod.find('.modal-product-image')
                           .attr('src', p.images?.[0] || 'pictures/placeholder.jpg');
 
+        // Bild-Slideshow im Modal
         if (p.images?.length > 1) {
           let i = 0;
           $mod.on('shown.bs.modal', () => {
@@ -110,13 +108,13 @@
 
         $mod.find('.modal-title').text(p.name);
         $mod.find('.product-description')
-          .html(`<strong>Description:</strong><br>${p.description||'No description'}`);
+          .html(`<strong>Description:</strong><br>${p.description || 'No description'}`);
         $mod.find('.product-price-text')
           .html(`<strong>Price:</strong> €${p.price}`);
         $mod.find('.product-stock')
-          .html(`<strong>Stock:</strong> ${p.stock>0?'✅ In Stock':'❌ Out of Stock'}`);
+          .html(`<strong>Stock:</strong> ${p.stock > 0 ? '✅ In Stock' : '❌ Out of Stock'}`);
         $mod.find('.product-category')
-          .html(`<strong>Category:</strong> ${p.category}${p.sub_category?'/'+p.sub_category:''}`);
+          .html(`<strong>Category:</strong> ${p.category}${p.sub_category ? '/' + p.sub_category : ''}`);
         $mod.find('.product-rating').html(`<strong>Rating:</strong> ${this.renderStars(p.rating)}`);
         $mod.find('.attributes')
           .html(`<strong>Attributes:</strong><br>${this.renderAttributes(p.attributes)}`);
@@ -126,7 +124,6 @@
     }
   };
 
-  // Objekt global verfügbar machen
   window.ProductsRender = ProductsRender;
 
 })(window, jQuery);

@@ -5,14 +5,16 @@
 (function(window, $) {
   'use strict';
 
+  // [1] Sammlung von Hilfsfunktionen für Account
   const AccountTools = {
-    // Tooltips initialisieren
+
+    // [1.1] Tooltips aus Bootstrap initialisieren
     initTooltips() {
       $('[data-bs-toggle="tooltip"]').each((_, el) => new bootstrap.Tooltip(el));
     }
   };
 
-  // Globale Bereitstellung
+  // [2] Globale Bereitstellung
   window.AccountTools = AccountTools;
 
 })(window, jQuery);

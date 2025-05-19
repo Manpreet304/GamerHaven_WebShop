@@ -39,26 +39,34 @@ class LoginLogic {
 
   // Token in DB speichern
   public function saveRememberToken(int $userId, string $token, mysqli $conn): void {
-    $stmt = $conn->prepare("UPDATE users SET remember_token = ? WHERE id = ?");
-    $stmt->bind_param("si", $token, $userId);
-    $stmt->execute();
-  }
+  $expires = date('Y-m-d H:i:s', time() + 60 * 60 * 24 * 30); // 30 Tage gültig
+  $stmt = $conn->prepare("UPDATE users SET remember_token = ?, remember_token_expires = ? WHERE id = ?");
+  $stmt->bind_param("ssi", $token, $expires, $userId);
+  $stmt->execute();
+}
+
 
   // Login per Cookie-Token
   public function loginWithToken(string $token, mysqli $conn): array {
-    $stmt = $conn->prepare("SELECT id, username, role, is_active
-                            FROM users
-                            WHERE remember_token = ?");
-    $stmt->bind_param("s", $token);
-    $stmt->execute();
-    $user = $stmt->get_result()->fetch_assoc();
+  $stmt = $conn->prepare("SELECT id, username, role, is_active, remember_token_expires
+                          FROM users
+                          WHERE remember_token = ?");
+  $stmt->bind_param("s", $token);
+  $stmt->execute();
+  $user = $stmt->get_result()->fetch_assoc();
 
-    if (!$user || $user["is_active"] !== 'true') {
-      return [403, null, "Invalid token"];
-    }
-
-    unset($user["is_active"]);
-    $_SESSION["user"] = $user;
-    return [200, $user, "Token login successful"];
+  if (
+    !$user ||
+    $user["is_active"] !== 'true' ||
+    !isset($user["remember_token_expires"]) ||
+    strtotime($user["remember_token_expires"]) < time()
+  ) {
+    return [403, null, "Invalid or expired token"];
   }
+
+  unset($user["is_active"], $user["remember_token_expires"]);
+  $_SESSION["user"] = $user;
+  return [200, $user, "Token login successful"];
+}
+
 }

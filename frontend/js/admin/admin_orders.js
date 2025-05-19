@@ -1,6 +1,7 @@
 (function(window, $) {
   'use strict';
 
+  // [1] DOM-Elemente vorbereiten
   const customerSelect         = document.getElementById('orderCustomerSelect');
   const ordersTableBody        = document.querySelector('#ordersTable tbody');
   const orderItemsContainer    = document.getElementById('orderItemsBody');
@@ -8,6 +9,7 @@
   const orderItemsModal        = new bootstrap.Modal(orderItemsModalElement);
   let ordersCache              = {};
 
+  // [2] Kundenliste für Dropdown abrufen
   function fetchCustomersForOrders() {
     return new Promise((resolve, reject) => {
       apiRequest({
@@ -19,6 +21,7 @@
     });
   }
 
+  // [3] Bestellungen zu Kunde abrufen
   function fetchOrdersByCustomer(customerId = '') {
     const url = customerId
       ? `../../backend/api/ApiAdmin.php?listOrdersByCustomer&id=${customerId}`
@@ -34,6 +37,7 @@
     });
   }
 
+  // [4] Einzelne Bestellpositionen abrufen
   function fetchOrderItems(orderId) {
     return new Promise((resolve, reject) => {
       apiRequest({
@@ -45,6 +49,7 @@
     });
   }
 
+  // [5] Bestellposition reduzieren/löschen
   function removeOrderItem(orderItemId, qty) {
     return new Promise((resolve, reject) => {
       apiRequest({
@@ -57,12 +62,14 @@
     });
   }
 
+  // [6] Kunden-Dropdown aufbauen
   function renderCustomerDropdown(customers) {
     customerSelect.innerHTML =
       '<option value="">All Customers</option>' +
       customers.map(c => `<option value="${c.id}">${c.firstname} ${c.lastname}</option>`).join('');
   }
 
+  // [7] Bestellübersichtstabelle anzeigen
   function renderOrdersTable(orders) {
     ordersCache = {};
     ordersTableBody.innerHTML = '';
@@ -82,6 +89,7 @@
     });
   }
 
+  // [8] Bestellpositionen anzeigen (Modal)
   function renderOrderItems(orderId, items) {
     const order = ordersCache[orderId];
     orderItemsContainer.innerHTML = '';
@@ -120,6 +128,7 @@
     orderItemsModal.show();
   }
 
+  // [9] Kunde auswählen → Bestellungen laden
   function handleCustomerChange() {
     const id = customerSelect.value;
     fetchOrdersByCustomer(id)
@@ -127,6 +136,7 @@
       .catch(() => {});
   }
 
+  // [10] Button "Details" → Bestellpositionen anzeigen
   function handleViewItemsClick(e) {
     const id = +e.currentTarget.dataset.id;
     fetchOrderItems(id)
@@ -134,6 +144,7 @@
       .catch(() => {});
   }
 
+  // [11] Position entfernen aus Bestellung
   function handleRemoveItemClick(e) {
     const id = +e.currentTarget.dataset.id;
     const input = document.querySelector(`.remove-quantity[data-id="${id}"]`);
@@ -152,12 +163,14 @@
       .catch(() => {});
   }
 
+  // [12] Events binden
   function bindOrderEvents() {
     customerSelect.addEventListener('change', handleCustomerChange);
     $(ordersTableBody).on('click', '.view-items', handleViewItemsClick);
     $(orderItemsContainer).on('click', '.remove-item', handleRemoveItemClick);
   }
 
+  // [13] Start bei DOM ready
   document.addEventListener('DOMContentLoaded', () => {
     fetchCustomersForOrders()
       .then(renderCustomerDropdown)

@@ -5,11 +5,13 @@
 (function(window, $) {
   'use strict';
 
+  // [1] DOM-Elemente vorbereiten
   const customersTableBody   = document.querySelector('#customersTable tbody');
   const customerFormElement  = document.getElementById('customerForm');
   const customerModalElement = document.getElementById('customerModal');
   const customerModal        = new bootstrap.Modal(customerModalElement);
 
+  // [2] Kunden vom Server holen
   function fetchAllCustomers() {
     return new Promise((resolve, reject) => {
       apiRequest({
@@ -21,6 +23,7 @@
     });
   }
 
+  // [3] Einzelnen Kunden holen
   function fetchCustomerData(customerId) {
     return new Promise((resolve, reject) => {
       apiRequest({
@@ -32,6 +35,7 @@
     });
   }
 
+  // [4] Kunden speichern (aktualisieren)
   function submitCustomerData(customerData) {
     return new Promise((resolve, reject) => {
       apiRequest({
@@ -45,6 +49,7 @@
     });
   }
 
+  // [5] Kunde löschen
   function deleteCustomerById(customerId) {
     return new Promise((resolve, reject) => {
       apiRequest({
@@ -58,6 +63,7 @@
     });
   }
 
+  // [6] Kunden in die Tabelle eintragen
   function renderCustomersTable(customers) {
     customersTableBody.innerHTML = '';
     customers.forEach(c => {
@@ -80,6 +86,7 @@
     });
   }
 
+  // [7] Kundenformular öffnen (leeres oder mit Daten)
   function openCustomerModal(c = {}) {
     customerFormElement.classList.remove('was-validated');
     $('#customerForm')[0].reset();
@@ -100,10 +107,12 @@
     customerModal.show();
   }
 
+  // [8] "Add Customer" Button
   function handleAddCustomerClick() {
     openCustomerModal();
   }
 
+  // [9] "Edit" Button
   function handleEditCustomerClick(e) {
     const id = +e.currentTarget.closest('tr').dataset.id;
     fetchCustomerData(id)
@@ -111,6 +120,7 @@
       .catch(() => {});
   }
 
+  // [10] Kunden speichern (aus Formular)
   function handleSaveCustomerClick() {
     if (!customerFormElement.checkValidity()) {
       customerFormElement.classList.add('was-validated');
@@ -142,6 +152,7 @@
       .catch(() => {});
   }
 
+  // [11] Kunde löschen
   function handleDeleteCustomerClick(e) {
     const id = +e.currentTarget.closest('tr').dataset.id;
     deleteCustomerById(id)
@@ -149,6 +160,7 @@
       .catch(() => {});
   }
 
+  // [12] Klick-Events verknüpfen
   function bindCustomerEvents() {
     const addBtn = document.getElementById('addCustomerBtn');
     if (addBtn) addBtn.addEventListener('click', handleAddCustomerClick);
@@ -163,12 +175,14 @@
     }
   }
 
+  // [13] Kunden laden und Tabelle anzeigen
   function loadAndRenderCustomers() {
     fetchAllCustomers()
       .then(data => renderCustomersTable(data))
       .catch(() => {});
   }
 
+  // [14] Initialisierung beim Laden der Seite
   document.addEventListener('DOMContentLoaded', () => {
     loadAndRenderCustomers();
     bindCustomerEvents();

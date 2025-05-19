@@ -5,8 +5,10 @@
 (function(window, $) {
   'use strict';
 
+  // [1] Funktionen zur Darstellung im Account-Bereich
   const AccountRender = {
-    // Nutzerinfo anzeigen
+
+    // [1.1] Benutzerdaten im Info-Bereich anzeigen
     renderAccountInfo(user) {
       $('#account-info').html(`
         <p><strong>Name:</strong> ${user.first_name} ${user.last_name}</p>
@@ -15,7 +17,7 @@
       `);
     },
 
-    // Zahlungsmethoden anzeigen
+    // [1.2] Zahlungsmethoden anzeigen
     renderPaymentMethods(payments) {
       const container = $('#payment-methods').empty();
       if (!payments.length) {
@@ -36,7 +38,7 @@
       });
     },
 
-    // Bestellübersicht anzeigen
+    // [1.3] Liste von Bestellungen darstellen
     renderOrders(orders) {
       const c = $('#order-list').empty();
       if (!orders.length) {
@@ -59,7 +61,7 @@
       });
     },
 
-    // Bestelldetails im Modal anzeigen
+    // [1.4] Bestelldetails in Modal anzeigen
     showOrderDetailsModal(res) {
       $('#modal-order-id').text(res.order.id);
       $('#modal-order-date').text(res.order.created_at);
@@ -67,6 +69,7 @@
       $('#modal-discount').text(`€${res.order.discount}`);
       $('#modal-shipping').text(`€${res.order.shipping_amount}`);
       $('#modal-total').text(`€${res.order.total_amount}`);
+
       const body = $('#modal-items-body').empty();
       res.items.forEach(item => {
         body.append(`
@@ -82,7 +85,7 @@
     }
   };
 
-  // Globale Bereitstellung
+  // [2] Objekt global bereitstellen
   window.AccountRender = AccountRender;
 
 })(window, jQuery);
