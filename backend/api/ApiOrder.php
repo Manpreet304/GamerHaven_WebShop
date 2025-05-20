@@ -55,7 +55,6 @@ switch ($_SERVER["REQUEST_METHOD"]) {
         break;
 
     default:
-        // HTTP-Methode nicht erlaubt
         sendApiResponse(405, null, "Method not allowed.");
         break;
 }
