@@ -58,6 +58,5 @@ switch ($_SERVER["REQUEST_METHOD"]) {
         break;
 
     default:
-        // Methode nicht erlaubt (z. B. PUT/DELETE)
         sendApiResponse(405, null, "Method not allowed");
 }
