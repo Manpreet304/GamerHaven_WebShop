@@ -6,22 +6,6 @@ class ProductLogic {
     $this->conn = $conn;
   }
 
-  // Alle Produkte laden (unsortiert oder nach created_at)
-  public function getAllProducts(): array {
-    $stmt = $this->conn->prepare("SELECT * FROM products ORDER BY created_at DESC");
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    $products = [];
-    while ($row = $result->fetch_assoc()) {
-      $row["images"] = $this->extractImages($row["image_url"]);
-      unset($row["image_url"]);
-      $products[] = $row;
-    }
-
-    return [200, $products, "All products loaded"];
-  }
-
   // Gefilterte Produktsuche nach Kategorie, Brand, Preis, Rating, Stock, Suche
   public function getFilteredProducts(array $filters): array {
     $sql    = "SELECT * FROM products WHERE 1=1";
