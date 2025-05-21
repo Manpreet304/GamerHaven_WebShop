@@ -38,7 +38,7 @@ $stmt->bind_param("i", $orderId);
 $stmt->execute();
 $items = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
-// --- Helpers ---
+//Helpers
 function utf(string $text): string {
     return utf8_decode($text);
 }
@@ -70,12 +70,12 @@ class InvoicePDF extends FPDF {
             $this->Cell(0,6, utf($line), 0,1);
         }
 
-        // --- RIGHT: Logo + Company Info ---
+        // Logo + Company Info
         // Logo
         $this->Image('../../pictures/GamerHaven_Logo.png',160,-5,45);
         // Company
         $this->SetFont('Arial','B',11);
-        $y = 10 + 20 + 2; // unter Logo
+        $y = 10 + 20 + 2;
         $this->SetXY(150,$y);
         $this->Cell(0,6, utf('GamerHaven GmbH'), 0,1,'R');
         $this->SetFont('Arial','',9);
@@ -108,18 +108,18 @@ $pdf = new InvoicePDF($order);
 $pdf->AddPage();
 $pdf->SetAutoPageBreak(true,30);
 
-// — Title —
+//Title
 $pdf->SetFont('Arial','B',16);
 $pdf->Cell(0,8, utf('INVOICE'), 0,1,'C');
 $pdf->Ln(2);
 
-// — Metadata (Invoice #, Date) —
+//Metadata (Invoice 123 etc., Date)
 $pdf->SetFont('Arial','',11);
 $pdf->Cell(100,6, utf('Invoice #: ').$order['id'],0,0);
 $pdf->Cell(0,6, utf('Date: ').substr($order['created_at'],0,10),0,1,'R');
 $pdf->Ln(5);
 
-// — Table header —
+//Table header
 $pdf->SetFont('Arial','B',10);
 $pdf->SetFillColor(240,240,240);
 $w = [10, 25, 85, 20, 25, 25];
@@ -130,7 +130,7 @@ $pdf->Cell($w[3],8,'Qty',1,0,'C',true);
 $pdf->Cell($w[4],8,'Unit Price',1,0,'C',true);
 $pdf->Cell($w[5],8,'Total',1,1,'C',true);
 
-// — Table content —
+//Table content
 $pdf->SetFont('Arial','',9);
 $i = 1;
 foreach ($items as $it) {
@@ -142,7 +142,7 @@ foreach ($items as $it) {
     $pdf->Cell($w[5],6,euro($it['total_price']),1,1,'R');
 }
 
-// — Totals —
+//Totals
 $pdf->Ln(4);
 $pdf->SetFont('Arial','B',10);
 $pdf->Cell(array_sum(array_slice($w,0,4)));

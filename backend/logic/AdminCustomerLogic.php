@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 class AdminCustomerLogic {
 
-    // Gibt alle Kunden zurück
+    // Gibt alle Kunden aus der Datenbank zurück, sortiert nach Erstellungsdatum (neueste zuerst)
     public function list(mysqli $conn): array {
         $res = $conn->query("
             SELECT id, firstname, lastname, email, username, role, is_active
@@ -14,7 +14,7 @@ class AdminCustomerLogic {
         return [200, $res->fetch_all(MYSQLI_ASSOC), "Customer list loaded"];
     }
 
-    // Gibt einen einzelnen Kunden anhand der ID zurück
+    // Gibt einen einzelnen Kunden anhand seiner ID zurück
     public function get(int $id, mysqli $conn): array {
         $stmt = $conn->prepare("
             SELECT id, firstname, lastname, email, username, salutation,
@@ -26,12 +26,14 @@ class AdminCustomerLogic {
         $stmt->execute();
 
         $result = $stmt->get_result()->fetch_assoc();
+
+        // Gibt 200 zurück, wenn Kunde existiert, sonst 404
         return $result
             ? [200, $result, "Customer loaded"]
             : [404, null, "Customer not found"];
     }
 
-    // Aktiviert/Deaktiviert den Kundenstatus (Toggle)
+    // Aktiviert oder deaktiviert einen Kunden (Boolean wird invertiert)
     public function toggle(int $id, mysqli $conn): array {
         $stmt = $conn->prepare("UPDATE users SET is_active = NOT is_active WHERE id = ?");
         $stmt->bind_param("i", $id);
@@ -42,7 +44,7 @@ class AdminCustomerLogic {
             : [400, ['toggled' => false], "Toggling failed"];
     }
 
-    // Löscht einen Kunden anhand der ID
+    // Löscht einen Kunden anhand seiner ID
     public function delete(int $id, mysqli $conn): array {
         $stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
         $stmt->bind_param("i", $id);
@@ -53,14 +55,14 @@ class AdminCustomerLogic {
             : [400, ['deleted' => false], "Customer could not be deleted"];
     }
 
-    // Speichert oder aktualisiert Kundendaten
+    // Speichert neue oder aktualisiert bestehende Kundendaten
     public function save(array $d, mysqli $conn): array {
-        $isActiveStr = $d['is_active'] ? 'true' : 'false';
+        $isActiveStr = $d['is_active'] ? 'true' : 'false'; // Konvertiert zu SQL-kompatiblem Wert
 
-        // === UPDATE bestehender Kunde ===
+        // UPDATE: Kunde existiert bereits 
         if (!empty($d['id'])) {
             if (!empty($d['password'])) {
-                // Mit Passwort-Änderung
+                // Passwort-Änderung inklusive
                 $hash = password_hash($d['password'], PASSWORD_DEFAULT);
                 $stmt = $conn->prepare("
                     UPDATE users SET
@@ -77,7 +79,7 @@ class AdminCustomerLogic {
                     $hash, $d['id']
                 );
             } else {
-                // Ohne Passwort-Änderung
+                // Kein neues Passwort
                 $stmt = $conn->prepare("
                     UPDATE users SET
                         firstname=?, lastname=?, email=?, username=?,
@@ -99,7 +101,8 @@ class AdminCustomerLogic {
                 ? [200, ['updated' => true], "Customer updated"]
                 : [400, ['updated' => false], "Update failed"];
         } else {
-            // === INSERT neuer Kunde ===
+            // INSERT: Neuer Kunde wird angelegt
+            // Passwort setzen oder zufälliges erzeugen, wenn keines übergeben wurde
             $hash = password_hash($d['password'] ?? bin2hex(random_bytes(8)), PASSWORD_DEFAULT);
             $stmt = $conn->prepare("
                 INSERT INTO users

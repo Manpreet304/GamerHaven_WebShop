@@ -7,10 +7,9 @@ header("Content-Type: application/json");
 // Session starten, falls noch nicht aktiv
 if (session_status() === PHP_SESSION_NONE) session_start();
 
-// Benötigte Abhängigkeiten einbinden
-require_once("../db/dbaccess.php");           // DB-Verbindung
-require_once("../logic/ProductLogic.php");    // Produkt-Logik direkt
-require_once("../models/response.php");       // sendApiResponse() für einheitliche Antwortstruktur
+require_once("../db/dbaccess.php");           
+require_once("../logic/ProductLogic.php");    
+require_once("../models/response.php");
 
 // Produktlogik-Instanz direkt erstellen
 $logic = new ProductLogic($conn);

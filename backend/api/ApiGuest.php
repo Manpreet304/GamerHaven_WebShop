@@ -7,15 +7,14 @@ header("Content-Type: application/json");
 // Session starten, falls noch nicht aktiv
 if (session_status() === PHP_SESSION_NONE) session_start();
 
-// Einbindung benötigter Ressourcen
-require_once("../db/dbaccess.php");               // Stellt DB-Verbindung her
-require_once("../logic/RegisterLogic.php");       // Registrierung
-require_once("../logic/LoginLogic.php");          // Login / Token
-require_once("../logic/LogoutLogic.php");         // Logout
-require_once("../logic/GuestInfoLogic.php");      // Statusprüfung
-require_once("../models/UserModel.php");          // Datenmodell
-require_once("../models/response.php");           // Enthält Hilfsfunktion sendApiResponse()
-
+require_once("../db/dbaccess.php");
+require_once("../logic/RegisterLogic.php");
+require_once("../logic/LoginLogic.php");
+require_once("../logic/LogoutLogic.php");         
+require_once("../logic/GuestInfoLogic.php");     
+require_once("../models/UserModel.php");          
+require_once("../models/response.php"); 
+          
 // Instanzen der Logik-Klassen
 $registerLogic  = new RegisterLogic();
 $loginLogic     = new LoginLogic();

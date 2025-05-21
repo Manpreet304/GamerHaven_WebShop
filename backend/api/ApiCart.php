@@ -5,10 +5,9 @@ header("Content-Type: application/json");
 // Startet die Session, falls sie noch nicht aktiv ist
 if (session_status() === PHP_SESSION_NONE) session_start();
 
-// Bindet notwendige Abhängigkeiten ein
-require_once __DIR__ . '/../db/dbaccess.php';     // Stellt DB-Verbindung her
-require_once __DIR__ . '/../logic/CartLogic.php'; // Direktzugriff auf Logik
-require_once __DIR__ . '/../models/response.php'; // sendApiResponse() Funktion
+require_once("../db/dbaccess.php"); 
+require_once("../logic/CartLogic.php"); 
+require_once("../models/response.php"); 
 
 // Prüft, ob der Benutzer eingeloggt ist – andernfalls Abbruch
 if (empty($_SESSION['user']['id'])) {

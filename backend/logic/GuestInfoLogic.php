@@ -1,9 +1,9 @@
 <?php
 class GuestInfoLogic {
 
-  // Gibt eingeloggte Userdaten + gespeicherte Zahlungsmethoden zurück
+  // Gibt eingeloggte Userdaten sowie gespeicherte Zahlungsmethoden zurück
   public function getUserStatus(mysqli $conn): array {
-    // 🔐 Auto-Login mit Remember Me Token, falls keine Session existiert
+    // Automatischer Login über "Remember Me"-Token, falls keine aktive Session vorhanden ist
     if (!isset($_SESSION["user"]) && isset($_COOKIE["remember_token"])) {
       require_once("../logic/LoginLogic.php");
       $loginLogic = new LoginLogic();
@@ -11,12 +11,12 @@ class GuestInfoLogic {
 
       if ($status === 200) {
         $_SESSION["user"] = $userData;
-        // Cookie erneuern (optional, für verlängertes Login)
+        // Verlängert die Gültigkeit des Tokens im Cookie
         setcookie("remember_token", $_COOKIE["remember_token"], time() + 60 * 60 * 24 * 30, "/");
       }
     }
 
-    // Noch nicht eingeloggt → Rückgabe
+    // Wenn keine Session vorhanden ist, gilt der Benutzer als nicht eingeloggt
     if (!isset($_SESSION["user"])) {
       return [200, [
         "loggedIn" => false,
@@ -28,7 +28,7 @@ class GuestInfoLogic {
 
     $userId = $_SESSION["user"]["id"];
 
-    // Userdaten abrufen
+    // Benutzerstammdaten aus der Datenbank laden
     $stmt = $conn->prepare("SELECT username, firstname AS first_name, lastname AS last_name,
                                    email, address, zip_code, city, country
                             FROM users
@@ -41,7 +41,7 @@ class GuestInfoLogic {
       return [404, null, "User not found"];
     }
 
-    // Zahlungsdaten abrufen
+    // Zahlungsdaten (z. B. Kreditkarte, PayPal, IBAN) abrufen
     $stmt = $conn->prepare("SELECT id, method, RIGHT(card_number, 4) AS last_digits,
                                   paypal_email, iban
                            FROM payments
@@ -50,7 +50,7 @@ class GuestInfoLogic {
     $stmt->execute();
     $payments = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
-    // Daten zusammenführen und zurückgeben
+    // Benutzer- und Zahlungsdaten zusammenführen
     $data = array_merge([
       "loggedIn" => true,
       "role"     => $_SESSION["user"]["role"],

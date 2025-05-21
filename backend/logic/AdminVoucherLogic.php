@@ -3,11 +3,9 @@ declare(strict_types=1);
 
 class AdminVoucherLogic {
 
-    /**
-     * Lade alle Gutscheine und aktualisiere inaktive automatisch.
-     */
+    // Lädt alle Gutscheine und deaktiviert automatisch ungültige (abgelaufen oder leer)
     public function list(mysqli $conn): array {
-        // Abgelaufene oder verbrauchte Gutscheine deaktivieren
+        // Automatische Deaktivierung abgelaufener oder verbrauchter Gutscheine
         $conn->query("
             UPDATE vouchers
             SET is_active = CASE
@@ -16,6 +14,7 @@ class AdminVoucherLogic {
             END
         ");
 
+        // Alle Gutscheine laden
         $res = $conn->query("
             SELECT id, code, value, remaining_value, is_active, expires_at, created_at
             FROM vouchers
@@ -24,10 +23,9 @@ class AdminVoucherLogic {
         return [200, $res->fetch_all(MYSQLI_ASSOC), "Vouchers loaded"];
     }
 
-    /**
-     * Lade einen bestimmten Gutschein (inkl. Statusaktualisierung).
-     */
+    // Lädt einen bestimmten Gutschein und aktualisiert vorher dessen Status
     public function get(int $id, mysqli $conn): array {
+        // Gutscheinstatus aktualisieren (z. B. deaktivieren wenn abgelaufen)
         $conn->query("
             UPDATE vouchers
             SET is_active = CASE
@@ -36,6 +34,7 @@ class AdminVoucherLogic {
             END
         ");
 
+        // Gutschein anhand der ID laden
         $stmt = $conn->prepare("
             SELECT id, code, value, remaining_value, is_active, expires_at
             FROM vouchers
@@ -50,33 +49,29 @@ class AdminVoucherLogic {
             : [404, null, "Voucher not found"];
     }
 
-    /**
-     * Generiere einen zufälligen neuen Gutscheincode.
-     */
+    // Erzeugt einen neuen zufälligen 5-stelligen Gutscheincode
     public function generateCode(): array {
         $code = $this->generateRandomCode();
         return [200, ['code' => $code], "Voucher code generated"];
     }
 
-    /**
-     * Speichere oder aktualisiere einen Gutschein.
-     */
+    // Speichert einen neuen oder aktualisiert einen bestehenden Gutschein
     public function save(array $d, mysqli $conn): array {
         $expiresAt       = $d['expires_at'];
         $today           = date('Y-m-d');
         $remaining       = isset($d['remaining_value']) ? (float)$d['remaining_value'] : (float)$d['value'];
         $requestedActive = !empty($d['is_active']) ? 1 : 0;
 
-        // Aktivierung nicht möglich, wenn abgelaufen
+        // Verhindert Aktivierung eines abgelaufenen Gutscheins
         if ($requestedActive && $expiresAt < $today) {
             return [400, ['updated' => false], "Cannot activate voucher: expiration date is in the past."];
         }
 
-        // Automatische Deaktivierung bei abgelaufenem Datum oder 0€ Restwert
+        // Automatische Deaktivierung bei abgelaufenem Datum oder 0 Restwert
         $isActive = ($expiresAt < $today || $remaining <= 0) ? 0 : $requestedActive;
 
         if (!empty($d['id'])) {
-            // UPDATE
+            // UPDATE eines bestehenden Gutscheins 
             $stmt = $conn->prepare("
                 UPDATE vouchers
                 SET code = ?, value = ?, remaining_value = ?, is_active = ?, expires_at = ?
@@ -89,7 +84,7 @@ class AdminVoucherLogic {
                 ? [200, ['updated' => true], "Voucher updated"]
                 : [400, ['updated' => false], "Update failed"];
         } else {
-            // INSERT
+            // === INSERT eines neuen Gutscheins ===
             $code = !empty($d['code']) ? $d['code'] : $this->generateRandomCode();
 
             $stmt = $conn->prepare("
@@ -105,9 +100,7 @@ class AdminVoucherLogic {
         }
     }
 
-    /**
-     * Erzeuge einen 5-stelligen alphanumerischen Code.
-     */
+    // Interne Hilfsfunktion zur Generierung eines zufälligen Codes (5 Zeichen)
     private function generateRandomCode(): string {
         $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
         $code = '';

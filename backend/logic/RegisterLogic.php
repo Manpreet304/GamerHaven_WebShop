@@ -1,7 +1,7 @@
 <?php
 class RegisterLogic {
 
-    // Registrierung: Validieren und Speichern
+    // Registrierung eines neuen Benutzers: validiert Eingaben und speichert Daten
     public function register(User $user, string $password2, mysqli $conn): array {
         $errors = $this->validate($user, $password2, $conn);
         if (!empty($errors)) {
@@ -11,29 +11,33 @@ class RegisterLogic {
         return $this->save($user, $conn);
     }
 
-    // Validierung der Nutzerdaten
+    // Validiert Passwort, E-Mail und prüft auf doppelte Benutzernamen oder E-Mail-Adressen
     public function validate(User $user, string $password2, mysqli $conn): array {
         $errors = [];
 
+        // Passwort-Wiederholung prüfen
         if ($user->password !== $password2) {
             $errors["password2"] = "Passwords do not match.";
         }
 
+        // Passwort-Länge prüfen
         if (strlen($user->password) < 8) {
             $errors["password"] = "Password too short.";
         }
 
+        // Passwort-Komplexität prüfen (Groß-, Kleinbuchstaben, Zahl)
         if (!preg_match('/[A-Z]/', $user->password) ||
             !preg_match('/[a-z]/', $user->password) ||
             !preg_match('/[0-9]/', $user->password)) {
             $errors["password"] = "Password must contain uppercase, lowercase, and number.";
         }
 
+        // Gültige E-Mail prüfen
         if (!filter_var($user->email, FILTER_VALIDATE_EMAIL)) {
             $errors["email"] = "Invalid email.";
         }
 
-        // Prüfen auf doppelte Benutzernamen
+        // Benutzername darf nicht doppelt sein
         $stmt = $conn->prepare("SELECT id FROM users WHERE username = ?");
         $stmt->bind_param("s", $user->username);
         $stmt->execute();
@@ -42,7 +46,7 @@ class RegisterLogic {
             $errors["username"] = "Username taken.";
         }
 
-        // Prüfen auf doppelte E-Mail
+        // E-Mail darf nicht doppelt sein
         $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
         $stmt->bind_param("s", $user->email);
         $stmt->execute();
@@ -54,11 +58,12 @@ class RegisterLogic {
         return $errors;
     }
 
-    // Speichern von Benutzer + Zahlmethode in Datenbank
+    // Speichert den Benutzer und seine Zahlungsmethode in der Datenbank (Transaktional)
     public function save(User $user, mysqli $conn): array {
         $conn->begin_transaction();
 
         try {
+            // Benutzer speichern
             $stmt = $conn->prepare("INSERT INTO users (salutation, firstname, lastname, address, zip_code, city, email, username, password, country, created_at, role)
                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'user')");
 
@@ -78,6 +83,7 @@ class RegisterLogic {
             $stmt->execute();
             $userId = $conn->insert_id;
 
+            // Zahlungsmethode speichern
             $stmt2 = $conn->prepare("INSERT INTO payments (user_id, method, card_number, csv, paypal_email, paypal_username, iban, bic, created_at)
                                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
             $stmt2->bind_param("isssssss",
@@ -92,10 +98,12 @@ class RegisterLogic {
             );
             $stmt2->execute();
 
+            // Transaktion abschließen
             $conn->commit();
             return [200, ["id" => $userId], "Registration successful"];
 
         } catch (Exception $e) {
+            // Bei Fehler alles zurückrollen
             $conn->rollback();
             return [500, null, "Registration failed"];
         }
