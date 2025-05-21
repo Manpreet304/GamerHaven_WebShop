@@ -72,7 +72,7 @@ class AdminCustomerLogic {
                     WHERE id=?
                 ");
                 $stmt->bind_param(
-                    "sssssssssssssi",
+                    "ssssssssssssi",
                     $d['firstname'], $d['lastname'], $d['email'], $d['username'],
                     $d['salutation'], $d['role'], $isActiveStr,
                     $d['address'], $d['zip_code'], $d['city'], $d['country'],
