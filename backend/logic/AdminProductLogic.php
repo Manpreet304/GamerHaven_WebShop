@@ -2,11 +2,10 @@
 declare(strict_types=1);
 
 class AdminProductLogic {
+    // Pfad zum Bilderverzeichnis
     private string $imageDir = __DIR__ . '/../../pictures/';
 
-    /**
-     * Alle Produkte aus der Datenbank laden.
-     */
+    // Lädt alle Produkte aus der Datenbank
     public function list(mysqli $conn): array {
         $res = $conn->query("
             SELECT id, name, description, price, stock, rating,
@@ -17,9 +16,7 @@ class AdminProductLogic {
         return [200, $res->fetch_all(MYSQLI_ASSOC), "Product list loaded"];
     }
 
-    /**
-     * Einzelnes Produkt anhand ID laden.
-     */
+    // Lädt ein einzelnes Produkt anhand der ID
     public function get(int $id, mysqli $conn): array {
         $stmt = $conn->prepare("
             SELECT id, name, description, price, stock, rating,
@@ -36,13 +33,11 @@ class AdminProductLogic {
             : [404, null, "Product not found"];
     }
 
-    /**
-     * Produkt speichern (neu oder Update).
-     */
+    // Speichert ein Produkt (Update oder Neuanlage)
     public function save(array $post, array $files, mysqli $conn): array {
         $newImages = [];
 
-        // --- Pflichtfelder prüfen ---
+        // Pflichtfelder prüfen
         $required = ['name', 'description', 'price', 'stock', 'brand', 'category', 'sub_category', 'rating'];
         foreach ($required as $field) {
             if (!isset($post[$field]) || $post[$field] === '') {
@@ -50,13 +45,13 @@ class AdminProductLogic {
             }
         }
 
-        // --- Bilder speichern ---
+        // Bilder hochladen und abspeichern
         if (!empty($files['product_images']['name'] ?? null)) {
             foreach ($files['product_images']['error'] as $i => $err) {
                 if ($err === UPLOAD_ERR_OK) {
                     $tmp = $files['product_images']['tmp_name'][$i];
                     $ext = strtolower(pathinfo($files['product_images']['name'][$i], PATHINFO_EXTENSION));
-                    if ($ext !== 'jpg') continue;
+                    if ($ext !== 'jpg') continue; // Nur JPG erlaubt
                     $uniq = uniqid('img_', true) . '.jpg';
                     move_uploaded_file($tmp, $this->imageDir . $uniq);
                     $newImages[] = "pictures/$uniq";
@@ -67,15 +62,17 @@ class AdminProductLogic {
         $isUpdate = isset($post['id']) && (int)$post['id'] > 0;
         $existing = $isUpdate ? $this->get((int)$post['id'], $conn)[1] : [];
 
+        // Bisherige oder neue Bilder speichern
         $oldImages    = !empty($existing['image_url']) ? json_decode($existing['image_url'], true) : [];
         $imagesToSave = !empty($newImages) ? $newImages : $oldImages;
         $jsonImages   = json_encode($imagesToSave, JSON_UNESCAPED_SLASHES);
 
+        // Attribute JSON vorbereiten
         $jsonAttributes = isset($post['attributes'])
             ? json_encode(json_decode($post['attributes'], true) ?: [], JSON_UNESCAPED_UNICODE)
             : ($existing['attributes'] ?? '[]');
 
-        // --- UPDATE ---
+        // UPDATE eines bestehenden Produkts
         if ($isUpdate) {
             $stmt = $conn->prepare("
                 UPDATE products SET
@@ -97,7 +94,7 @@ class AdminProductLogic {
                 : [400, ['updated' => false], "Update failed"];
         }
 
-        // --- INSERT ---
+        //INSERT eines neuen Produkts 
         $stmt = $conn->prepare("
             INSERT INTO products
                 (name, description, price, stock, rating,
@@ -118,9 +115,7 @@ class AdminProductLogic {
             : [400, null, "Product creation failed"];
     }
 
-    /**
-     * Produkt löschen.
-     */
+    // Produkt anhand der ID löschen
     public function delete(int $id, mysqli $conn): array {
         $stmt = $conn->prepare("DELETE FROM products WHERE id = ?");
         $stmt->bind_param("i", $id);

@@ -6,12 +6,12 @@ class OrderLogic {
     $this->conn = $conn;
   }
 
-  // Bestellung erstellen (inkl. Warenkorb, Zahlung, Gutschein, Lagerstand)
+  // Erstellt eine Bestellung: verarbeitet Warenkorb, Zahlweise, Gutschein und aktualisiert Lagerbestand
   public function createOrder(int $userId, int $paymentId, ?string $voucherCode): array {
     $this->conn->begin_transaction();
 
     try {
-      // Warenkorb und Produktinfos laden
+      // Warenkorb und zugehörige Produktinfos laden
       $stmt = $this->conn->prepare("SELECT c.product_id, c.quantity, p.name, p.price, p.stock
                                      FROM cart c
                                      JOIN products p ON c.product_id = p.id
@@ -22,6 +22,8 @@ class OrderLogic {
 
       $items = [];
       $originalSubtotal = 0.0;
+
+      // Verfügbarkeit prüfen und Zwischensumme berechnen
       while ($row = $result->fetch_assoc()) {
         if ($row["stock"] < $row["quantity"]) {
           throw new Exception("Product '{$row['name']}' is out of stock or insufficient quantity.");
@@ -32,7 +34,7 @@ class OrderLogic {
 
       if (empty($items)) throw new Exception("Cart is empty.");
 
-      // Gutschein prüfen
+      // Gutscheinverarbeitung vorbereiten
       $voucherId = null;
       $discount = 0.0;
       $subtotal = $originalSubtotal;
@@ -53,17 +55,18 @@ class OrderLogic {
         $active = $remaining > 0 ? 1 : 0;
       }
 
+      // Versandkosten berechnen und Gesamtpreis ermitteln
       $shipping = $subtotal >= 300.0 ? 0.0 : 9.90;
       $total = $subtotal - $discount + $shipping;
 
-      // Bestellung eintragen
+      // Bestellung in der Datenbank eintragen
       $istmt = $this->conn->prepare("INSERT INTO orders (user_id, payment_id, voucher_id, subtotal, discount, shipping_amount, total_amount, created_at)
                                      VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
       $istmt->bind_param("iiidddd", $userId, $paymentId, $voucherId, $subtotal, $discount, $shipping, $total);
       $istmt->execute();
       $orderId = $istmt->insert_id;
 
-      // Bestellpositionen & Lager aktualisieren
+      // Bestellpositionen einfügen und Lagerbestand anpassen
       $pstmt = $this->conn->prepare("INSERT INTO order_items (order_id, product_id, name_snapshot, price_snapshot, quantity, total_price)
                                      VALUES (?, ?, ?, ?, ?, ?)");
       $ustmt = $this->conn->prepare("UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ?");
@@ -80,7 +83,7 @@ class OrderLogic {
         $ustmt->execute();
       }
 
-      // Gutschein aktualisieren, falls verwendet
+      // Gutschein aktualisieren (Restwert und Status)
       if ($voucherId !== null) {
         $ustmt2 = $this->conn->prepare("UPDATE vouchers SET remaining_value = ?, is_active = ? WHERE id = ?");
         $ustmt2->bind_param("dii", $remaining, $active, $voucherId);
@@ -92,16 +95,18 @@ class OrderLogic {
       $dstmt->bind_param("i", $userId);
       $dstmt->execute();
 
+      // Transaktion abschließen
       $this->conn->commit();
       return [200, ["success" => true, "orderId" => $orderId], "Order placed"];
 
     } catch (Exception $e) {
+      // Fehlerbehandlung: Transaktion zurückrollen
       $this->conn->rollback();
       return [500, ["success" => false], "Order creation failed: " . $e->getMessage()];
     }
   }
 
-  // Bestellübersicht für Nutzer
+  // Gibt alle Bestellungen eines Nutzers zurück
   public function getOrdersByUser(int $userId): array {
     $stmt = $this->conn->prepare("SELECT id, created_at, subtotal, discount, shipping_amount, total_amount
                                   FROM orders
@@ -113,7 +118,7 @@ class OrderLogic {
     return [200, $orders, "Orders retrieved"];
   }
 
-  // Einzelne Bestellung + Items abrufen (inkl. Zugriffsschutz)
+  // Gibt Details zu einer Bestellung mit zugehörigen Artikeln zurück, wenn sie dem Nutzer gehört
   public function getOrderWithItems(int $orderId, int $userId): array {
     $stmt = $this->conn->prepare("SELECT id, created_at, subtotal, discount, shipping_amount, total_amount
                                   FROM orders

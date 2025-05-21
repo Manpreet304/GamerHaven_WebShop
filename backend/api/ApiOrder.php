@@ -7,10 +7,9 @@ header("Content-Type: application/json");
 // Startet die Session, falls noch nicht aktiv
 if (session_status() === PHP_SESSION_NONE) session_start();
 
-// Lädt benötigte Ressourcen
-require_once("../db/dbaccess.php");           // Datenbankverbindung
-require_once("../logic/OrderLogic.php");      // Bestell-Logik
-require_once("../models/response.php");       // Einheitliche Antwortfunktion
+require_once("../db/dbaccess.php");  
+require_once("../logic/OrderLogic.php"); 
+require_once("../models/response.php"); 
 
 // Prüft, ob ein Benutzer eingeloggt ist (Session enthält User-ID)
 if (!isset($_SESSION["user"]["id"])) {

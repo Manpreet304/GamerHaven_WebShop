@@ -1,10 +1,10 @@
-// === Navbar laden ===
+// Lädt die Navbar von einer externen HTML-Datei
 $.get("../../inclusions/navbar.html")
   .done(html => {
-    // HTML einfügen
+    // Fügt das geladene HTML in die Seite ein
     $("#navbar-placeholder").html(html);
 
-    // Navbar-Script dynamisch einbinden
+    // Lädt ein begleitendes JavaScript dynamisch nach
     const script = document.createElement("script");
     script.src = "../../frontend/js/services/navbar.js";
     script.onload = () => console.log("Navbar script loaded");
@@ -12,5 +12,6 @@ $.get("../../inclusions/navbar.html")
     document.body.appendChild(script);
   })
   .fail((xhr, status, err) => {
+    // Fehlerbehandlung beim Laden der Navbar
     console.error("Error loading Navbar:", status, err);
   });

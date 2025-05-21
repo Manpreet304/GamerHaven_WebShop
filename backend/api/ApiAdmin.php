@@ -5,7 +5,6 @@ header("Content-Type: application/json");
 // Startet die Session, falls sie noch nicht läuft
 if (session_status() === PHP_SESSION_NONE) session_start();
 
-// DB-Verbindung und Logikklassen einbinden
 require_once("../db/dbaccess.php");
 require_once("../logic/AdminProductLogic.php");
 require_once("../logic/AdminCustomerLogic.php");
@@ -31,7 +30,7 @@ $payload = json_decode(file_get_contents('php://input'), true) ?? $_POST;
 try {
     switch ("$method?$action") {
 
-        // --- Produkte ---
+        //Produkte
         case 'GET?listProducts':
             sendApiResponse(...$productLogic->list($conn));
             break;
@@ -49,7 +48,7 @@ try {
             sendApiResponse(...$productLogic->delete((int)$_GET['id'], $conn));
             break;
 
-        // --- Kunden ---
+        //Kunden
         case 'GET?listCustomers':
             sendApiResponse(...$customerLogic->list($conn));
             break;
@@ -71,7 +70,7 @@ try {
             sendApiResponse(...$customerLogic->delete((int)$_GET['id'], $conn));
             break;
 
-        // --- Bestellungen ---
+        //Bestellungen
         case 'GET?listOrdersByCustomer':
             $id = (int)($_GET['id'] ?? 0);
             if ($id > 0) {
@@ -89,7 +88,7 @@ try {
             sendApiResponse(...$orderLogic->removeItem((int)$_GET['id'], (int)($_GET['qty'] ?? 1), $conn));
             break;
 
-        // --- Gutscheine ---
+        //Gutscheine
         case 'GET?listVouchers':
             sendApiResponse(...$voucherLogic->list($conn));
             break;
@@ -107,7 +106,7 @@ try {
             sendApiResponse(...$voucherLogic->save($payload, $conn));
             break;
 
-        // --- Fallback für ungültige Aktionen ---
+        //Fallback für ungültige Aktionen
         default:
             sendApiResponse(400, null, "Invalid request.");
     }

@@ -8,7 +8,6 @@ header("Content-Type: application/json");
 // Session starten, falls sie noch nicht läuft
 if (session_status() === PHP_SESSION_NONE) session_start();
 
-// Benötigte Dateien einbinden
 require_once("../db/dbaccess.php");
 require_once("../logic/AccountLogic.php");
 require_once("../models/response.php");
@@ -30,11 +29,9 @@ $userId  = (int)$_SESSION['user']['id'];
 // JSON-Nutzdaten aus dem Body laden (z. B. Formulardaten)
 $payload = json_decode(file_get_contents('php://input'), true) ?? [];
 
-// Instanz der Logik-Klasse erzeugen
 $logic = new AccountLogic($conn);
 
 try {
-    // Anfrage-Routing nach Methode und Aktion
     switch ("$method?$action") {
         case 'POST?update':
             // Account-Daten aktualisieren

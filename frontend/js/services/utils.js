@@ -1,4 +1,4 @@
-// Zeigt Bootstrap-Alert
+// Zeigt eine Bootstrap-Alert-Nachricht an
 function showMessage(type, text) {
   const alertClass = type === "success" ? "alert-success" : "alert-danger";
   const html = `
@@ -11,10 +11,11 @@ function showMessage(type, text) {
   const container = $('#globalMessageOverlay');
   container.stop(true, true).hide().html(html).fadeIn();
 
+  // Blendet die Nachricht nach 5 Sekunden automatisch wieder aus
   setTimeout(() => container.fadeOut(() => container.empty()), 5000);
 }
 
-// Universeller Ajax-Wrapper
+// Führt eine Ajax-Anfrage aus und behandelt Erfolg und Fehler zentral
 function apiRequest({
   url,
   method = "GET",
@@ -36,7 +37,7 @@ function apiRequest({
     .done(response => {
       if (response.success) {
         if (successMessage) showMessage("success", successMessage);
-        onSuccess(response.data); // Nur die Daten übergeben
+        onSuccess(response.data);
       } else {
         handleResponse(response, { errorMessage, onError });
       }
@@ -49,7 +50,7 @@ function apiRequest({
     });
 }
 
-// Fehler verarbeiten (Backend-Fehler)
+// Behandelt Fehlermeldungen zentral
 function handleResponse(response, {
   errorMessage = "An error occurred!",
   onError = () => {}
@@ -59,7 +60,7 @@ function handleResponse(response, {
   onError(response);
 }
 
-// Aktuelle Cart-Anzahl laden
+// Ruft die aktuelle Anzahl an Artikeln im Warenkorb ab
 function updateCartCount() {
   $.getJSON("../../backend/api/ApiCart.php?cartCount")
     .done(res => {
@@ -69,7 +70,7 @@ function updateCartCount() {
     .fail(() => $("#cart-count").text(0));
 }
 
-// Global exportieren
+// Globale Verfügbarkeit der Funktionen im window-Objekt
 window.showMessage = showMessage;
 window.apiRequest = apiRequest;
 window.handleResponse = handleResponse;

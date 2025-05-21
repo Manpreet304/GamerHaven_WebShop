@@ -2,6 +2,7 @@
 function loadNavbar() {
   $.get("../../inclusions/navbar.html")
     .done(html => {
+      // Template extrahieren und in die Seite einfügen
       const $temp = $("<div>").html(html);
       const template = $temp.find("#navbar-template")[0];
       if (!template) {
@@ -10,36 +11,44 @@ function loadNavbar() {
       }
 
       $("#navbar-placeholder").empty().append($(template.content).clone());
+
+      // Zusätzliche Initialisierungen
       setupCartClickInterceptor();
       fetchUserData();
     })
     .fail((_, status, err) => {
+      // Fehler beim Laden der Navbar
       console.error("Navbar loading failed", status, err);
     });
 }
 
-// Holt eingeloggten Benutzer (falls vorhanden)
+// Benutzerdaten vom Server abrufen
 function fetchUserData() {
   $.getJSON("../../backend/api/ApiGuest.php?me")
     .done(resp => {
+      // Reaktion auf eingeloggten oder anonymen Benutzer
       const user = resp.success ? resp.data : { loggedIn: false };
       window.currentUser = user;
       updateUserNavbar(user);
+
+      // Warenkorb aktualisieren, falls eingeloggt
       if (user.loggedIn) updateCartCount();
     })
     .fail((_, status, err) => {
+      // Fehler beim Abruf der Benutzerdaten
       console.error("User fetch failed", status, err);
       updateUserNavbar({ loggedIn: false });
     });
 }
 
-// Passt Navbar an Benutzerstatus an
+// Navbar-Inhalte je nach Login-Status des Benutzers anzeigen
 function updateUserNavbar(user) {
   const $userContainer = $("#user-dropdown-container");
   if (!$userContainer.length) return;
 
   $userContainer.empty();
 
+  // Anzeige für Gäste
   if (!user.loggedIn) {
     $userContainer.append(`
       <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
@@ -54,6 +63,7 @@ function updateUserNavbar(user) {
     return;
   }
 
+  // Anzeige für eingeloggte Nutzer (inkl. Admin-Zugriff und Logout)
   $userContainer.replaceWith(`
     <li class="nav-item">
       <a class="nav-link" href="../website/account.html">
@@ -76,7 +86,7 @@ function updateUserNavbar(user) {
     </li>
   `);
 
-  // Logout-Logik
+  // Logout-Funktionalität binden
   $(".logout-link").on("click", e => {
     e.preventDefault();
     apiRequest({
@@ -90,7 +100,7 @@ function updateUserNavbar(user) {
   });
 }
 
-// Abfangen des Warenkorb-Links (nur für eingeloggte Nutzer)
+// Interzeptiert Klick auf Warenkorb-Link und prüft Login-Status
 function setupCartClickInterceptor() {
   $(document).on("click", "#nav-cart-link", e => {
     e.preventDefault();
@@ -102,5 +112,5 @@ function setupCartClickInterceptor() {
   });
 }
 
-// Start bei Seitenaufruf
+// Initialisierung bei Seitenstart
 $(document).ready(loadNavbar);

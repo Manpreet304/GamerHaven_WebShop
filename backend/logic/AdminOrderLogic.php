@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 class AdminOrderLogic {
 
-    // Liefert alle Bestellungen (adminweit)
+    // Gibt alle Bestellungen im System zurück (adminweit)
     public function listAll(mysqli $conn): array {
         $stmt = $conn->prepare("
             SELECT id, user_id, created_at, subtotal, discount, shipping_amount, total_amount
@@ -16,7 +16,7 @@ class AdminOrderLogic {
         return [200, $orders, "All orders loaded"];
     }
 
-    // Liefert alle Bestellungen eines bestimmten Kunden
+    // Gibt alle Bestellungen eines bestimmten Kunden zurück
     public function listByCustomer(int $userId, mysqli $conn): array {
         $stmt = $conn->prepare("
             SELECT id, created_at, subtotal, discount, shipping_amount, total_amount
@@ -31,7 +31,7 @@ class AdminOrderLogic {
         return [200, $orders, "Orders loaded"];
     }
 
-    // Liefert die Artikel einer bestimmten Bestellung
+    // Gibt die Artikel (Positionen) einer bestimmten Bestellung zurück
     public function listItems(int $orderId, mysqli $conn): array {
         $stmt = $conn->prepare("
             SELECT id, name_snapshot, price_snapshot, quantity, total_price
@@ -45,9 +45,9 @@ class AdminOrderLogic {
         return [200, $items, "Order items loaded"];
     }
 
-    // Entfernt oder reduziert einen Artikel aus einer Bestellung
+    // Entfernt oder reduziert die Menge eines Artikels aus einer Bestellung
     public function removeItem(int $itemId, int $qty, mysqli $conn): array {
-        // Hole ursprüngliche Artikelinfos
+        // Artikelinformationen abfragen
         $stmt = $conn->prepare("
             SELECT order_id, quantity, price_snapshot 
             FROM order_items 
@@ -65,13 +65,13 @@ class AdminOrderLogic {
         $currentQty   = (int)$item['quantity'];
         $pricePerUnit = (float)$item['price_snapshot'];
 
-        // === Vollständiges Entfernen, wenn qty >= aktueller Menge ===
+        //Artikel vollständig entfernen
         if ($qty >= $currentQty) {
             $delItem = $conn->prepare("DELETE FROM order_items WHERE id = ?");
             $delItem?->bind_param("i", $itemId);
             $delItem?->execute();
 
-            // Prüfen, ob Bestellung dann leer ist → Bestellung löschen
+            // Prüfen, ob Bestellung danach leer ist → ggf. ganze Bestellung löschen
             $countStmt = $conn->prepare("SELECT COUNT(*) AS cnt FROM order_items WHERE order_id = ?");
             $countStmt?->bind_param("i", $orderId);
             $countStmt?->execute();
@@ -84,25 +84,27 @@ class AdminOrderLogic {
                 $delOrder?->execute();
             }
 
-        // === Teilmenge reduzieren ===
+        // Artikelmenge reduzieren 
         } else {
             $newQty   = $currentQty - $qty;
             $newTotal = $newQty * $pricePerUnit;
+
             $upd = $conn->prepare("UPDATE order_items SET quantity = ?, total_price = ? WHERE id = ?");
             $upd?->bind_param("idi", $newQty, $newTotal, $itemId);
             $upd?->execute();
         }
 
-        // === Neue Summen berechnen ===
+        // Neue Zwischensumme der Bestellung berechnen
         $rs = $conn->prepare("SELECT COALESCE(SUM(total_price),0) AS subtotal FROM order_items WHERE order_id = ?");
         $rs->bind_param("i", $orderId);
         $rs->execute();
         $subtotal = (float)$rs->get_result()->fetch_assoc()['subtotal'];
 
+        // Versandkosten abhängig von Zwischensumme (ab 300€ versandkostenfrei)
         $shipping = $subtotal >= 300.0 ? 0.0 : 9.90;
         $total    = $subtotal + $shipping;
 
-        // Bestellung aktualisieren mit neuen Summen
+        // Bestellung aktualisieren mit neuen Werten
         $us = $conn->prepare("
             UPDATE orders SET subtotal = ?, shipping_amount = ?, total_amount = ? 
             WHERE id = ?
